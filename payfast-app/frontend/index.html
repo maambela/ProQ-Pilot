@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Generate PayFast payment links instantly">
+    <title>PayFast Payment Generator</title>
+    <link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>💳 PayFast Payment Generator</h1>
+        <p class="subtitle">Generate secure payment links for your customers</p>
+        
+        <div id="alert" class="alert"></div>
+        
+        <form id="paymentForm">
+            <div class="form-group">
+                <label for="amount">
+                    Amount (ZAR) <span class="required">*</span>
+                </label>
+                <input 
+                    type="number" 
+                    id="amount" 
+                    name="amount" 
+                    placeholder="100.00" 
+                    step="0.01" 
+                    min="5" 
+                    required
+                    autocomplete="off"
+                >
+                <small style="color: #666;">Minimum: R5.00</small>
+            </div>
+            
+            <div class="form-group">
+                <label for="item_name">
+                    Item Name <span class="required">*</span>
+                </label>
+                <input 
+                    type="text" 
+                    id="item_name" 
+                    name="item_name" 
+                    placeholder="e.g., Premium Membership, Product Name" 
+                    required
+                    autocomplete="off"
+                >
+            </div>
+            
+            <div class="form-group">
+                <label for="item_description">Item Description (Optional)</label>
+                <textarea 
+                    id="item_description" 
+                    name="item_description" 
+                    placeholder="Additional details about this payment..."
+                ></textarea>
+            </div>
+            
+            <div class="form-group">
+                <label for="name_first">
+                    Customer First Name <span class="required">*</span>
+                </label>
+                <input 
+                    type="text" 
+                    id="name_first" 
+                    name="name_first" 
+                    placeholder="John" 
+                    required
+                    autocomplete="given-name"
+                >
+            </div>
+            
+            <div class="form-group">
+                <label for="name_last">
+                    Customer Last Name <span class="required">*</span>
+                </label>
+                <input 
+                    type="text" 
+                    id="name_last" 
+                    name="name_last" 
+                    placeholder="Doe" 
+                    required
+                    autocomplete="family-name"
+                >
+            </div>
+            
+            <div class="form-group">
+                <label for="email_address">
+                    Customer Email <span class="required">*</span>
+                </label>
+                <input 
+                    type="email" 
+                    id="email_address" 
+                    name="email_address" 
+                    placeholder="john@example.com" 
+                    required
+                    autocomplete="email"
+                >
+            </div>
+            
+            <button type="submit" class="btn btn-primary" id="submitBtn">
+                Generate Payment Link
+            </button>
+        </form>
+        
+        <div id="result" class="result">
+            <h3>✅ Payment Link Generated!</h3>
+            
+            <div class="payment-info">
+                <div class="payment-info-label">Payment ID</div>
+                <div class="payment-info-value" id="paymentId"></div>
+            </div>
+            
+            <div class="payment-info">
+                <div class="payment-info-label">Payment Link</div>
+                <div class="payment-info-value" id="paymentLink"></div>
+            </div>
+            
+            <div class="button-group">
+                <button class="btn btn-success" onclick="copyLink()">
+                    📋 Copy Link
+                </button>
+                <button class="btn btn-primary" onclick="openPaymentPage()">
+                    🚀 Open Payment Page
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <script src="assets/js/config.js"></script>
+    <script src="assets/js/payment.js"></script>
+</body>
+</html>
