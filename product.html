@@ -1,0 +1,1608 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ProQ Pilot | Legion Pro 7i Details</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <style>
+        /* Square Image Constraints */
+        .main-frame {
+            width: 100%;
+            aspect-ratio: 1 / 1; /* Forces square shape */
+            overflow: hidden;
+            border-radius: 26px;
+            background: #fff;
+            border: 1px solid rgba(255, 255, 255, 0.7);
+            box-shadow: 0 24px 70px rgba(0,0,0,0.22);
+            padding: 34px;
+        }
+
+        .main-frame img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain; /* Ensures whole image is visible without cropping */
+            border-radius: 15px;
+            border: none !important; /* Removed ugly black border */
+        }
+
+        /* Stock Gauge Styling */
+        .stock-status {
+            margin: 25px 0;
+            max-width: 400px;
+        }
+
+        .status-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .status-label { color: #888; }
+        .stock-count { color: var(--accent-teal); font-weight: 200 !important; }
+
+        .gauge-container {
+            height: 8px;
+            background: rgba(0, 0, 0, 0.05);
+            border-radius: 10px;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .gauge-bar {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent-teal), #00ff88);
+            box-shadow: 0 0 10px rgba(0, 210, 190, 0.5);
+            transition: width 1s ease-in-out;
+        }
+
+        .stock-low {
+            background: linear-gradient(90deg, #ff4b2b, #ff0055) !important;
+            box-shadow: 0 0 10px rgba(255, 0, 85, 0.5) !important;
+            animation: pulse-red 1.5s infinite;
+        }
+
+        /* Product Page Layout */
+        .product-page-container {
+            max-width: 1360px;
+            margin: 0 auto;
+            padding: 116px 5% 80px;
+        }
+
+        .back-nav {
+            text-decoration: none;
+            color: #fff;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 22px;
+            min-height: 38px;
+            padding: 0 16px;
+            border-radius: 999px;
+            border: 1px solid rgba(255, 255, 255, 0.28);
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(18px) saturate(150%);
+            -webkit-backdrop-filter: blur(18px) saturate(150%);
+            font-size: 0.82rem;
+            font-weight: 200;
+        }
+
+        .product-display {
+            display: grid;
+            grid-template-columns: minmax(360px, 0.95fr) minmax(360px, 1fr);
+            gap: clamp(30px, 5vw, 66px);
+            align-items: flex-start;
+        }
+
+        .gallery-column {
+            position: sticky;
+            top: 122px;
+        }
+
+        .thumbnail-row {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+            overflow-x: auto;
+            padding-bottom: 4px;
+        }
+        .thumb {
+            width: 80px;
+            height: 80px;
+            border-radius: 12px;
+            cursor: pointer;
+            border: 2px solid transparent;
+            object-fit: contain;
+            background: #fff;
+            padding: 6px;
+        }
+        .thumb.active { border-color: var(--accent-blue); }
+
+        .info-column {
+            min-width: 0;
+            padding: 28px;
+            border-radius: 28px;
+            border: 1px solid rgba(255, 255, 255, 0.22);
+            background: linear-gradient(135deg, rgba(255,255,255,0.12), rgba(255,255,255,0.055));
+            backdrop-filter: blur(24px) saturate(165%);
+            -webkit-backdrop-filter: blur(24px) saturate(165%);
+            box-shadow: 0 24px 70px rgba(0, 0, 0, 0.24), inset 0 1px 2px rgba(255, 255, 255, 0.28);
+        }
+        .brand-label { color: rgba(255,255,255,0.72); letter-spacing: 1.6px; font-size: 0.74rem; }
+        .brand-logo-tag { max-height: 44px; }
+        .product-title {
+            max-width: 680px;
+            font-size: clamp(1.95rem, 4vw, 3.15rem);
+            line-height: 1.05;
+            margin: 12px 0;
+            font-weight: 100;
+            color: #fff;
+        }
+
+        .price-row {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .current-price {
+            font-size: clamp(1.55rem, 2.4vw, 2.15rem);
+            color: #ffffff;
+            text-shadow: 0 0 20px rgba(68, 255, 224, 0.22);
+            font-weight: 200 !important;
+        }
+        .old-price { text-decoration: line-through; color: #aaa; }
+        .save-badge { background: #fce4ec; color: #db2777; padding: 4px 12px; border-radius: 15px; font-size: 0.8rem; }
+
+        .description {
+            max-width: 650px;
+            color: rgba(255, 255, 255, 0.84);
+            font-size: 0.95rem;
+            line-height: 1.65;
+        }
+
+        .specs-card {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0.065));
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(18px) saturate(155%);
+            -webkit-backdrop-filter: blur(18px) saturate(155%);
+            border-radius: 20px;
+            padding: 25px;
+            margin: 30px 0;
+        }
+        .specs-card h3,
+        .features-section h3,
+        .procurement-panel h3,
+        .payment-panel h3 {
+            color: #fff;
+            font-size: 1rem;
+            font-weight: 200;
+            margin: 0 0 12px;
+        }
+        .specs-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 15px;
+        }
+        .spec-item { display: flex; flex-direction: column; gap: 5px; }
+        .spec-item.full-width { grid-column: span 2; }
+        .spec-item .label { font-size: 0.68rem; color: rgba(68, 255, 224, 0.9); text-transform: uppercase; }
+        .spec-item .value { font-size: 0.92rem; color: rgba(255, 255, 255, 0.86); }
+
+        .purchase-actions { display: flex; gap: 15px; align-items: center; }
+
+        .quantity-selector {
+            display: flex;
+            background: white;
+            border-radius: 50px;
+            padding: 5px;
+            border: 1px solid #eee;
+        }
+        .quantity-selector input { border: none; width: 40px; text-align: center; outline: none; background: none; }
+
+        /* Icon Wrapper Styles */
+        .auth-wrapper, .cart-wrapper {
+            text-decoration: none;
+            font-size: 1.4rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .add-to-cart {
+            border: none !important; /* Explicitly remove any remaining borders */
+        }
+
+        .procurement-panel,
+        .payment-panel,
+        .features-section {
+            margin-top: 22px;
+            padding: 22px;
+            border-radius: 22px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.055));
+            backdrop-filter: blur(20px) saturate(155%);
+            -webkit-backdrop-filter: blur(20px) saturate(155%);
+        }
+
+        .procurement-grid,
+        .payment-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 10px;
+        }
+
+        .procurement-chip,
+        .payment-chip {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            min-height: 54px;
+            padding: 12px;
+            border-radius: 14px;
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            background: rgba(255, 255, 255, 0.065);
+            color: rgba(255, 255, 255, 0.84);
+            font-size: 0.78rem;
+            line-height: 1.25;
+        }
+
+        .procurement-chip i,
+        .payment-chip i {
+            color: var(--accent-teal);
+            font-size: 1.1rem;
+        }
+
+        .payment-note {
+            margin: 12px 0 0;
+            color: rgba(255, 255, 255, 0.68);
+            font-size: 0.76rem;
+            line-height: 1.45;
+        }
+
+        .product-page .recommendation-section {
+            padding: 22px;
+            border-radius: 24px;
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.105), rgba(255, 255, 255, 0.05));
+            backdrop-filter: blur(20px) saturate(155%);
+            -webkit-backdrop-filter: blur(20px) saturate(155%);
+        }
+
+        .product-page .recommendation-image {
+            background: #ffffff;
+            border-bottom-color: rgba(0, 0, 0, 0.08);
+        }
+
+        .product-page .recommendation-card--compact .recommendation-image {
+            border-right-color: rgba(0, 0, 0, 0.08);
+        }
+
+        @media (max-width: 1100px) {
+            .product-page-container {
+                padding: 106px 4% 64px;
+            }
+
+            .main-frame {
+                max-width: 520px;
+                margin: 0 auto;
+                padding: 22px;
+            }
+
+            .thumbnail-row {
+                justify-content: center;
+            }
+        }
+
+        @media (max-width: 860px) {
+            .product-page-container {
+                padding-top: 94px;
+            }
+
+            .back-nav {
+                margin-bottom: 16px;
+                font-size: 0.78rem;
+            }
+
+            .product-display {
+                grid-template-columns: 1fr;
+                gap: 24px;
+            }
+
+            .gallery-column,
+            .info-column {
+                width: 100%;
+            }
+
+            .gallery-column {
+                position: static;
+                max-width: 560px;
+                margin: 0 auto;
+            }
+
+            .product-title {
+                font-size: 2rem;
+                line-height: 1.08;
+            }
+
+            .description {
+                font-size: 0.88rem;
+                line-height: 1.45;
+            }
+
+            .specs-card {
+                margin: 20px 0;
+                padding: 18px;
+                border-radius: 16px;
+            }
+
+            .specs-grid {
+                gap: 12px;
+            }
+
+            .purchase-actions {
+                position: sticky;
+                bottom: 10px;
+                z-index: 40;
+                display: grid;
+                grid-template-columns: auto minmax(0, 1fr) auto;
+                gap: 8px;
+                padding: 10px;
+                border: 1px solid rgba(255, 255, 255, 0.3);
+                border-radius: 22px;
+                background: rgba(15, 15, 15, 0.45);
+                backdrop-filter: blur(18px);
+                -webkit-backdrop-filter: blur(18px);
+            }
+
+            .add-to-cart {
+                width: 100%;
+            }
+        }
+
+        @media (max-width: 520px) {
+            .product-page-container {
+                padding: 86px 12px 38px;
+            }
+
+            .main-frame {
+                width: 100%;
+                padding: 12px;
+                border-radius: 18px;
+            }
+
+            .main-frame img {
+                border-radius: 12px;
+            }
+
+            .thumbnail-row {
+                gap: 8px;
+                margin-top: 10px;
+            }
+
+            .thumb {
+                width: 48px;
+                height: 48px;
+                border-radius: 9px;
+            }
+
+            .brand-label {
+                font-size: 0.64rem;
+                letter-spacing: 1.4px;
+            }
+
+            .product-title {
+                font-size: 1.45rem;
+                margin: 6px 0;
+            }
+
+            .rating-row {
+                gap: 6px !important;
+                margin-bottom: 8px !important;
+                font-size: 0.78rem;
+            }
+
+            .price-row {
+                gap: 8px;
+                margin: 10px 0;
+                flex-wrap: wrap;
+            }
+
+            .current-price {
+                font-size: 1.25rem;
+            }
+
+            .save-badge {
+                padding: 3px 8px;
+                font-size: 0.65rem;
+            }
+
+            .description {
+                display: -webkit-box;
+                -webkit-line-clamp: 4;
+                -webkit-box-orient: vertical;
+                overflow: hidden;
+                font-size: 0.78rem;
+            }
+
+            .stock-status {
+                margin: 16px 0;
+            }
+
+            .status-header {
+                font-size: 0.66rem;
+                letter-spacing: 0.5px;
+            }
+
+            .gauge-container {
+                height: 6px;
+            }
+
+            .specs-card {
+                padding: 14px;
+                margin: 16px 0;
+            }
+
+            .specs-card h3,
+            .features-section h3 {
+                font-size: 0.9rem;
+            }
+
+            .specs-grid {
+                grid-template-columns: 1fr;
+                gap: 9px;
+            }
+
+            .procurement-grid,
+            .payment-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .spec-item.full-width {
+                grid-column: auto;
+            }
+
+            .spec-item .label {
+                font-size: 0.62rem;
+            }
+
+            .spec-item .value {
+                font-size: 0.78rem;
+            }
+
+            .features-section {
+                margin-top: 16px !important;
+            }
+
+            #features-list {
+                font-size: 0.78rem;
+            }
+
+            .purchase-actions {
+                bottom: 8px;
+                grid-template-columns: auto minmax(0, 1fr) 38px;
+                border-radius: 18px;
+                padding: 8px;
+            }
+
+            .quantity-selector {
+                padding: 3px;
+            }
+
+            .quantity-selector input {
+                width: 28px;
+                font-size: 0.72rem;
+            }
+
+            .qty-btn {
+                width: 28px;
+                height: 28px;
+                font-size: 0.72rem;
+            }
+
+            .add-to-cart {
+                padding: 7px 10px;
+                font-size: 0.72rem;
+            }
+
+            .btn-wishlist {
+                min-width: 0;
+                width: 38px;
+                height: 38px;
+                padding: 0;
+                border-radius: 50%;
+            }
+        }
+
+        @media (max-width: 360px) {
+            .main-frame {
+                width: min(100%, 248px);
+            }
+
+            .purchase-actions {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .btn-wishlist {
+                display: none;
+            }
+        }
+
+        @keyframes pulse-red {
+            0% { opacity: 1; }
+            50% { opacity: 0.6; }
+            100% { opacity: 1; }
+        }
+    </style>
+</head>
+<body class="product-page">
+
+    <header class="main-header">
+        <div class="header-container">
+            <a href="index.html" class="logo-area" style="text-decoration: none;">
+                <span class="logo-icon">P</span>
+                <span class="brand-name">ProQ Pilot</span>
+            </a>
+            <nav class="nav-links" id="nav-links">
+                <a href="index.html">Home</a>
+                <a href="store.html" class="active">Store</a>
+                <a href="user-orders.html">Orders</a>
+                <a href="my-account.html">My Account</a>
+            </nav>
+            <div class="header-actions">
+                <a href="wishlist.html" class="wishlist-wrapper">
+                    <span class="wishlist-icon"><i class='bx bx-heart'></i></span>
+                    <span class="wishlist-badge">0</span>
+                </a>
+                <a href="signin.html" class="auth-wrapper">
+                    <span class="auth-icon"><i class='bx bx-user'></i></span>
+                </a>
+                <a href="cart.html" class="cart-wrapper">
+                    <span class="cart-icon"><i class='bx bx-cart'></i></span>
+                    <span class="cart-badge" id="cart-count">0</span>
+                </a>
+                <div class="hamburger" id="hamburger">
+                    <span></span><span></span><span></span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="product-page-container">
+        <a href="store.html" class="back-nav"><i class='bx bx-chevron-left'></i> Back to Store</a>
+
+        <section class="product-display">
+            <div class="gallery-column">
+                <div class="main-frame">
+                    <img id="main-product-img" src="https://images.unsplash.com/photo-1541807084-5c52b6b3adef?q=80&w=1200" alt="Legion Pro 7i">
+                </div>
+                <div class="thumbnail-row">
+                    <img src="https://images.unsplash.com/photo-1541807084-5c52b6b3adef?q=80&w=1200" class="thumb active">
+                    <img src="https://images.unsplash.com/photo-1593642632823-8f785ba67e45?q=80&w=1200" class="thumb">
+                    <img src="https://images.unsplash.com/photo-1588872657578-7efd1f1555ed?q=80&w=1200" class="thumb">
+                </div>
+            </div>
+
+            <div class="info-column">
+                <span class="brand-label">LENOVO</span>
+                <h1 class="product-title">Legion Pro 7i</h1>
+                
+                <div class="rating-row" style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px;">
+                    <div class="stars" style="color: #FFD700;">
+                        <i class='bx bxs-star'></i><i class='bx bxs-star'></i><i class='bx bxs-star'></i><i class='bx bxs-star'></i><i class='bx bxs-star-half'></i>
+                    </div>
+                    <span class="review-count" style="color: #888; font-size: 0.9rem;">(4.8)</span>
+                </div>
+
+                <div class="price-row">
+                    <span class="current-price"></span>
+                    <span class="old-price"></span>
+                    
+                </div>
+
+                <p class="description">
+                    The Lenovo Legion Pro 7i is the ultimate gaming laptop, featuring the latest Intel Core i9 processor and NVIDIA RTX 4080 graphics. Experience unparalleled performance with its 16-inch WQXGA display and 240Hz refresh rate.
+                </p>
+
+                <div class="stock-status">
+                    <div class="status-header">
+                        <span class="status-label">Stock availability</span>
+                        <span class="stock-count" id="stock-text">products Remaining</span>
+                    </div>
+                    <div class="gauge-container">
+                        <div class="gauge-bar" id="stock-gauge"></div>
+                    </div>
+                </div>
+
+                <div class="specs-card">
+                    <h3>Technical Specifications</h3>
+                    <div class="specs-grid">
+                        <!-- Specs will be populated here -->
+                    </div>
+                </div>
+
+                <div class="procurement-panel">
+                    <h3>Procurement fit</h3>
+                    <div class="procurement-grid" id="procurementFitGrid">
+                        <div class="procurement-chip"><i class='bx bx-laptop'></i><span>Business device profile</span></div>
+                        <div class="procurement-chip"><i class='bx bx-shield-quarter'></i><span>Ready for MFA and identity protection</span></div>
+                        <div class="procurement-chip"><i class='bx bxl-microsoft'></i><span>Pairs with Microsoft cloud licensing</span></div>
+                        <div class="procurement-chip"><i class='bx bx-package'></i><span>Can be bundled with accessories</span></div>
+                    </div>
+                </div>
+
+                <div class="payment-panel">
+                    <h3>Payment options</h3>
+                    <div class="payment-grid">
+                        <div class="payment-chip"><i class='bx bx-credit-card'></i><span>Card payment at checkout</span></div>
+                        <div class="payment-chip"><i class='bx bx-transfer'></i><span>EFT / bank transfer</span></div>
+                        <div class="payment-chip"><i class='bx bx-receipt'></i><span>Company purchase order</span></div>
+                        <div class="payment-chip"><i class='bx bx-support'></i><span>Sales-assisted quote</span></div>
+                    </div>
+                    <p class="payment-note">For larger procurement orders, use checkout or request a quote so the team can confirm stock, licensing, delivery, and warranty details before payment.</p>
+                </div>
+
+                <div class="features-section" id="features-container" style="display: none;">
+                    <h3>Key Features</h3>
+                    <ul id="features-list" style="margin-top: 15px; padding-left: 20px; color: rgba(255,255,255,0.82);">
+                        <!-- Features will be populated here -->
+                    </ul>
+                </div>
+
+                <div class="purchase-actions">
+                    <div class="quantity-selector">
+                        <button class="qty-btn" id="minus"><i class='bx bx-minus'></i></button>
+                        <input type="number" value="1" id="qty-input" readonly>
+                        <button class="qty-btn" id="plus"><i class='bx bx-plus'></i></button>
+                    </div>
+                    
+                    <button class="btn btn-primary add-to-cart" id="add-to-cart-btn">
+                         Add to Cart
+                    </button>
+                    
+                    <button class="btn-wishlist">
+                        ❤️
+                    </button>
+                </div>
+
+                <section id="productSmartAddons" class="recommendation-slot recommendation-slot--side" aria-label="Smart add-ons"></section>
+            </div>
+        </section>
+
+        <section id="productCompleteSetup" class="recommendation-slot recommendation-slot--wide" aria-label="Complete your setup"></section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="footer-container">
+            <div class="footer-brand">
+                <div class="logo">
+                    <div class="logo-circle"></div>
+                    <span>ProQ Pilot</span>
+                </div>
+                <p>Next-gen laptop shopping designed for the modern user.</p>
+            </div>
+            <div class="footer-links">
+                <h4>Shop</h4>
+                <a href="store.html">Gaming Laptops</a>
+                <a href="store.html">Business Laptops</a>
+                <a href="brands.html">Brands</a>
+            </div>
+            <div class="footer-links">
+                <h4>Support</h4>
+                <a href="contact.html">Contact Us</a>
+                <a href="about.html">Warranty Policy</a>
+                <a href="about.html">Shipping Info</a>
+            </div>
+            <div class="footer-links">
+                <h4>Contact Us</h4>
+                <a href="mailto:info@stackopsit.co.za"><i class='bx bx-envelope'></i> info@stackopsit.co.za</a>
+                <a href="mailto:support@stackopsit.co.za"><i class='bx bx-envelope'></i> support@stackopsit.co.za</a>
+                <a href="mailto:sales@stackopsit.co.za"><i class='bx bx-envelope'></i> sales@stackopsit.co.za</a>
+                <a href="tel:0115689337"><i class='bx bx-phone'></i> 011 568 9337</a>
+                <p><i class='bx bx-map'></i> Mia Drive, Waterfall City, Johannesburg, 1685</p>
+            </div>
+            <div class="footer-newsletter">
+                <h4>Join the Future</h4>
+                <p>Subscribe for hardware updates.</p>
+                <div class="subscribe-box">
+                    <input type="email" placeholder="Email address">
+                    <button class="btn btn-primary">Join</button>
+                </div>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2026 ProQ Pilot. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script src="js/site-footer.js"></script>
+    <script src="js/auth-ui.js"></script>
+    <script src="js/recommendations.js"></script>
+    <script>
+
+        // Helper function to limit product name to 4 words max
+        function cleanProductName(fullName) {
+            if (!fullName) return "Laptop";
+            // Take only first 4 words
+            return fullName.split(/\s+/).slice(0, 4).join(' ').trim();
+        }
+
+        function safeProductText(value) {
+            return String(value || '').replace(/[<>&"']/g, (char) => ({
+                '<': '&lt;',
+                '>': '&gt;',
+                '&': '&amp;',
+                '"': '&quot;',
+                "'": '&#039;'
+            }[char]));
+        }
+
+        function sentenceCase(value) {
+            const text = String(value || '').trim();
+            if (!text) return '';
+            return text.charAt(0).toUpperCase() + text.slice(1);
+        }
+
+        function getProductProcurementType(product, specs) {
+            const text = `${product?.product_name || ''} ${product?.description || ''} ${product?.brand || ''}`.toLowerCase();
+            if (/monitor|display/.test(text) && !specs.RAM && !specs.Processor) return 'Monitor';
+            if (/mouse|mice/.test(text)) return 'Mouse';
+            if (/keyboard/.test(text)) return 'Keyboard';
+            if (/bag|backpack|sleeve|carry/.test(text)) return 'Laptop bag';
+            if (/duo|mfa|microsoft|365|license|licence/.test(text)) return 'License';
+            if (/desktop|micro|slim|mini pc|optiplex/.test(text)) return 'Desktop';
+            if (/workstation|zbook|precision/.test(text)) return 'Workstation';
+            return 'Business laptop';
+        }
+
+        function buildProcurementSummary(product, specs) {
+            const type = getProductProcurementType(product, specs);
+            const parts = [];
+            if (specs.Processor) parts.push(`Processor: ${specs.Processor}`);
+            if (specs.RAM) parts.push(`RAM: ${specs.RAM}`);
+            if (specs.Storage) parts.push(`Storage: ${specs.Storage}`);
+            if (specs.Display) parts.push(`Display: ${specs.Display}`);
+            if (specs["Operating System"]) parts.push(`OS: ${specs["Operating System"]}`);
+            if (specs.Warranty) parts.push(`Warranty: ${specs.Warranty}`);
+
+            if (parts.length) {
+                return `${type} selected for procurement. ${parts.slice(0, 6).join('. ')}.`;
+            }
+
+            const fallback = String(product?.description || '').replace(/\s+/g, ' ').trim();
+            return fallback ? sentenceCase(fallback.split('.').slice(0, 2).join('. ')) : `${type} ready for procurement review.`;
+        }
+
+        function updateProcurementFit(product, specs) {
+            const grid = document.getElementById('procurementFitGrid');
+            if (!grid) return;
+
+            const type = getProductProcurementType(product, specs);
+            const fitItems = [
+                { icon: 'bx bx-category', text: `${type} procurement item` },
+                { icon: 'bx bx-data', text: specs.RAM || specs.Storage ? 'Spec profile detected from supplier data' : 'Supplier detail available for review' },
+                { icon: 'bx bx-shield-quarter', text: 'Can be paired with Duo MFA security' },
+                { icon: 'bx bxl-microsoft', text: 'Can be bundled with Microsoft licensing' }
+            ];
+
+            grid.innerHTML = fitItems.map(item => `
+                <div class="procurement-chip">
+                    <i class='${item.icon}'></i>
+                    <span>${safeProductText(item.text)}</span>
+                </div>
+            `).join('');
+        }
+
+        // Helper function to get brand display (image or name)
+        function getBrandDisplay(brand) {
+            if (!brand) return '<span class="brand-tag" style="background: #00d2be; color: white; padding: 4px 10px; border-radius: 4px; font-size: 11px; font-weight: 200;">ELECTRONICS</span>';
+            
+            const brandLower = brand.toLowerCase();
+            const logos = {
+                'hp': 'Images/HP.PNG',
+                'dell': 'Images/DellLaptops.PNG',
+                'apple': 'Images/Apple.PNG',
+                'macbook': 'Images/Apple.PNG',
+                'microsoft': 'Images/Microsoft.PNG',
+                'acer': 'Images/AcerStick.png',
+                'lenovo': 'Images/lenovo.PNG'
+            };
+
+            if (logos[brandLower]) {
+                return `<img src="${logos[brandLower]}" alt="${brand}" class="brand-logo-tag" style="height: 50px; width: auto; display: block; object-fit: contain;">`;
+            }
+
+            return `<span class="brand-tag" style="background: #00d2be; color: white; padding: 4px 10px; border-radius: 4px; font-size: 11px; font-weight: 200;">${brand.toUpperCase()}</span>`;
+        }
+
+        // Helper function to extract specs using regex patterns (same as store summary)
+        function extractSpecs(description) {
+            const specs = {};
+
+            const fullText = (description || '').toLowerCase();
+
+            // Extract RAM
+            const ramPatterns = [
+                /(\d+)\s*gb\s*ram/i,
+                /ram\s*(\d+)\s*gb/i,
+                /(\d+)\s*gb\s*dram/i,
+                /dram\s*(\d+)\s*gb/i,
+                /(\d+)\s*gb.*ddr\d+/i,
+                /ddr\d+.*(\d+)\s*gb/i,
+                /(\d+)\s*gb\s*\([^)]*\)\s*ddr\d+/i,
+                /(\d+)\s*gb/i
+            ];
+            for (const pattern of ramPatterns) {
+                const match = fullText.match(pattern);
+                if (match) {
+                    const size = match[1] || match[2] || match[3] || match[4] || match[5] || match[6] || match[7];
+                    specs.ram = `${size}GB RAM`;
+                    break;
+                }
+            }
+
+            // Extract Storage
+            const storagePatterns = [
+                { pattern: /(\d{1,2})\s*tb.*ssd/i, sizeIndex: 1, unit: 'TB', type: 'SSD' },
+                { pattern: /(\d{3})\s*gb.*ssd/i, sizeIndex: 1, unit: 'GB', type: 'SSD' },
+                { pattern: /ssd.*(\d{1,2})\s*tb/i, sizeIndex: 1, unit: 'TB', type: 'SSD' },
+                { pattern: /ssd.*(\d{3})\s*gb/i, sizeIndex: 1, unit: 'GB', type: 'SSD' },
+                { pattern: /(\d{1,2})\s*tb.*hdd/i, sizeIndex: 1, unit: 'TB', type: 'HDD' },
+                { pattern: /(\d{3})\s*gb.*hdd/i, sizeIndex: 1, unit: 'GB', type: 'HDD' },
+                { pattern: /hdd.*(\d{1,2})\s*tb/i, sizeIndex: 1, unit: 'TB', type: 'HDD' },
+                { pattern: /hdd.*(\d{3})\s*gb/i, sizeIndex: 1, unit: 'GB', type: 'HDD' },
+                { pattern: /(\d{1,2})\s*tb\s*pcie.*nvme/i, sizeIndex: 1, unit: 'TB', type: 'SSD' },
+                { pattern: /(\d{3})\s*gb\s*pcie.*nvme/i, sizeIndex: 1, unit: 'GB', type: 'SSD' },
+                { pattern: /pcie.*nvme.*(\d{1,2})\s*tb/i, sizeIndex: 1, unit: 'TB', type: 'SSD' },
+                { pattern: /pcie.*nvme.*(\d{3})\s*gb/i, sizeIndex: 1, unit: 'GB', type: 'SSD' },
+                { pattern: /(\d{1,2})\s*(tb)\s*storage/i, sizeIndex: 1, unitIndex: 2, type: 'SSD' },
+                { pattern: /(\d{3})\s*(gb)\s*storage/i, sizeIndex: 1, unitIndex: 2, type: 'SSD' }
+            ];
+            for (const item of storagePatterns) {
+                const match = fullText.match(item.pattern);
+                if (match) {
+                    const size = match[item.sizeIndex];
+                    const unit = item.unit || match[item.unitIndex || 2].toUpperCase();
+                    const type = item.type;
+                    specs.storage = `${size}${unit} ${type} storage`;
+                    break;
+                }
+            }
+
+            // Extract Processor
+            const processorPatterns = [
+                /(intel\s*core\s*i\d+)/i,
+                /(core\s*i\d+)/i,
+                /(i\d+)\s*processor/i,
+                /(amd\s*ryzen\s*\d+)/i,
+                /(ryzen\s*\d+)/i,
+                /(ryze[n]?\s*\d+)/i,
+                /(ultra\s*\d+)/i,
+                /(u\d+)/i,
+                /(i\d+)/i,
+                /(ryze[n]?\s*\d+\s*\w*)/i,
+                /(ultra\s*\d+\s*\w*)/i,
+                /(u\d+\s*\w*)/i
+            ];
+            for (const pattern of processorPatterns) {
+                const match = fullText.match(pattern);
+                if (match) {
+                    let proc = match[1] || match[2] || match[3] || match[4] || match[5] || match[6] || match[7] || match[8] || match[9] || match[10] || match[11] || match[12];
+                    proc = proc.replace(/\s+/g, ' ').trim();
+                    // Fix common typos
+                    proc = proc.replace(/ryze/i, 'Ryzen');
+                    proc = proc.replace(/ryzenn/i, 'Ryzen');
+                    proc = proc.replace(/ultra/i, 'Ultra');
+                    proc = proc.replace(/u(\d)/i, 'Ultra $1');
+                    specs.processor = `${proc} processor`;
+                    break;
+                }
+            }
+
+            // Extract Display
+            const displayPatterns = [
+                /(fhd\+?|full\s*hd|4k|uhd|qhd|hd|wqxga|wqhd|wuxga|oled|ips|wideview)\s*(\d+(?:\.\d+)?)\s*(?:inch|")/i,
+                /(\d+(?:\.\d+)?)\s*(?:inch|")\s*(fhd\+?|full\s*hd|4k|uhd|qhd|hd|wqxga|wqhd|wuxga|oled|ips|wideview)?/i,
+                /(\d+(?:\.\d+)?)\s*(?:inch|")\s*display/i,
+                /(\d+(?:\.\d+)?)\s*(fhd\+?|full\s*hd|4k|uhd|qhd|hd|wqxga|wqhd|wuxga|oled|ips|wideview)/i
+            ];
+            for (const pattern of displayPatterns) {
+                const match = fullText.match(pattern);
+                if (match) {
+                    const size = match[1] || match[2] || match[3];
+                    const res = match[4] || match[5] || '';
+                    const resText = res ? ` ${res.toUpperCase()}` : '';
+                    specs.display = `${size}"${resText} display`;
+                    break;
+                }
+            }
+
+            // Extract Graphics
+            const graphicsPatterns = [
+                /(rtx\s*\d+(?:\s*super)?)/i,
+                /(gtx\s*\d+)/i,
+                /(nvidia\s*geforce\s*rtx?\s*\d+)/i,
+                /(amd\s*radeon\s*rx?\s*\d+)/i,
+                /(intel\s*iris\s*xe?)/i,
+                /(intel\s*uhd\s*graphics)/i,
+                /(integrated\s*graphics)/i,
+                /(nvidia\s*quadro)/i,
+                /(intel\s*integrated)/i,
+                /(amd\s*integrated)/i
+            ];
+            for (const pattern of graphicsPatterns) {
+                const match = fullText.match(pattern);
+                if (match) {
+                    specs.graphics = `${match[1] || match[2] || match[3] || match[4] || match[5] || match[6] || match[7] || match[8] || match[9] || match[10]} graphics`;
+                    break;
+                }
+            }
+
+            // Fallback for integrated graphics if not specified
+            if (!specs.graphics) {
+                if (fullText.includes('intel')) {
+                    specs.graphics = 'Intel integrated graphics';
+                } else if (fullText.includes('amd')) {
+                    specs.graphics = 'AMD integrated graphics';
+                }
+            }
+
+            // Extract Operating System
+            const osPatterns = [
+                /(windows\s*\d+(?:\s+(?:pro|home|enterprise|education))?(?:\s+\d+)?)/i,
+                /(win(?:dows)?\s*\d+(?:\s+(?:pro|home|enterprise|education))?(?:\s+\d+)?)/i,
+                /(linux(?:\s+\w+)*)/i,
+                /(macos(?:\s+\w+)*)/i,
+                /(chrome\s*os(?:\s+\w+)*)/i
+            ];
+            for (const pattern of osPatterns) {
+                const match = fullText.match(pattern);
+                if (match) {
+                    let os = match[1] || match[2] || match[3] || match[4] || match[5];
+                    os = os.replace(/\s+/g, ' ').trim();
+                    os = os.replace(/windows?/i, 'Windows');
+                    os = os.replace(/linux/i, 'Linux');
+                    os = os.replace(/macos/i, 'macOS');
+                    os = os.replace(/chrome/i, 'Chrome');
+                    // Capitalize first letter of each word
+                    os = os.replace(/\b\w/g, l => l.toUpperCase());
+                    specs.os = os;
+                    break;
+                }
+            }
+
+            // Extract Security Features
+            const securityFeatures = [];
+            if (fullText.includes('fingerprint')) securityFeatures.push('Fingerprint');
+            if (fullText.includes('face recognition') || fullText.includes('facial recognition')) securityFeatures.push('Face Recognition');
+            if (fullText.includes('biometric')) securityFeatures.push('Biometric');
+            if (securityFeatures.length > 0) {
+                specs.security = securityFeatures.join(', ');
+            }
+
+            // Extract Touchscreen
+            if (fullText.includes('touch') || fullText.includes('touchscreen')) {
+                specs.touchscreen = 'Touchscreen';
+            }
+
+            // Extract Camera
+            if (fullText.includes('camera') || fullText.includes('nfovcamera')) {
+                specs.camera = 'NFOV Camera';
+            }
+
+            // Extract Microphone
+            if (fullText.includes('mic') || fullText.includes('microphone') || fullText.includes('arymic')) {
+                specs.microphone = 'Dual Array Microphone';
+            }
+
+            // Extract Connectivity
+            const connectivity = [];
+            if (fullText.includes('wi fi') || fullText.includes('wifi')) connectivity.push('Wi-Fi 7');
+            if (fullText.includes('bt') || fullText.includes('bluetooth')) connectivity.push('Bluetooth 5.4');
+            if (connectivity.length > 0) {
+                specs.connectivity = connectivity.join(', ');
+            }
+
+            // Extract Warranty
+            const warrantyPatterns = [
+                /(\d+)\s*year.*warranty/i,
+                /warranty.*(\d+)\s*year/i,
+                /(\d+)\s*year.*onsite/i,
+                /onsite.*(\d+)\s*year/i,
+                /(\d+)y.*onsite/i,
+                /onsite.*(\d+)y/i
+            ];
+            for (const pattern of warrantyPatterns) {
+                const match = fullText.match(pattern);
+                if (match) {
+                    const years = match[1] || match[2] || match[3] || match[4] || match[5] || match[6];
+                    specs.warranty = `${years} Year Warranty`;
+                    break;
+                }
+            }
+            // Fallback if not matched but mentioned
+            if (!specs.warranty && fullText.includes('warranty')) {
+                specs.warranty = 'Warranty Included';
+            }
+
+            // Extract Charger
+            const chargerPatterns = [
+                /(\d+)w.*type.?c/i,
+                /type.?c.*(\d+)w/i,
+                /(\d+)w.*usb.?c/i,
+                /usb.?c.*(\d+)w/i
+            ];
+            for (const pattern of chargerPatterns) {
+                const match = fullText.match(pattern);
+                if (match) {
+                    const wattage = match[1] || match[2] || match[3] || match[4];
+                    specs.charger = `${wattage}W Type-C Charger`;
+                    break;
+                }
+            }
+
+            return specs;
+        }
+
+        async function loadProductDetails() {
+            const params = new URLSearchParams(window.location.search);
+            const productId = params.get('id');
+
+            const res = await fetch(`/api/v1/products/${productId}`);
+            const result = await res.json();
+            const product = result.data.product;
+            const images = result.data.images;
+
+            // Display Name & Price
+            document.getElementById('product-name').innerText = product.product_name;
+            document.getElementById('product-price').innerText = `R${parseFloat(product.price).toLocaleString()}`;
+            
+            // Display Full Description
+            document.getElementById('full-description').innerText = product.description;
+
+            // LIMIT IMAGES TO 6
+            const gallery = document.getElementById('image-gallery');
+            gallery.innerHTML = images.slice(0, 6).map(img => `
+                <div class="thumb">
+                    <img src="${img.image_url}" onclick="setMainImage('${img.image_url}')">
+                </div>
+            `).join('');
+
+            // Structured Specs from the specific columns
+            document.getElementById('spec-grid').innerHTML = `
+                <div class="spec-tile"><span>Processor</span><strong>${product.processor}</strong></div>
+                <div class="spec-tile"><span>Memory</span><strong>${product.ram || '8GB DDR4'}</strong></div>
+                <div class="spec-tile"><span>Storage</span><strong>${product.storage || '512GB SSD'}</strong></div>
+            `;
+        }
+        // Helper function to parse description
+        function parseDescription(desc) {
+            if (!desc || !desc.includes('/')) return { summary: desc, details: null };
+            
+            const parts = desc.split('/');
+            if (parts.length < 5) return { summary: desc, details: null };
+
+            const model = parts[0].trim();
+            const processor = parts[1].trim();
+            const ram = parts[2].trim();
+            const storage = parts[3].trim();
+            const display = parts[4].trim();
+            const graphics = parts[5] ? parts[5].trim() : 'Integrated Graphics';
+
+            const brand = model.split(' ')[0].toUpperCase();
+
+            return {
+                brand,
+                model,
+                processor,
+                ram,
+                storage,
+                display,
+                graphics,
+                summary: `The ${model} is a premium device featuring the ${processor} processor and ${graphics}. It offers a stunning ${display} display, ${ram} of memory, and ${storage} storage for ultimate performance.`
+            };
+        }
+
+        // Fetch product details
+        const urlParams = new URLSearchParams(window.location.search);
+        const productId = urlParams.get('id');
+
+        if (productId) {
+            fetchProductDetails(productId);
+        }
+
+        async function fetchProductDetails(id) {
+            try {
+                // 1. Fetch basic product data from local DB
+                const response = await fetch(`/api/v1/products/${id}`);
+                const data = await response.json();
+
+                if (data.status === 'success') {
+                    const product = data.data.product;
+                    const images = data.data.images;
+                    populateProductPage(product, images);
+                    
+                    // 2. Try fetching comprehensive details from Axiz (Real-time)
+                    fetchAxizDetails(id);
+                } else {
+                    showUnavailableProduct();
+                }
+            } catch (err) {
+                console.error('Error fetching product details:', err);
+                showUnavailableProduct();
+            }
+        }
+
+        function showUnavailableProduct() {
+            document.querySelector('.product-display').innerHTML = `
+                <div class="info-column" style="grid-column: 1 / -1; max-width: 720px; margin: 0 auto;">
+                    <span class="brand-label">PROCUREMENT STORE</span>
+                    <h1 class="product-title">Product unavailable</h1>
+                    <p class="description">This item is no longer part of the ProQ Pilot procurement catalog. Return to the store to view approved laptops, monitors, accessories, and licensing options.</p>
+                    <a href="store.html" class="btn btn-primary">Back to Store</a>
+                </div>
+            `;
+            document.getElementById('productCompleteSetup').hidden = true;
+        }
+
+        async function fetchAxizDetails(id) {
+            try {
+                const response = await fetch(`/api/v1/products/${id}/axiz-details`);
+                const data = await response.json();
+
+                if (data.status === 'success' && data.source === 'axiz') {
+                    populateAxizDetails(data.data);
+                }
+            } catch (err) {
+                console.error('Error fetching Axiz details:', err);
+            }
+        }
+
+        let currentProduct = null;
+
+        function populateProductPage(product, images) {
+            currentProduct = product;
+            
+            document.querySelector('.brand-label').innerHTML = getBrandDisplay(product.brand);
+            document.querySelector('.product-title').innerText = cleanProductName(product.product_name);
+            document.title = `ProQ Pilot | ${cleanProductName(product.product_name)}`;
+            document.querySelector('.current-price').innerText = `R${parseFloat(product.price).toLocaleString()}`;
+            document.querySelector('.description').innerText = product.description;
+            document.getElementById('stock-text').innerText = `${product.quantity} Products Remaining`;
+
+            // Extract specs from description using regex patterns
+            const extractedSpecs = extractSpecs(product.description);
+
+            // Map keys to display labels
+            const specLabels = {
+                processor: "Processor",
+                ram: "RAM",
+                storage: "Storage",
+                display: "Display",
+                graphics: "Graphics",
+                os: "Operating System",
+                security: "Access Security",
+                touchscreen: "Touchscreen",
+                camera: "Camera",
+                microphone: "Microphone",
+                connectivity: "Connectivity",
+                warranty: "Warranty",
+                charger: "Charger"
+            };
+
+            // Create specs object with only found specs
+            const specsToShow = {};
+            Object.keys(extractedSpecs).forEach(key => {
+                if (specLabels[key]) {
+                    specsToShow[specLabels[key]] = extractedSpecs[key];
+                }
+            });
+
+            // Display Specs
+            updateSpecsUI(specsToShow);
+            updateProcurementFit(product, specsToShow);
+
+            // Store current specs for merging with Axiz data
+            window.currentExtractedSpecs = specsToShow;
+            document.querySelector('.description').innerText = buildProcurementSummary(product, specsToShow);
+
+            // Update Gallery
+            if (images && images.length > 0) {
+                updateGalleryUI(images.map(img => {
+                    let url = img.image_url;
+                    return url.startsWith('http') ? url : `/product_images/${url}`;
+                }));
+                currentProduct.image_url = images[0].image_url;
+            }
+
+            // Update Stock Gauge
+            currentStock = product.quantity;
+            updateStockUI();
+
+            if (window.StackRecommendations) {
+                window.StackRecommendations.init({
+                    container: '#productSmartAddons',
+                    title: 'Procurement add-ons',
+                    context: 'product',
+                    product,
+                    limit: 2,
+                    fetchLimit: 8,
+                    compact: true,
+                    randomize: true,
+                    noCache: true
+                });
+
+                window.StackRecommendations.init({
+                    container: '#productCompleteSetup',
+                    title: 'Random procurement picks',
+                    context: 'product',
+                    product,
+                    offset: 2,
+                    limit: 3,
+                    fetchLimit: 8,
+                    randomize: true,
+                    noCache: true
+                });
+            }
+        }
+
+        function populateAxizDetails(axizData) {
+            // Update Description if more comprehensive
+            if (axizData.description) {
+                const mergedSpecs = window.currentExtractedSpecs || {};
+                document.querySelector('.description').innerText = buildProcurementSummary({
+                    ...currentProduct,
+                    description: axizData.description
+                }, mergedSpecs);
+            }
+
+            // Update Specs from Axiz specifications
+            if (axizData.specifications && Object.keys(axizData.specifications).length > 0) {
+                // Merge Axiz specs with extracted specs (Axiz takes precedence for overlapping keys)
+                const mergedSpecs = { ...window.currentExtractedSpecs, ...axizData.specifications };
+                updateSpecsUI(mergedSpecs);
+                updateProcurementFit(currentProduct, mergedSpecs);
+                document.querySelector('.description').innerText = buildProcurementSummary(currentProduct, mergedSpecs);
+            }
+
+            // Update Features
+            if (axizData.features && Object.keys(axizData.features).length > 0) {
+                const featuresContainer = document.getElementById('features-container');
+                const featuresList = document.getElementById('features-list');
+                featuresContainer.style.display = 'block';
+                featuresList.innerHTML = '';
+                
+                Object.entries(axizData.features).forEach(([key, value]) => {
+                    const li = document.createElement('li');
+                    li.innerHTML = `<strong>${key}:</strong> ${value}`;
+                    featuresList.appendChild(li);
+                });
+            }
+
+            // Update Gallery from Axiz
+            if (axizData.productImageGallery && axizData.productImageGallery.length > 0) {
+                updateGalleryUI(axizData.productImageGallery.map(img => img.imageUrl));
+            }
+
+            // Update Stock if available
+            if (axizData.availableToSell !== undefined) {
+                currentStock = axizData.availableToSell;
+                updateStockUI();
+            }
+        }
+
+        function updateSpecsUI(specs) {
+            const specsGrid = document.querySelector('.specs-grid');
+            specsGrid.innerHTML = '';
+            
+            Object.entries(specs).forEach(([label, value], index, array) => {
+                const specItem = document.createElement('div');
+                specItem.className = 'spec-item';
+                // Make the last item full width if odd number of items
+                if (index === array.length - 1 && array.length % 2 !== 0) {
+                    specItem.classList.add('full-width');
+                }
+                specItem.innerHTML = `
+                    <span class="label">${label}</span>
+                    <span class="value">${value}</span>
+                `;
+                specsGrid.appendChild(specItem);
+            });
+        }
+
+        function updateGalleryUI(imageUrls) {
+            const mainImg = document.getElementById('main-product-img');
+            const thumbRow = document.querySelector('.thumbnail-row');
+            
+            if (imageUrls.length > 0) {
+                mainImg.src = imageUrls[0];
+                thumbRow.innerHTML = '';
+                imageUrls.forEach((url, index) => {
+                    const thumb = document.createElement('img');
+                    thumb.src = url;
+                    thumb.className = `thumb ${index === 0 ? 'active' : ''}`;
+                    thumb.addEventListener('click', () => {
+                        mainImg.src = thumb.src;
+                        document.querySelectorAll('.thumb').forEach(t => t.classList.remove('active'));
+                        thumb.classList.add('active');
+                    });
+                    thumbRow.appendChild(thumb);
+                });
+            }
+        }
+
+        // Gallery Functionality (Legacy for static, will be overridden by dynamic)
+        const thumbs = document.querySelectorAll('.thumb');
+        const mainImg = document.getElementById('main-product-img');
+
+        thumbs.forEach(thumb => {
+            thumb.addEventListener('click', () => {
+                mainImg.src = thumb.src;
+                thumbs.forEach(t => t.classList.remove('active'));
+                thumb.classList.add('active');
+            });
+        });
+
+        // Quantity Logic
+        const plus = document.getElementById('plus');
+        const minus = document.getElementById('minus');
+        const qtyInput = document.getElementById('qty-input');
+
+        plus.addEventListener('click', () => {
+            qtyInput.value = parseInt(qtyInput.value) + 1;
+        });
+
+        minus.addEventListener('click', () => {
+            if (qtyInput.value > 1) {
+                qtyInput.value = parseInt(qtyInput.value) - 1;
+            }
+        });
+
+        // Stock Gauge Logic
+        let currentStock = 5; 
+        const maxStock = 20;
+        const stockBar = document.getElementById('stock-gauge');
+        const stockText = document.getElementById('stock-text');
+        
+        function updateStockUI() {
+            let percentage = (currentStock / maxStock) * 100;
+            stockBar.style.width = percentage + '%';
+            stockText.innerText = `${currentStock} products Remaining`;
+
+            if (percentage <= 25) {
+                stockBar.classList.add('stock-low');
+                stockText.style.color = "#ff0055";
+            } else {
+                stockBar.classList.remove('stock-low');
+                stockText.style.color = "var(--accent-teal)";
+            }
+        }
+
+        // Initialize UI
+        updateStockUI();
+
+        const user = JSON.parse(localStorage.getItem('user'));
+
+        async function updateCartBadge() {
+            if (user) {
+                try {
+                    const response = await fetch(`/api/v1/cart/${user.userID}`);
+                    const data = await response.json();
+                    if (data.status === 'success') {
+                        const count = data.data.reduce((acc, item) => acc + item.quantity, 0);
+                        localStorage.setItem('cartCount', count);
+                        document.getElementById('cart-count').innerText = count;
+                    }
+                } catch (err) {
+                    console.error('Error fetching cart count:', err);
+                }
+            } else {
+                const cart = JSON.parse(localStorage.getItem('cart')) || [];
+                const count = cart.reduce((acc, item) => acc + item.quantity, 0);
+                localStorage.setItem('cartCount', count);
+                document.getElementById('cart-count').innerText = count;
+            }
+        }
+
+        // Init badge
+        updateCartBadge();
+
+        // Add to Cart Logic (Working click)
+        const cartBtn = document.getElementById('add-to-cart-btn');
+        const wishlistBtn = document.querySelector('.btn-wishlist');
+
+        cartBtn.addEventListener('click', async () => {
+            if (currentStock > 0) {
+                const quantity = parseInt(qtyInput.value);
+                
+                if (user) {
+                    try {
+                        await fetch('/api/v1/cart/sync', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ 
+                                userID: user.userID, 
+                                items: [{ id: productId, quantity: quantity }] 
+                            })
+                        });
+                    } catch (err) {
+                        console.error('Error syncing cart to DB:', err);
+                    }
+                } else {
+                    let cart = JSON.parse(localStorage.getItem('cart')) || [];
+                    const idx = cart.findIndex(i => i.id == productId);
+                    if (idx > -1) {
+                        cart[idx].quantity += quantity;
+                    } else if (currentProduct) {
+                        cart.push({
+                            id: currentProduct.id,
+                            product_name: currentProduct.product_name,
+                            price: currentProduct.price,
+                            image_url: currentProduct.image_url,
+                            description: currentProduct.description,
+                            quantity: quantity
+                        });
+                    }
+                    localStorage.setItem('cart', JSON.stringify(cart));
+                }
+
+                // Update badge
+                await updateCartBadge();
+
+                // Decrease stock visual
+                currentStock = Math.max(0, currentStock - quantity);
+                updateStockUI();
+
+                // Button Feedback
+                const originalText = cartBtn.innerText;
+                cartBtn.innerText = "✓ Added!";
+                cartBtn.style.opacity = "0.7";
+                
+                setTimeout(() => {
+                    cartBtn.innerText = originalText;
+                    cartBtn.style.opacity = "1";
+                }, 1500);
+            } else {
+                alert("Out of Stock!");
+            }
+        });
+
+        // Wishlist Button
+        wishlistBtn.addEventListener('click', async (e) => {
+            e.preventDefault();
+            const userID = user?.userID || localStorage.getItem('userID');
+            
+            if (userID) {
+                // Server wishlist
+                if (wishlistBtn.classList.contains('in-wishlist')) {
+                    // Remove from wishlist
+                    try {
+                        const response = await fetch(`/api/v1/wishlist/${productId}`, {
+                            method: 'DELETE',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ userID: userID })
+                        });
+                        
+                        if (response.ok) {
+                            wishlistBtn.innerText = '🤍';
+                            wishlistBtn.classList.remove('in-wishlist');
+                            updateWishlistBadgeProduct();
+                            showWishlistNotificationProduct('Removed from wishlist', 'info');
+                        }
+                    } catch (err) {
+                        console.error('Error removing from wishlist:', err);
+                    }
+                } else {
+                    // Add to wishlist
+                    try {
+                        const response = await fetch('/api/v1/wishlist/add', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                userID: userID,
+                                productID: productId
+                            })
+                        });
+                        
+                        if (response.ok) {
+                            wishlistBtn.innerText = '❤️';
+                            wishlistBtn.classList.add('in-wishlist');
+                            updateWishlistBadgeProduct();
+                            showWishlistNotificationProduct('Added to wishlist!', 'success');
+                        } else {
+                            const data = await response.json();
+                            showWishlistNotificationProduct(data.message || 'Error adding to wishlist', 'error');
+                        }
+                    } catch (err) {
+                        console.error('Error adding to wishlist:', err);
+                        showWishlistNotificationProduct('Error adding to wishlist', 'error');
+                    }
+                }
+            } else {
+                // localStorage wishlist
+                let wishlist = JSON.parse(localStorage.getItem('wishlist') || '[]');
+                const idx = wishlist.findIndex(item => item.id === productId);
+                
+                if (idx > -1) {
+                    wishlist.splice(idx, 1);
+                    wishlistBtn.innerText = '🤍';
+                    wishlistBtn.classList.remove('in-wishlist');
+                    showWishlistNotificationProduct('Removed from wishlist', 'info');
+                } else {
+                    if (currentProduct) {
+                        wishlist.push({
+                            id: currentProduct.id,
+                            product_name: currentProduct.product_name,
+                            price: currentProduct.price,
+                            image_url: currentProduct.image_url,
+                            description: currentProduct.description
+                        });
+                        wishlistBtn.innerText = '❤️';
+                        wishlistBtn.classList.add('in-wishlist');
+                        showWishlistNotificationProduct('Added to wishlist!', 'success');
+                    }
+                }
+                localStorage.setItem('wishlist', JSON.stringify(wishlist));
+                updateWishlistBadgeProduct();
+            }
+        });
+
+        function updateWishlistBadgeProduct() {
+            const userID = user?.userID || localStorage.getItem('userID');
+            const wishlistBadges = document.querySelectorAll('.wishlist-badge');
+            
+            if (userID) {
+                fetch(`/api/v1/wishlist/count/${userID}`)
+                    .then(response => response.ok ? response.json() : { data: 0 })
+                    .then(data => {
+                        const count = data.data || 0;
+                        wishlistBadges.forEach(badge => badge.textContent = count);
+                        localStorage.setItem('wishlistCount', count);
+                    })
+                    .catch(err => {
+                        const wishlist = JSON.parse(localStorage.getItem('wishlist') || '[]');
+                        const count = wishlist.length;
+                        wishlistBadges.forEach(badge => badge.textContent = count);
+                        localStorage.setItem('wishlistCount', count);
+                    });
+            } else {
+                const wishlist = JSON.parse(localStorage.getItem('wishlist') || '[]');
+                const count = wishlist.length;
+                wishlistBadges.forEach(badge => badge.textContent = count);
+                localStorage.setItem('wishlistCount', count);
+            }
+        }
+
+        function showWishlistNotificationProduct(message, type = 'info') {
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                padding: 15px 25px;
+                background: ${type === 'success' ? '#31ffba' : type === 'error' ? '#ff4757' : '#64748b'};
+                color: white;
+                border-radius: 8px;
+                box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+                z-index: 10000;
+                animation: slideIn 0.3s ease;
+            `;
+            notification.textContent = message;
+            document.body.appendChild(notification);
+
+            setTimeout(() => {
+                notification.style.animation = 'slideOut 0.3s ease';
+                setTimeout(() => notification.remove(), 300);
+            }, 3000);
+        }
+
+        // Initialize wishlist badge
+        updateWishlistBadgeProduct();
+    </script>
+</body>
+</html>

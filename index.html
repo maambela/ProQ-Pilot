@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ProQ Pilot | Next-Gen Laptop Store</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+</head>
+<body>
+
+    <header class="main-header">
+        <div class="header-container">
+            <div class="logo-area">
+                <span class="logo-icon">P</span>
+                <span class="brand-name">ProQ Pilot</span>
+            </div>
+            <nav class="nav-links" id="nav-links">
+                <a href="index.html" class="active">Home</a>
+                <a href="store.html">Store</a>
+                <a href="user-orders.html">Orders</a>
+                <a href="my-account.html">My Account</a>
+            </nav>
+            <div class="header-actions">
+                <a href="wishlist.html" class="wishlist-wrapper">
+                    <span class="wishlist-icon"><i class='bx bx-heart'></i></span>
+                    <span class="wishlist-badge">0</span>
+                </a>
+                <a href="signin.html" class="auth-wrapper">
+                    <span class="auth-icon"><i class='bx bx-user'></i></span>
+                </a>
+                <a href="cart.html" class="cart-wrapper">
+                    <span class="cart-icon"><i class='bx bx-cart'></i></span>
+                    <span class="cart-badge" id="cart-count">0</span>
+                </a>
+                <div class="hamburger" id="hamburger">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <section class="hero">
+            <div class="hero-content">
+                <span class="badge-pill">Next-Gen IT Procurement</span>
+                <h1>Precision IT procurement <span class="accent-text"> for modern businesses</span></h1>
+                <p>Premium devices from leading brands — intelligently merged to your needs, performance goals, and budget..</p>
+                <div class="hero-btns">
+                    <a href="store.html" class="btn btn-primary">Explore Store →</a>
+                    <a href="brands.html" class="btn btn-primary">View Brands</a>
+                </div>
+                <div class="hero-stats">
+                    <div class="stat-item">4+ <span>Premium Brands</span></div>
+                    <div class="stat-item">50+ <span>Laptop Models</span></div>
+                    <div class="stat-item">24/7 <span>Support</span></div>
+                </div>
+            </div>
+            <div class="hero-visual animate-on-scroll slide-in-right">
+                <div class="slideshow-container">
+                    <!--<div class="slide fade show">
+                        <img src="Images/ARP098_Q2'26 NPI MacBook Neo Now Available_Mobile Banner (1000x800)_Tier 1 Partner Mock-up.png" alt="MacBook">
+                    </div> -->
+                    <div class="slide fade show">
+                        <img src="https://images.unsplash.com/photo-1517336714731-489689fd1ca8?q=80&w=1000&auto=format&fit=crop" alt="MacBook">
+                    </div>
+                    <!--<div class="slide fade">
+                        <img src="https://images.unsplash.com/photo-1593642632823-8f785ba67e45?q=80&w=1000&auto=format&fit=crop" alt="Dell XPS">
+                    </div>
+                    <div class="slide fade">
+                        <img src="https://images.unsplash.com/photo-1541807084-5c52b6b3adef?q=80&w=1000&auto=format&fit=crop" alt="Lenovo ThinkPad">
+                    </div>-->
+                    <div class="slide fade">
+                        <img src="https://images.unsplash.com/photo-1589561084283-930aa7b1ce50?q=80&w=1000&auto=format&fit=crop" alt="HP Spectre">
+                    </div>
+                    <div class="slide fade">
+                        <img src="https://images.unsplash.com/photo-1515378791036-0648a3ef77b2?q=80&w=1000&auto=format&fit=crop" alt="Microsoft Surface">
+                    </div>
+                    <div class="slide fade">
+                        <img src="https://images.unsplash.com/photo-1525547719571-a2d4ac8945e2?q=80&w=1000&auto=format&fit=crop" alt="Acer Swift">
+                    </div>
+                    <!-- Navigation Dots -->
+                    <div class="dot-container">
+                        <span class="dot active"></span>
+                        <span class="dot"></span>
+                        <span class="dot"></span>
+                        <span class="dot"></span>
+                        <span class="dot"></span>
+                        <span class="dot"></span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+            <section class="featured-products animate-on-scroll">
+            <div class="section-title">
+                <h2>Featured Procurement Picks</h2>
+                <p>A focused set of in-stock devices to start your next purchase order.</p>
+            </div>
+            <div class="featured-product-carousel" id="featured-products-grid">
+                <!-- Products will be loaded dynamically -->
+            </div>
+            <div class="features-action" style="text-align: center; margin-top: 40px;">
+                <a href="store.html" class="btn btn-primary">View Full Store</a>
+            </div>
+        </section>
+
+        <section class="procurement-scroll-stage animate-on-scroll">
+            <aside class="preferred-category-panel">
+                <div class="section-title">
+                    <span class="badge-pill">Shop by need</span>
+                    <h2>Select your preferred category</h2>
+                </div>
+                <div class="category-grid">
+                <!-- Row 1 -->
+                <div class="category-card animate-on-scroll slide-in-left">
+                    <div class="category-image-wrapper">
+                        <img src="https://images.unsplash.com/photo-1517336714731-489689fd1ca8?q=80&w=600&auto=format&fit=crop" alt="Laptops for home">
+                    </div>
+                    <div class="category-content liquid-glass-card">
+                        <h3>Laptops for home</h3>
+                        <p>Find the laptop that suits your home needs</p>
+                        <a href="store.html?category=laptops" class="category-btn">View Home Laptops</a>
+                    </div>
+                </div>
+
+                <div class="category-card animate-on-scroll slide-in-top">
+                    <div class="category-image-wrapper">
+                        <img src="Images/Laptopsforbusiness.avif" alt="Laptops for business">
+                    </div>
+                    <div class="category-content liquid-glass-card">
+                        <h3>Laptops for business</h3>
+                        <p>Find the laptop that suits your business needs</p>
+                        <a href="store.html?category=laptops" class="category-btn">View Business Laptops</a>
+                    </div>
+                </div>
+
+                <div class="category-card animate-on-scroll slide-in-right">
+                    <div class="category-image-wrapper">
+                        <img src="Images/monitors.jpg" alt="Monitors">
+                    </div>
+                    <div class="category-content liquid-glass-card">
+                        <h3>Monitors</h3>
+                        <p>Shop the best monitors</p>
+                        <a href="store.html?category=monitors" class="category-btn">View Monitors</a>
+                    </div>
+                </div>
+
+                <!-- Row 2 -->
+                <div class="category-card animate-on-scroll slide-in-left">
+                    <div class="category-image-wrapper">
+                        <img src="Images/PremiumDesktops_small.avif" alt="Desktops">
+                    </div>
+                    <div class="category-content liquid-glass-card">
+                        <h3>Desktops</h3>
+                        <p>Shop our Desktop & All in One's</p>
+                        <a href="store.html?category=desktops" class="category-btn">View Desktops</a>
+                    </div>
+                </div>
+
+                <div class="category-card animate-on-scroll slide-in-bottom">
+                    <div class="category-image-wrapper">
+                        <img src="Images/workstation0.png" alt="Workstations">
+                    </div>
+                    <div class="category-content liquid-glass-card">
+                        <h3>Workstations</h3>
+                        <p>Build the next big thing with workstations</p>
+                        <a href="store.html?category=workstations" class="category-btn">View Workstations</a>
+                    </div>
+                </div>
+
+                <div class="category-card animate-on-scroll slide-in-right">
+                    <div class="category-image-wrapper">
+                        <img src="Images/gaming.avif" alt="Gaming">
+                    </div>
+                    <div class="category-content liquid-glass-card">
+                        <h3>Gaming</h3>
+                        <p>Shop Alienware</p>
+                        <a href="store.html?category=gaming" class="category-btn">View Gaming</a>
+                    </div>
+                </div>
+            </div>
+
+            </aside>
+
+            <div class="procurement-sticky-panel">
+                <section class="procurement-command animate-on-scroll">
+                    <div class="procurement-media animate-on-scroll slide-in-left">
+                        <img src="Images/ProcumentImage.png" alt="Business team procuring laptops and software">
+                    </div>
+                    <div class="procurement-copy animate-on-scroll slide-in-right">
+                        <span class="badge-pill">Procurement Modernized</span>
+                        <h2>Devices, licenses, and security in one buying flow.</h2>
+                        <p>Help your team source the right laptop, pair it with Microsoft cloud licensing, and add Cisco Duo protection before checkout.</p>
+                        <div class="procurement-paths">
+                            <a href="store.html?category=laptops" class="procurement-path">
+                                <i class='bx bx-laptop'></i>
+                                <span>Device Procurement</span>
+                            </a>
+                            <a href="store.html?category=licenses&brand=Microsoft" class="procurement-path">
+                                <i class='bx bxl-microsoft'></i>
+                                <span>Microsoft Licenses</span>
+                            </a>
+                            <a href="store.html?category=licenses&brand=Duo" class="procurement-path">
+                                <i class='bx bx-shield-quarter'></i>
+                                <span>Duo Security</span>
+                            </a>
+                        </div>
+                        <div class="procurement-actions">
+                            <a href="store.html" class="btn btn-primary">Start Procurement</a>
+                            <a href="store.html?category=licenses" class="btn btn-primary">View Licenses</a>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="license-promo-strip animate-on-scroll">
+                    <div class="license-promo-copy">
+                        <span>Software & Licenses</span>
+                        <h2>Already buying hardware? Add the licenses your team needs.</h2>
+                    </div>
+                    <div class="license-promo-items">
+                        <a href="store.html?category=licenses&brand=Microsoft">
+                            <i class='bx bxl-microsoft'></i>
+                            Microsoft licensing
+                        </a>
+                        <a href="store.html?category=licenses&brand=Duo">
+                            <i class='bx bx-lock-alt'></i>
+                            Cisco Duo MFA
+                        </a>
+                        <a href="store.html?category=licenses">
+                            <i class='bx bx-cloud-download'></i>
+                            Digital delivery
+                        </a>
+                    </div>
+                </section>
+            </div>
+        </section>
+
+        <section class="procurement-bundles animate-on-scroll" id="procurement-bundles">
+            <div class="section-title">
+                <h2>Procurement bundles built around real teams</h2>
+                <p>Shop by business outcome instead of chasing every line item separately.</p>
+            </div>
+            <div class="bundle-grid">
+                <article class="bundle-card animate-on-scroll slide-in-left">
+                    <div class="bundle-icon"><i class='bx bx-user-plus'></i></div>
+                    <p class="bundle-label">New Starter</p>
+                    <h3>New Employee Kit</h3>
+                    <p>Laptop, Microsoft 365, Duo MFA, and essential accessories for day-one readiness.</p>
+                    <a href="kit.html?type=new-starter" class="bundle-link">Build Kit</a>
+                </article>
+                <article class="bundle-card animate-on-scroll slide-in-bottom">
+                    <div class="bundle-icon"><i class='bx bx-wifi'></i></div>
+                    <p class="bundle-label">Hybrid Work</p>
+                    <h3>Remote Team Kit</h3>
+                    <p>Business laptops, Teams-ready licensing, secure access, and collaboration gear.</p>
+                    <a href="kit.html?type=hybrid" class="bundle-link">Shop Team Setup</a>
+                </article>
+                <article class="bundle-card animate-on-scroll slide-in-right">
+                    <div class="bundle-icon"><i class='bx bx-shield-plus'></i></div>
+                    <p class="bundle-label">Secure Growth</p>
+                    <h3>Secure Business Kit</h3>
+                    <p>Procure endpoint devices with identity, MFA, and cloud productivity in one cart.</p>
+                    <a href="kit.html?type=secure" class="bundle-link">Secure Users</a>
+                </article>
+            </div>
+        </section>
+
+                <section class="promo-grid-section animate-on-scroll">
+            <div class="section-title">
+                <h2>Built for Your Lifestyle</h2>
+                <p>From production to performance and everything in between.</p>
+            </div>
+            <div class="promo-container">
+                <div class="promo-box animate-on-scroll slide-in-left" style="background-image: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url('https://images.unsplash.com/photo-1496181133206-80ce9b88a853?q=80&w=1000')">
+                    <div class="promo-text">
+                        <h3>Ready to Work</h3>
+                        <p>Enterprise-grade security and all-day battery life for the modern professional.</p>
+                        <a href="store.html" class="btn-link">Shop Business →</a>
+                    </div>
+                </div>
+                <div class="promo-box animate-on-scroll slide-in-top" style="background-image: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url('https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=1000')">
+                    <div class="promo-text">
+                        <h3>Elite Performance</h3>
+                        <p>Push the limits with RTX 40-series graphics and liquid-metal cooling.</p>
+                        <a href="store.html" class="btn-link">Explore Gaming →</a>
+                    </div>
+                </div>
+                <div class="promo-box animate-on-scroll slide-in-bottom" style="background-image: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url('https://images.unsplash.com/photo-1558655146-d09347e92766?q=80&w=1000')">
+                    <div class="promo-text">
+                        <h3>Creative Studio</h3>
+                        <p>Color-accurate OLED displays designed for designers and editors.</p>
+                        <a href="store.html" class="btn-link">View Studio Laptops →</a>
+                    </div>
+                </div>
+                <div class="promo-box animate-on-scroll slide-in-right" style="background-image: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url('https://images.unsplash.com/photo-1531297484001-80022131f5a1?q=80&w=1000')">
+                    <div class="promo-text">
+                        <h3>Student Deals</h3>
+                        <p>Back-to-school offers on lightweight devices that last through every lecture.</p>
+                        <a href="store.html" class="btn-link">Claim Discount →</a>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        
+        <section class="features animate-on-scroll">
+            <div class="section-title">
+                <h2>Why Choose ProQ Pilot</h2>
+                <p>We bring you the best laptops with an unmatched shopping experience</p>
+            </div>
+            <div class="feature-grid">
+                <div class="feature-card animate-on-scroll slide-in-left">
+                    <div class="icon-box"><i class='bx bx-desktop'></i></div>
+                    <h3>Product View</h3>
+                    <p>Experience every angle with immersive models</p>
+                </div>
+                <div class="feature-card animate-on-scroll slide-in-bottom">
+                    <div class="icon-box"><i class='bx bx-cog'></i></div>
+                    <h3>Latest Hardware</h3>
+                    <p>Only the newest processors and graphics cards</p>
+                </div>
+                <div class="feature-card animate-on-scroll slide-in-right">
+                    <div class="icon-box"><i class='bx bx-run'></i></div>
+                    <h3>Fast Delivery</h3>
+                    <p>Get your device within a week</p>
+                </div>
+                <div class="feature-card animate-on-scroll slide-in-top">
+                    <div class="icon-box"><i class='bx bx-shield'></i></div>
+                    <h3>Extended Warranty</h3>
+                    <p>3-year warranty on all premium devices</p>
+                </div>
+            </div>
+        </section>
+
+
+        <section class="brands-section animate-on-scroll">
+            <div class="section-title">
+                <h2>Brands We Sell</h2>
+                <p>Premium brands you can trust for quality and performance</p>
+            </div>
+            <div class="brands-grid">
+                <div class="brand-card animate-on-scroll fade-in-scale">
+                    <img src="Images/HP.PNG" alt="HP" class="brand-image">
+                </div>
+                <div class="brand-card animate-on-scroll fade-in-scale">
+                    <img src="Images/DellLaptops.PNG" alt="Dell" class="brand-image">
+                </div>
+                <div class="brand-card animate-on-scroll fade-in-scale">
+                    <img src="Images/Apple.PNG" alt="Apple" class="brand-image">
+                </div>
+                <div class="brand-card animate-on-scroll fade-in-scale">
+                    <img src="Images/Microsoft.PNG" alt="Microsoft" class="brand-image">
+                </div>
+                <div class="brand-card animate-on-scroll fade-in-scale">
+                    <img src="Images/AcerStick.png" alt="Acer" class="brand-image">
+                </div>
+                <div class="brand-card animate-on-scroll fade-in-scale">
+                    <img src="Images/lenovo.PNG" alt="Lenovo" class="brand-image">
+                </div>
+
+            </div>
+        </section>
+
+        <footer class="site-footer animate-on-scroll">
+            <div class="footer-container">
+                <div class="footer-brand animate-on-scroll slide-in-left">
+                    <div class="logo">
+                        <div class="logo-circle"></div>
+                        <span>ProQ Pilot</span>
+                    </div>
+                    <p>Next-gen laptop shopping designed for the modern user.</p>
+                </div>
+                <div class="footer-links animate-on-scroll slide-in-bottom">
+                    <h4>Shop</h4>
+                    <a href="store.html">Gaming Laptops</a>
+                    <a href="store.html">Business Laptops</a>
+                    <a href="brands.html">Brands</a>
+                </div>
+                <div class="footer-links animate-on-scroll slide-in-top">
+                    <h4>Support</h4>
+                    <a href="contact.html">Contact Us</a>
+                    <a href="about.html">Warranty Policy</a>
+                    <a href="about.html">Shipping Info</a>
+                </div>
+
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2026 ProQ Pilot. All rights reserved.</p>
+            </div>
+        </footer>
+    </main>
+
+    <script src="js/site-footer.js"></script>
+    <script src="js/script.js?v=featured-carousel-fix-2"></script>
+    <script src="js/auth-ui.js"></script>
+</body>
+</html>

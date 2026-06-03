@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Cisco Duo Security - ProQ Pilot</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/duo-store.css">
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+</head>
+<body>
+    <!-- HEADER -->
+    <header class="main-header">
+        <div class="header-container">
+            <div class="logo-area">
+                <span class="logo-icon">P</span>
+                <span class="brand-name">ProQ Pilot</span>
+            </div>
+            <nav class="nav-links" id="nav-links">
+                <a href="index.html">Home</a>
+                <a href="store.html">Store</a>
+                <a href="duo-store.html" class="active">Duo Security</a>
+                <a href="user-orders.html">Orders</a>
+                <a href="my-account.html">My Account</a>
+            </nav>
+            <div class="header-actions">
+                <a href="wishlist.html" class="wishlist-wrapper">
+                    <span class="wishlist-icon"><i class='bx bx-heart'></i></span>
+                    <span class="wishlist-badge">0</span>
+                </a>
+                <a href="signin.html" class="auth-wrapper">
+                    <span class="auth-icon"><i class='bx bx-user'></i></span>
+                </a>
+                <a href="cart.html" class="cart-wrapper">
+                    <span class="cart-icon"><i class='bx bx-cart'></i></span>
+                    <span class="cart-badge" id="cart-count">0</span>
+                </a>
+                <div class="hamburger" id="hamburger">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="duo-main-container" style="min-height: 60vh; display: flex; align-items: center; justify-content: center; text-align: center;">
+        <div class="glass-card" style="padding: 60px; border-radius: 30px; background: rgba(255,255,255,0.05); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.1); max-width: 800px;">
+            <i class='bx bx-shield-quarter' style="font-size: 80px; color: var(--accent-blue); margin-bottom: 20px;"></i>
+            <h1 style="font-size: 2.5rem; margin-bottom: 20px; font-weight: 200;">Duo Security Integration</h1>
+            <p style="font-size: 1.1rem; color: rgba(255,255,255,0.8); margin-bottom: 40px; line-height: 1.6;">
+                We've integrated Cisco Duo Security directly into our main store for a more seamless experience. 
+                You can now configure your licenses alongside your hardware.
+            </p>
+            <a href="store.html" class="btn primary-btn" style="padding: 15px 40px; font-size: 1.1rem;">
+                Go to Store
+            </a>
+        </div>
+    </main>
+
+    <footer class="site-footer"></footer>
+
+    <!-- Modal for Demo -->
+    <div id="demoModal" class="modal-overlay" aria-hidden="true">
+        <div class="modal-content">
+            <button class="modal-close" id="demoClose">&times;</button>
+            <div class="modal-body">
+                <h2>Duo In Action</h2>
+                <div class="demo-video">
+                    <div style="background: rgba(0,188,212,0.2); padding: 40px; border-radius: 12px; text-align: center;">
+                        <i class='bx bx-play-circle' style="font-size: 80px; color: var(--accent-blue);"></i>
+                        <p style="margin-top: 20px; color: rgba(255,255,255,0.8);">
+                            Video would play here showing real Duo workflow
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/site-footer.js"></script>
+    <script src="js/auth-ui.js"></script>
+    <script src="js/duo-store.js"></script>
+</body>
+</html>

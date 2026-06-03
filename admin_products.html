@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - Product Management</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <link href="css/style.css" rel="stylesheet">
+    <style>
+        :root {
+            --fifa-blue: #008cff;
+            --fifa-dark: #000000;
+            --fifa-gray: #f4f4f4;
+            --fifa-border: #e2e8f0;
+            --fifa-white: #ffffff;
+            --fifa-text: #1a202c;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            /* The gradient moves from bottom-left to top-right */
+            background: linear-gradient(45deg, #a3e9d9, #bce6f5, #fce4ec);
+            
+            /* Ensures the gradient covers the full height of the screen */
+            background-attachment: fixed;
+            min-height: 100vh;
+            
+            color: var(--fifa-text);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        .main-header {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(10px);
+            padding: 1rem 5%;
+            position: fixed;
+            top: 0;
+            width: 100%;
+            z-index: 1000;
+            border-bottom: 1px solid var(--fifa-border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .admin-nav {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .nav-link {
+            text-decoration: none;
+            color: var(--fifa-dark);
+            font-size: 0.9rem;
+            font-weight: 200;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            background: rgba(255,255,255,0.5);
+            transition: all 0.2s;
+        }
+
+        .nav-link:hover, .nav-link.active {
+            background: var(--fifa-blue);
+            color: white;
+        }
+
+
+        .logo {
+            font-weight: 200;
+            font-size: 1.5rem;
+            letter-spacing: -1px;
+            color: var(--fifa-dark);
+            text-transform: uppercase;
+        }
+
+        /* --- Main Layout --- */
+        main {
+            padding: 3rem 5%;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .page-title {
+            font-size: 2.5rem;
+            font-weight: 200;
+            margin-bottom: 2rem;
+            margin-top: 4rem;
+            color: var(--fifa-dark);
+        }
+
+        /* --- Form Container --- */
+        .products-container {
+            display: flex;
+            flex-direction: column;
+            gap: 3rem;
+        }
+
+        .product-card {
+            background: var(--fifa-white);
+            border: 1px solid var(--fifa-border);
+            border-radius: 12px;
+            padding: 2rem;
+            transition: box-shadow 0.3s ease;
+            position: relative;
+        }
+
+        .product-card:hover {
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+        }
+
+        .product-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            border-bottom: 1px solid var(--fifa-gray);
+            padding-bottom: 1rem;
+        }
+
+        .remove-product-btn {
+            background: none;
+            border: none;
+            color: #ef4444;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 200;
+        }
+
+        /* --- Grid Layout --- */
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .form-group.full-width {
+            grid-column: 1 / -1;
+        }
+
+        label {
+            font-size: 0.75rem;
+            font-weight: 200;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #718096;
+        }
+
+        input, textarea, select {
+            padding: 0.75rem 1rem;
+            border: 1px solid var(--fifa-border);
+            border-radius: 8px;
+            font-size: 1rem;
+            background: var(--fifa-gray);
+            transition: all 0.2s;
+            outline: none;
+        }
+
+        input:focus, textarea:focus {
+            border-color: var(--fifa-blue);
+            background: var(--fifa-white);
+            box-shadow: 0 0 0 3px rgba(0, 140, 255, 0.1);
+        }
+
+        /* --- Image Section --- */
+        .image-section {
+            margin-top: 2rem;
+        }
+
+        .image-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .image-preview {
+            position: relative;
+            aspect-ratio: 1;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid var(--fifa-border);
+            background: var(--fifa-gray);
+        }
+
+        .image-preview img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            background: white;
+        }
+
+        .image-actions {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.6);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 0.5rem;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+
+        .image-preview:hover .image-actions {
+            opacity: 1;
+        }
+
+        .delete-img {
+            background: #ef4444;
+            color: white;
+            border: none;
+            padding: 0.4rem 0.8rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.7rem;
+            font-weight: 200;
+            text-transform: uppercase;
+        }
+
+        .primary-badge {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background: var(--fifa-blue);
+            color: white;
+            font-size: 0.6rem;
+            padding: 2px 6px;
+            border-radius: 4px;
+            text-transform: uppercase;
+            font-weight: 200;
+            display: none;
+        }
+
+        .image-preview.is-primary .primary-badge {
+            display: block;
+        }
+
+        .set-primary-btn {
+            background: var(--fifa-white);
+            color: var(--fifa-dark);
+            border: none;
+            padding: 0.4rem 0.8rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.7rem;
+            font-weight: 200;
+            text-transform: uppercase;
+        }
+
+        .add-image-placeholder {
+            border: 2px dashed var(--fifa-border);
+            background: none;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            color: #718096;
+            transition: all 0.2s;
+        }
+
+        .add-image-placeholder:hover {
+            border-color: var(--fifa-blue);
+            color: var(--fifa-blue);
+        }
+
+        /* --- Buttons (Custom Design) --- */
+        .glow-wrap {
+            position: relative;
+            display: inline-block;
+            width: 200px;
+            height: 50px;
+            margin-top: 10px;
+            border-radius: 25px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0, 162, 255, 0.199);
+            transition: transform 0.2s ease;
+            border: none;
+            background: none;
+            cursor: pointer;
+        }
+
+        .glow-wrap:hover {
+            transform: scale(1.05);
+            animation: live-glow 1.5s infinite alternate;
+        }
+
+        @keyframes live-glow {
+            from { box-shadow: 0 4px 15px rgba(0, 162, 255, 0.199); }
+            to { box-shadow: 0 4px 25px rgba(0, 162, 255, 0.5); }
+        }
+
+        .glowing-border-layer {
+            position: absolute;
+            top: -80px;
+            left: -80px;
+            width: 360px;
+            height: 210px;
+            z-index: 1;
+            background: conic-gradient(
+                #00ffc3 0%,
+                hsla(207, 100%, 50%, 0) 25%,
+                #0084ff00 50%,
+                #0077ff00 75%,
+                #00ffc3 100%
+            );
+            animation: spin 3s linear infinite;
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .link-content {
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: calc(100% - 4px);
+            height: calc(100% - 4px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            text-decoration: none;
+            border-radius: 23px;
+            background: linear-gradient(45deg, #a3e9d9, #bce6f5, #fce4ec);
+            box-shadow: 0 4px 25px rgb(255, 255, 255);
+            color: #000000;
+            font-size: 15px;
+            font-weight: 200;
+            letter-spacing: 2px;
+            z-index: 2;
+            transition: color 0.3s;
+            pointer-events: none; /* Let the button handle clicks */
+        }
+
+        .glow-wrap:hover .link-content {
+            color: #ffffff;
+        }
+
+        /* Variants */
+        .glow-wrap.secondary .link-content {
+             background: linear-gradient(70deg, #bce6f5, #fce4ec, #a3e9d9);
+            border: 1px solid var(--fifa-border);
+            color: rgb(0, 0, 0);
+        }
+
+        .glow-wrap.secondary .glowing-border-layer {
+            background: conic-gradient(
+                #cbd5e0 0%,
+                hsla(0, 0%, 100%, 0) 25%,
+                #ffffff00 50%,
+                #ffffff00 75%,
+                #cbd5e0 100%
+            );
+        }
+
+        /* --- Footer Actions --- */
+        .form-actions {
+            margin-top: 4rem;
+            display: flex;
+            justify-content: flex-end;
+            gap: 1.5rem;
+            padding-bottom: 5rem;
+        }
+
+        /* --- Responsive Adjustments --- */
+        @media (max-width: 768px) {
+            .page-title {
+                font-size: 1.8rem;
+            }
+            .product-card {
+                padding: 1.5rem;
+            }
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+            .glow-wrap {
+                width: 100%;
+            }
+            .form-actions {
+                flex-direction: column;
+            }
+        }
+    </style>
+    <link href="css/admin-clean.css" rel="stylesheet">
+</head>
+<body>
+
+    <header class="main-header">
+        <div class="header-container">
+            <div class="logo-area">
+                <span class="logo-icon">P</span>
+                <span class="brand-name">ProQ Pilot</span>
+            </div>
+            <nav class="nav-links" id="nav-links">
+                <a href="admin_dashboard.html">Dashboard</a>
+                <a href="admin_products.html" class="active">Manual Products</a>
+                <a href="admin_core_products.html">Core Products</a>
+                <a href="store.html">Store</a>
+            </nav>
+            <div class="header-actions">
+                <a href="index.html" class="auth-wrapper" aria-label="View storefront">
+                    <span class="auth-icon"><i class='bx bx-store'></i></span>
+                </a>
+                <a href="my-account.html" class="cart-wrapper" aria-label="My account">
+                    <span class="cart-icon"><i class='bx bx-user'></i></span>
+                </a>
+                <div class="hamburger" id="hamburger">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <h1 class="page-title">Manage Products</h1>
+
+        <div class="admin-nav">
+            <a href="admin_dashboard.html" class="nav-link">Dashboard</a>
+            <a href="admin_products.html" class="nav-link active">Manual Products</a>
+            <a href="admin_core_products.html" class="nav-link">Core API Products</a>
+            <a href="index.html" class="nav-link">View Store</a>
+        </div>
+
+        <div id="products-list" class="products-container">
+            <!-- Product Card Template -->
+            <div class="product-card" id="product-1">
+                <div class="product-card-header">
+                    <h3>New Product</h3>
+                    <button class="remove-product-btn" onclick="removeProduct(1)">Remove</button>
+                </div>
+
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Product Number</label>
+                        <input type="text" placeholder="e.g. SKU-001">
+                    </div>
+                    <div class="form-group">
+                        <label>Product Name</label>
+                        <input type="text" placeholder="Enter name">
+                    </div>
+                    <div class="form-group">
+                        <label>Price</label>
+                        <input type="number" step="0.01" placeholder="0.00">
+                    </div>
+                    <div class="form-group">
+                        <label>Quantity</label>
+                        <input type="number" placeholder="0">
+                    </div>
+                    <div class="form-group full-width">
+                        <label>Description</label>
+                        <textarea rows="4" placeholder="Describe the product..."></textarea>
+                    </div>
+                </div>
+
+                <div class="image-section">
+                    <label>Product Images</label>
+                    <div class="image-grid" id="image-grid-1">
+                        <button class="image-preview add-image-placeholder" onclick="triggerUpload(1)">
+                            <span>+ Add Image</span>
+                            <input type="file" id="file-1" hidden multiple onchange="handleImageUpload(event, 1)">
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-actions">
+            <button class="glow-wrap secondary" onclick="addProduct()">
+                <div class="glowing-border-layer"></div>
+                <div class="link-content">+ Add Product</div>
+            </button>
+            <button class="glow-wrap" onclick="saveAll()">
+                <div class="glowing-border-layer"></div>
+                <div class="link-content">Save Products</div>
+            </button>
+        </div>
+    </main>
+
+    <script>
+        let productCount = 1;
+
+        function addProduct() {
+            productCount++;
+            const container = document.getElementById('products-list');
+            const card = document.createElement('div');
+            card.className = 'product-card';
+            card.id = `product-${productCount}`;
+            
+            card.innerHTML = `
+                <div class="product-card-header">
+                    <h3>New Product</h3>
+                    <button class="remove-product-btn" onclick="removeProduct(${productCount})">Remove</button>
+                </div>
+
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Product Number</label>
+                        <input type="text" placeholder="e.g. SKU-001">
+                    </div>
+                    <div class="form-group">
+                        <label>Product Name</label>
+                        <input type="text" placeholder="Enter name">
+                    </div>
+                    <div class="form-group">
+                        <label>Price</label>
+                        <input type="number" step="0.01" placeholder="0.00">
+                    </div>
+                    <div class="form-group">
+                        <label>Quantity</label>
+                        <input type="number" placeholder="0">
+                    </div>
+                    <div class="form-group full-width">
+                        <label>Description</label>
+                        <textarea rows="4" placeholder="Describe the product..."></textarea>
+                    </div>
+                </div>
+
+                <div class="image-section">
+                    <label>Product Images</label>
+                    <div class="image-grid" id="image-grid-${productCount}">
+                        <button class="image-preview add-image-placeholder" onclick="triggerUpload(${productCount})">
+                            <span>+ Add Image</span>
+                            <input type="file" id="file-${productCount}" hidden multiple onchange="handleImageUpload(event, ${productCount})">
+                        </button>
+                    </div>
+                </div>
+            `;
+            container.appendChild(card);
+            card.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function removeProduct(id) {
+            const el = document.getElementById(`product-${id}`);
+            if (document.querySelectorAll('.product-card').length > 1) {
+                el.style.opacity = '0';
+                el.style.transform = 'translateY(20px)';
+                setTimeout(() => el.remove(), 300);
+            } else {
+                alert("You need at least one product form.");
+            }
+        }
+
+        function triggerUpload(id) {
+            document.getElementById(`file-${id}`).click();
+        }
+
+        const productFiles = {}; // Store actual File objects for each product
+
+        function handleImageUpload(event, productId) {
+            const files = event.target.files;
+            const grid = document.getElementById(`image-grid-${productId}`);
+            const placeholder = grid.querySelector('.add-image-placeholder');
+
+            if (!productFiles[productId]) productFiles[productId] = [];
+
+            for (let file of files) {
+                productFiles[productId].push(file); // Store the file
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const preview = document.createElement('div');
+                    preview.className = 'image-preview';
+                    preview.innerHTML = `
+                        <img src="${e.target.result}" alt="Preview">
+                        <div class="primary-badge">Primary</div>
+                        <div class="image-actions">
+                            <button class="set-primary-btn" onclick="setPrimary(this)">Set Primary</button>
+                            <button class="delete-img" onclick="removeImage(this, ${productId}, '${file.name}')">Delete</button>
+                        </div>
+                    `;
+                    grid.insertBefore(preview, placeholder);
+                }
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function removeImage(btn, productId, fileName) {
+            const preview = btn.closest('.image-preview');
+            preview.remove();
+            if (productFiles[productId]) {
+                productFiles[productId] = productFiles[productId].filter(f => f.name !== fileName);
+            }
+        }
+
+        function setPrimary(btn) {
+            const grid = btn.closest('.image-grid');
+            grid.querySelectorAll('.image-preview').forEach(el => el.classList.remove('is-primary'));
+            btn.closest('.image-preview').classList.add('is-primary');
+        }
+
+        async function saveAll() {
+            const productCards = document.querySelectorAll('.product-card');
+            const productsData = [];
+            
+            productCards.forEach(card => {
+                const id = card.id.replace('product-', '');
+                const product = {
+                    tempId: id,
+                    product_number: card.querySelector('input[placeholder="e.g. SKU-001"]').value,
+                    product_name: card.querySelector('input[placeholder="Enter name"]').value,
+                    price: card.querySelector('input[placeholder="0.00"]').value,
+                    quantity: card.querySelector('input[placeholder="0"]').value,
+                    description: card.querySelector('textarea').value
+                };
+                productsData.push(product);
+            });
+
+            if (productsData.length === 0) return alert("No products to save.");
+
+            try {
+                // 1. Save products
+                const response = await fetch('http://localhost:3000/api/v1/products', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ products: productsData })
+                });
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`Server error (${response.status}): ${errorText}`);
+                }
+
+                const result = await response.json();
+                if (result.status !== 'success') throw new Error(result.message);
+
+                // 2. Upload images for each created product
+                for (const createdProduct of result.data) {
+                    const originalProduct = productsData.find(p => p.product_number === createdProduct.product_number);
+                    const files = productFiles[originalProduct.tempId];
+
+                    if (files && files.length > 0) {
+                        const formData = new FormData();
+                        files.forEach(file => formData.append('photos', file));
+
+                        const imgResponse = await fetch(`http://localhost:3000/api/v1/products/${createdProduct.id}/images`, {
+                            method: 'POST',
+                            body: formData
+                        });
+
+                        if (!imgResponse.ok) {
+                            const errorText = await imgResponse.text();
+                            console.error(`Failed to upload images for product ${createdProduct.id}: ${errorText}`);
+                        } else {
+                            const imgResult = await imgResponse.json();
+                            if (imgResult.status !== 'success') console.error(`Failed to upload images: ${imgResult.message}`);
+                        }
+                    }
+                }
+
+                alert("All products and images saved successfully!");
+                location.reload(); 
+
+            } catch (error) {
+                console.error("Save failed:", error);
+                alert("An error occurred: " + error.message);
+            }
+        }
+    </script>
+    <script src="js/auth-ui.js"></script>
+</body>
+</html>

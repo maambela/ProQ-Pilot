@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Store Debug</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #f0f0f0;
+        }
+        .box {
+            background: white;
+            padding: 20px;
+            margin: 10px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        h2 { color: #333; margin-top: 0; }
+        .success { color: green; font-weight: bold; }
+        .error { color: red; font-weight: bold; }
+        pre {
+            background: #f5f5f5;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>Store Debug Console</h1>
+    
+    <div class="box">
+        <h2>API Test Results</h2>
+        <p id="api-results">Testing API...</p>
+    </div>
+
+    <div class="box">
+        <h2>Product Grid Status</h2>
+        <p id="grid-status">Checking...</p>
+    </div>
+
+    <div class="box">
+        <h2>Products on Page</h2>
+        <p id="product-count">Loading...</p>
+    </div>
+
+    <script>
+        async function testAPI() {
+            try {
+                const response = await fetch('/api/v1/products');
+                const data = await response.json();
+                
+                document.getElementById('api-results').innerHTML = `
+                    <span class="success">✓ API Connected</span><br>
+                    Status: ${data.status}<br>
+                    Products Count: ${data.results}<br>
+                    Response Structure: OK
+                `;
+            } catch (error) {
+                document.getElementById('api-results').innerHTML = `
+                    <span class="error">✗ API Error: ${error.message}</span>
+                `;
+            }
+        }
+
+        function checkProductGrid() {
+            const grid = document.querySelector('.product-grid');
+            if (grid) {
+                document.getElementById('grid-status').innerHTML = `
+                    <span class="success">✓ Product grid element found</span><br>
+                    Grid classes: ${grid.className}
+                `;
+            } else {
+                document.getElementById('grid-status').innerHTML = `
+                    <span class="error">✗ Product grid element NOT found (.product-grid)</span>
+                `;
+            }
+        }
+
+        function checkProductsLoaded() {
+            const cards = document.querySelectorAll('.product-card');
+            document.getElementById('product-count').innerHTML = `
+                Products rendered: <strong>${cards.length}</strong><br>
+                ${cards.length > 0 ? '<span class="success">✓ Products are displaying</span>' : '<span class="error">✗ No products found on page</span>'}
+            `;
+        }
+
+        // Run tests when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            setTimeout(() => {
+                testAPI();
+                checkProductGrid();
+                checkProductsLoaded();
+            }, 2000);
+        });
+
+        // Manual test
+        window.testManually = function() {
+            console.log('Running manual tests...');
+            testAPI();
+            checkProductGrid();
+            checkProductsLoaded();
+        };
+    </script>
+
+    <p style="margin-top: 30px; text-align: center; color: #666;">
+        <em>Open console (F12) and run <code>testManually()</code> to retest at any time</em>
+    </p>
+</body>
+</html>

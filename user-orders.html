@@ -1,0 +1,951 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Orders - ProQ Pilot</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <style>
+        .orders-wrapper {
+            padding-top: 120px;
+            min-height: 100vh;
+        }
+
+
+
+        .orders-container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 0 20px 40px;
+        }
+
+        .orders-header {
+            margin-bottom: 30px;
+        }
+
+        .orders-header h1 {
+            font-size: 2rem;
+            color: var(--text-main);
+            margin-bottom: 5px;
+            font-weight: 200;
+        }
+
+        .orders-header p {
+            color: #7f8c8d;
+            font-size: 0.95rem;
+        }
+
+        .order-card {
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            margin-bottom: 15px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .order-card:hover {
+            box-shadow: 0 12px 40px rgba(0, 188, 212, 0.2), 0 0 20px rgba(0, 188, 212, 0.1);
+            border-color: rgba(0, 188, 212, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .order-header {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .order-info-left {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            flex: 1;
+        }
+
+        .order-number {
+            font-size: 1rem;
+            font-weight: 200;
+            color: #ffffff;
+        }
+
+        .order-date {
+            font-size: 0.85rem;
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .order-amount {
+            font-size: 1.3rem;
+            font-weight: 200;
+            color: var(--accent-teal);
+            min-width: 100px;
+            text-align: right;
+        }
+
+        .order-status {
+            padding: 4px 12px;
+            background: rgba(0, 188, 212, 0.2);
+            border: 1px solid rgba(0, 188, 212, 0.4);
+            border-radius: 20px;
+            font-size: 0.8rem;
+            color: rgba(0, 210, 190, 0.95);
+            text-transform: capitalize;
+            min-width: 70px;
+            text-align: center;
+        }
+
+        .order-body {
+            padding: 12px 20px;
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .order-items {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+        }
+
+        .item-thumbnail {
+            width: 60px;
+            height: 60px;
+            border-radius: 6px;
+            overflow: hidden;
+            border: 1px solid rgba(0, 188, 212, 0.3);
+            background: rgba(255, 255, 255, 0.05);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            flex-shrink: 0;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        .item-thumbnail img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .item-no-image {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0, 188, 212, 0.1);
+            color: rgba(0, 210, 190, 0.6);
+            font-size: 0.7rem;
+            text-align: center;
+        }
+
+        .item-quantity {
+            position: absolute;
+            top: -6px;
+            right: -6px;
+            background: var(--accent-blue);
+            color: white;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            font-weight: 200;
+        }
+
+        .order-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn {
+            padding:5px 20px;
+            border-radius: var(--pill-radius);
+            text-decoration: none;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            border: none;
+            font-size: 0.9rem;
+            font-weight: 200;
+            max-width: fit-content;
+        }
+
+        .btn-primary {
+            background: linear-gradient(to right, rgba(0, 188, 212, 0.3), rgba(0, 200, 180, 0.3));
+            border: 1px solid rgba(0, 188, 212, 0.6);
+            color: white;
+            flex: 1;
+            box-shadow: 0 0 12px rgba(0, 188, 212, 0.4), 0 0 25px rgba(0, 188, 212, 0.2);
+            animation: glowCyanOrders 2s ease-in-out infinite;
+        }
+
+        @keyframes glowCyanOrders {
+            0%, 100% {
+                box-shadow: 0 0 12px rgba(0, 188, 212, 0.4), 0 0 25px rgba(0, 188, 212, 0.2);
+            }
+            50% {
+                box-shadow: 0 0 20px rgba(0, 188, 212, 0.6), 0 0 40px rgba(0, 188, 212, 0.3);
+            }
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            background: linear-gradient(to right, rgba(0, 168, 196, 0.4), rgba(0, 194, 174, 0.4));
+            box-shadow: 0 0 20px rgba(0, 188, 212, 0.8), 0 6px 16px rgba(0, 188, 212, 0.5), inset 0 0 10px rgba(0, 188, 212, 0.1);
+            animation: glowCyanOrdersHover 1.5s ease-in-out infinite;
+            border-color: rgba(0, 188, 212, 0.8);
+        }
+
+        @keyframes glowCyanOrdersHover {
+            0%, 100% {
+                box-shadow: 0 0 20px rgba(0, 188, 212, 0.8), 0 6px 16px rgba(0, 188, 212, 0.5), inset 0 0 10px rgba(0, 188, 212, 0.1);
+            }
+            50% {
+                box-shadow: 0 0 30px rgba(0, 188, 212, 1), 0 10px 25px rgba(0, 188, 212, 0.6), inset 0 0 15px rgba(0, 188, 212, 0.2);
+            }
+        }
+
+        .btn-secondary {
+            background: linear-gradient(to right, rgba(0, 188, 212, 0.3), rgba(0, 200, 180, 0.3));
+            color: #ffffff;
+            border: 1px solid rgba(0, 188, 212, 0.6);
+            box-shadow: 0 0 12px rgba(0, 188, 212, 0.4), 0 0 25px rgba(0, 188, 212, 0.2);
+            animation: glowCyanOrders 2s ease-in-out infinite;
+        }
+
+        @keyframes glowOrangeSmall {
+            0%, 100% {
+                box-shadow: 0 0 10px rgba(255,165,0,0.2);
+            }
+            50% {
+                box-shadow: 0 0 15px rgba(255,165,0,0.3);
+            }
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255,165,0,0.25);
+            box-shadow: 0 0 20px rgba(255,165,0,0.6), 0 4px 12px rgba(255,165,0,0.3);
+            animation: glowOrangeHoverSmall 1.5s ease-in-out infinite;
+        }
+
+        @keyframes glowOrangeHoverSmall {
+            0%, 100% {
+                box-shadow: 0 0 20px rgba(255,165,0,0.6), 0 4px 12px rgba(255,165,0,0.3);
+            }
+            50% {
+                box-shadow: 0 0 25px rgba(255,165,0,0.8), 0 6px 15px rgba(255,165,0,0.4);
+            }
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 50px 20px;
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        .empty-state-icon {
+            font-size: 3rem;
+            margin-bottom: 15px;
+            color: rgba(0, 210, 190, 0.8);
+        }
+
+        .empty-state h2 {
+            color: #ffffff;
+            margin-bottom: 8px;
+            font-size: 1.3rem;
+            font-weight: 200;
+        }
+
+        .empty-state p {
+            color: rgba(255, 255, 255, 0.7);
+            margin-bottom: 20px;
+            font-size: 0.95rem;
+        }
+
+        .empty-state p a {
+            color: rgba(0, 210, 190, 0.95);
+            text-decoration: none;
+            font-weight: 200;
+            display: inline;
+            padding: 0;
+            background: none;
+            border-radius: 0;
+            transition: color 0.3s ease;
+        }
+
+        .empty-state p a:hover {
+            color: rgba(0, 210, 190, 1);
+            text-shadow: 0 0 10px rgba(0, 210, 190, 0.5);
+            box-shadow: none;
+            transform: none;
+        }
+
+        .empty-state .btn-explore {
+            display: inline-block;
+            padding: 10px 25px;
+            background: linear-gradient(to right, rgba(0, 188, 212, 0.3), rgba(0, 200, 180, 0.3));
+            border: 1px solid rgba(0, 188, 212, 0.6);
+            color: white;
+            text-decoration: none;
+            border-radius: var(--pill-radius);
+            font-weight: 200;
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+            margin-top: 10px;
+            box-shadow: 0 0 12px rgba(0, 188, 212, 0.4), 0 0 25px rgba(0, 188, 212, 0.2);
+        }
+
+        .empty-state .btn-explore:hover {
+            transform: translateY(-2px);
+            background: linear-gradient(to right, rgba(0, 168, 196, 0.4), rgba(0, 194, 174, 0.4));
+            box-shadow: 0 0 20px rgba(0, 188, 212, 0.8), 0 6px 16px rgba(0, 188, 212, 0.5), inset 0 0 10px rgba(0, 188, 212, 0.1);
+            color: white;
+            border-color: rgba(0, 188, 212, 0.8);
+        }
+
+        /* Community Welcome Banner */
+        .community-welcome-banner {
+            background: linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), url('https://images.unsplash.com/photo-1522202176988-66273c2fd55f?q=80&w=2071&auto=format&fit=crop');
+            background-size: cover;
+            background-position: center;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 50px 30px;
+            margin-bottom: 40px;
+            color: white;
+            text-align: center;
+            display: none;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15), 0 0 20px rgba(0, 188, 212, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .community-welcome-banner h2 {
+            font-size: 2.2rem;
+            margin-bottom: 15px;
+            font-weight: 200;
+            letter-spacing: -0.5px;
+        }
+
+        .community-welcome-banner p {
+            font-size: 1.1rem;
+            margin-bottom: 30px;
+            line-height: 1.6;
+            max-width: 650px;
+            margin-left: auto;
+            margin-right: auto;
+            opacity: 0.9;
+        }
+
+        .community-welcome-banner .explore-btn {
+            display: inline-block;
+            padding: 12px 35px;
+            background: linear-gradient(to right, rgba(0, 188, 212, 0.4), rgba(0, 200, 180, 0.4));
+            border: 1px solid rgba(0, 188, 212, 0.7);
+            color: white;
+            text-decoration: none;
+            border-radius: var(--pill-radius);
+            font-weight: 200;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            font-size: 0.85rem;
+            letter-spacing: 1px;
+            box-shadow: 0 0 15px rgba(0, 188, 212, 0.4), 0 0 30px rgba(0, 188, 212, 0.2);
+        }
+
+        .community-welcome-banner .explore-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 0 25px rgba(0, 188, 212, 0.9), 0 8px 25px rgba(0, 188, 212, 0.6), inset 0 0 10px rgba(0, 188, 212, 0.2);
+            background: linear-gradient(to right, rgba(0, 168, 196, 0.5), rgba(0, 194, 174, 0.5));
+            color: white;
+            border-color: rgba(0, 188, 212, 0.9);
+            max-width: fit-content;
+        }
+
+        @media (max-width: 768px) {
+            .orders-header h1 {
+                font-size: 1.5rem;
+            }
+
+            .order-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+
+            .order-info-left {
+                flex-direction: column;
+                gap: 5px;
+            }
+
+            .order-amount {
+                align-self: flex-start;
+                text-align: left;
+            }
+
+            .order-actions {
+                width: 100%;
+                flex-direction: column;
+            }
+
+            .item-thumbnail {
+                width: 50px;
+                height: 50px;
+            }
+        }
+
+        .orders-container {
+            max-width: 1120px;
+        }
+
+        .orders-header {
+            display: grid;
+            gap: 8px;
+            margin-bottom: 18px;
+        }
+
+        .orders-kicker {
+            display: inline-flex;
+            width: fit-content;
+            border: 1px solid rgba(68, 255, 224, 0.28);
+            color: var(--accent-blue);
+            border-radius: 999px;
+            padding: 6px 13px;
+            font-size: 0.72rem;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+
+        .orders-header p {
+            color: rgba(255, 255, 255, 0.62);
+        }
+
+        .orders-toolbar {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) auto;
+            gap: 12px;
+            margin-bottom: 18px;
+            align-items: center;
+        }
+
+        .orders-filter-tabs,
+        .orders-select {
+            background: rgba(255, 255, 255, 0.075);
+            border: 1px solid rgba(255, 255, 255, 0.16);
+            backdrop-filter: blur(18px);
+            -webkit-backdrop-filter: blur(18px);
+            box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.16);
+        }
+
+        .orders-filter-tabs {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            padding: 8px;
+            border-radius: 999px;
+        }
+
+        .orders-filter {
+            border: 0;
+            border-radius: 999px;
+            color: rgba(255, 255, 255, 0.76);
+            background: transparent;
+            padding: 8px 13px;
+            font: inherit;
+            font-size: 0.84rem;
+            cursor: pointer;
+        }
+
+        .orders-filter.active {
+            color: #ffffff;
+            background: rgba(153, 112, 70, 0.42);
+            box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.2);
+        }
+
+        .orders-select {
+            min-height: 42px;
+            border-radius: 999px;
+            color: #ffffff;
+            padding: 0 16px;
+            font: inherit;
+            font-size: 0.84rem;
+            outline: none;
+        }
+
+        .orders-select option {
+            color: #111111;
+        }
+
+        .order-card {
+            border-radius: 20px;
+            background: rgba(255, 255, 255, 0.075);
+            border-color: rgba(255, 255, 255, 0.18);
+            box-shadow: 0 14px 40px rgba(0, 0, 0, 0.22), inset 0 1px 2px rgba(255, 255, 255, 0.16);
+        }
+
+        .order-header {
+            padding: 16px 18px;
+            gap: 14px;
+        }
+
+        .order-body {
+            padding: 16px 18px 18px;
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) auto;
+            gap: 16px;
+            align-items: center;
+        }
+
+        .order-summary-line {
+            color: rgba(255, 255, 255, 0.62);
+            font-size: 0.88rem;
+            margin-top: 4px;
+        }
+
+        .order-amount {
+            font-size: 1.12rem;
+            white-space: nowrap;
+        }
+
+        .order-status {
+            background: rgba(68, 255, 224, 0.11);
+            border-color: rgba(68, 255, 224, 0.34);
+            color: var(--accent-blue);
+        }
+
+        .order-items {
+            margin-bottom: 0;
+        }
+
+        .item-thumbnail {
+            background: #ffffff;
+            border: 1px solid rgba(255, 255, 255, 0.7);
+            border-radius: 12px;
+        }
+
+        .item-thumbnail img {
+            object-fit: contain;
+            padding: 7px;
+        }
+
+        .item-no-image {
+            color: rgba(0, 0, 0, 0.48);
+            background: #ffffff;
+        }
+
+        .order-actions {
+            justify-content: flex-end;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            min-height: 42px;
+            padding: 9px 20px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn-primary,
+        .btn-secondary {
+            flex: 0 0 auto;
+            animation: none;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.14), rgba(153, 112, 70, 0.34));
+            border: 1px solid rgba(255, 255, 255, 0.24);
+            box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.2), 0 8px 24px rgba(0, 0, 0, 0.2);
+        }
+
+        .empty-state {
+            border-radius: 22px;
+            padding: 56px 24px;
+            background: rgba(255, 255, 255, 0.075);
+        }
+
+        @media (max-width: 768px) {
+            .orders-wrapper {
+                padding-top: 112px;
+            }
+
+            .orders-toolbar,
+            .order-body {
+                grid-template-columns: 1fr;
+            }
+
+            .orders-filter-tabs {
+                border-radius: 18px;
+            }
+
+            .orders-filter {
+                flex: 1 1 calc(50% - 8px);
+            }
+
+            .orders-select {
+                width: 100%;
+            }
+
+            .order-actions {
+                justify-content: stretch;
+            }
+
+            .order-actions .btn {
+                width: 100%;
+                max-width: none;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <header class="main-header">
+        <div class="header-container">
+            <div class="logo-area">
+                <span class="logo-icon">P</span>
+                <span class="brand-name">ProQ Pilot</span>
+            </div>
+            <nav class="nav-links" id="nav-links">
+                <a href="index.html">Home</a>
+                <a href="store.html">Store</a>
+                <a href="user-orders.html" class="active">Orders</a>
+                <a href="my-account.html">My Account</a>
+            </nav>
+            <div class="header-actions">
+                <a href="wishlist.html" class="wishlist-wrapper">
+                    <span class="wishlist-icon"><i class='bx bx-heart'></i></span>
+                    <span class="wishlist-badge">0</span>
+                </a>
+                <a href="signin.html" class="auth-wrapper">
+                    <span class="auth-icon"><i class='bx bx-user'></i></span>
+                </a>
+                <a href="cart.html" class="cart-wrapper">
+                    <span class="cart-icon"><i class='bx bx-cart'></i></span>
+                    <span class="cart-badge" id="cart-count">0</span>
+                </a>
+                <div class="hamburger" id="hamburger">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="orders-page">
+        <div class="orders-wrapper">
+            <div class="orders-container">
+                <div class="orders-header">
+                    <span class="orders-kicker">Procurement history</span>
+                    <h1>My Orders</h1>
+                    <p>Review past purchases, filter by status, and open each order when you need the full breakdown.</p>
+                </div>
+
+                <div class="orders-toolbar" aria-label="Order filters">
+                    <div class="orders-filter-tabs">
+                        <button type="button" class="orders-filter active" data-order-status="all">All</button>
+                        <button type="button" class="orders-filter" data-order-status="pending">Pending</button>
+                        <button type="button" class="orders-filter" data-order-status="completed">Completed</button>
+                        <button type="button" class="orders-filter" data-order-status="cancelled">Cancelled</button>
+                    </div>
+                    <select class="orders-select" id="order-range-filter" aria-label="Filter orders by date">
+                        <option value="all">All history</option>
+                        <option value="30">Last 30 days</option>
+                        <option value="90">Last 90 days</option>
+                        <option value="year">This year</option>
+                    </select>
+                </div>
+
+                <div id="orders-list">
+                    <!-- Orders will be dynamically loaded here -->
+                </div>
+
+                                
+                <div id="community-welcome-banner" class="community-welcome-banner">
+                    <h2>Welcome to the Community!</h2>
+                <p>You're officially part of our community. Thank you for shopping with us! We're excited to keep supporting your tech journey. Stay tuned for upgrades and latest releases</p>
+                    <a href="store.html" class="explore-btn">Explore More</a>
+                </div>
+
+
+            </div>
+        </div>
+    </main>
+
+    <script src="js/authentication.js"></script>
+    <script>
+        let cachedOrders = [];
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            const user = JSON.parse(localStorage.getItem('user'));
+            if (!user) {
+                displayEmpty('Please <a href="signin.html">sign in</a> to view your orders.');
+                return;
+            }
+
+            const token = localStorage.getItem('token');
+            if (!token) {
+                displayEmpty('Authentication token not found. Please <a href="signin.html">sign in</a> again.');
+                return;
+            }
+
+            const ordersList = document.getElementById('orders-list');
+            wireOrderFilters();
+
+            try {
+                const response = await fetch('/api/v1/users/orders/user', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.text();
+                    console.error('Error:', errorData);
+                    displayEmpty(`Failed to load orders (${response.status}). Please try again later.`);
+                    return;
+                }
+
+                const orders = await response.json();
+
+                if (!orders || !Array.isArray(orders) || orders.length === 0) {
+                    displayEmpty('Ready to join the family? Order something today!');
+                    return;
+                }
+
+                cachedOrders = orders;
+                document.getElementById('community-welcome-banner').style.display = 'block';
+                renderOrders();
+            } catch (error) {
+                console.error('Error fetching orders:', error);
+                displayEmpty('Error loading orders. Please try again later.');
+            }
+        });
+
+        function wireOrderFilters() {
+            document.querySelectorAll('[data-order-status]').forEach(button => {
+                button.addEventListener('click', () => {
+                    document.querySelectorAll('[data-order-status]').forEach(item => item.classList.remove('active'));
+                    button.classList.add('active');
+                    renderOrders();
+                });
+            });
+
+            document.getElementById('order-range-filter')?.addEventListener('change', renderOrders);
+        }
+
+        function renderOrders() {
+            const ordersList = document.getElementById('orders-list');
+            const visibleOrders = filterOrders(cachedOrders);
+            ordersList.innerHTML = '';
+
+            if (visibleOrders.length === 0) {
+                displayEmpty('No orders match the selected filters.');
+                return;
+            }
+
+            document.getElementById('community-welcome-banner').style.display = 'block';
+            visibleOrders.forEach(order => ordersList.appendChild(createOrderCard(order)));
+        }
+
+        function filterOrders(orders) {
+            const selectedStatus = document.querySelector('[data-order-status].active')?.dataset.orderStatus || 'all';
+            const selectedRange = document.getElementById('order-range-filter')?.value || 'all';
+            const now = new Date();
+
+            return orders
+                .filter(order => {
+                    const statusGroup = getStatusGroup(order.status);
+                    return selectedStatus === 'all' || statusGroup === selectedStatus;
+                })
+                .filter(order => {
+                    if (selectedRange === 'all') return true;
+                    const orderDate = new Date(order.created_at);
+                    if (Number.isNaN(orderDate.getTime())) return true;
+
+                    if (selectedRange === 'year') {
+                        return orderDate.getFullYear() === now.getFullYear();
+                    }
+
+                    const days = Number(selectedRange);
+                    const cutoff = new Date(now);
+                    cutoff.setDate(cutoff.getDate() - days);
+                    return orderDate >= cutoff;
+                })
+                .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+        }
+
+        function getStatusGroup(status = '') {
+            const value = String(status).toLowerCase();
+            if (value.includes('cancel') || value.includes('fail') || value.includes('refund')) return 'cancelled';
+            if (value.includes('complete') || value.includes('deliver') || value.includes('paid') || value.includes('fulfilled')) return 'completed';
+            return 'pending';
+        }
+
+        function displayEmpty(message) {
+            const ordersList = document.getElementById('orders-list');
+            const welcomeBanner = document.getElementById('community-welcome-banner');
+            
+            if (welcomeBanner) welcomeBanner.style.display = 'none';
+
+            ordersList.innerHTML = `
+                <div class="empty-state">
+                    <div class="empty-state-icon"><i class='bx bx-shopping-bag' style="color: var(--accent-teal);"></i></div>
+                    <h2>No Orders Yet</h2>
+                    <p>Go order something to become part of our community and start your tech journey with us!</p>
+                    <p style="margin-bottom: 25px;">${message}</p>
+                    <a href="store.html" class="btn-explore">Start Exploring</a>
+                </div>
+            `;
+        }
+
+        function createOrderCard(order) {
+            const card = document.createElement('div');
+            card.className = 'order-card';
+
+            const orderDate = new Date(order.created_at).toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric'
+            });
+
+            const rawStatus = order.status || 'pending';
+            const statusText = String(rawStatus).charAt(0).toUpperCase() + String(rawStatus).slice(1);
+            const items = Array.isArray(order.items) ? order.items : [];
+            const itemPreview = items.slice(0, 4).map(createItemThumbnail).join('');
+            const itemCount = items.length;
+
+            card.innerHTML = `
+                <div class="order-header">
+                    <div class="order-info-left">
+                        <div>
+                            <div class="order-number">Order #${order.id}</div>
+                            <div class="order-date">${orderDate}</div>
+                            <div class="order-summary-line">${itemCount} item${itemCount === 1 ? '' : 's'} in this order</div>
+                        </div>
+                    </div>
+                    <div class="order-amount">${formatOrderCurrency(order.total_amount)}</div>
+                    <div class="order-status">${statusText}</div>
+                </div>
+                <div class="order-body">
+                    ${itemPreview ? `
+                        <div class="order-items">
+                            ${itemPreview}
+                            ${items.length > 4 ? `<div class="item-thumbnail item-no-image">+${items.length - 4}</div>` : ''}
+                        </div>
+                    ` : ''}
+                    <div class="order-actions">
+                        <button class="btn btn-primary" onclick="window.location.href='/order-details.html?orderId=${order.id}'">
+                            View Details
+                        </button>
+                        <button class="btn btn-secondary" onclick="alert('Tracking coming soon!')">
+                            Track
+                        </button>
+                    </div>
+                </div>
+            `;
+
+            return card;
+        }
+
+        function createItemThumbnail(item) {
+            const image = normalizeOrderImage(item.image_url || item.image || item.product_image);
+            const name = escapeHtml(item.product_name || item.name || 'Order item');
+            if (!image) {
+                return `<div class="item-thumbnail" title="${name}"><div class="item-no-image"><i class='bx bx-package' style="font-size: 1.45rem;"></i></div></div>`;
+            }
+
+            return `
+                <div class="item-thumbnail" title="${name}">
+                    <img src="${image}" alt="${name}" loading="lazy" onerror="this.parentElement.innerHTML='<div class=&quot;item-no-image&quot;><i class=&quot;bx bx-package&quot; style=&quot;font-size: 1.45rem;&quot;></i></div>'">
+                </div>
+            `;
+        }
+
+        function normalizeOrderImage(image) {
+            if (!image || typeof image !== 'string') return '';
+            const trimmed = image.trim();
+            if (!trimmed || trimmed === 'null' || trimmed === 'undefined') return '';
+            if (/^(https?:|data:|\/)/i.test(trimmed)) return trimmed;
+            if (trimmed.startsWith('Images/')) return trimmed;
+            if (trimmed.startsWith('product_images/')) return `/${trimmed}`;
+            return `/product_images/${trimmed}`;
+        }
+
+        function formatOrderCurrency(value) {
+            const amount = Number(value) || 0;
+            return `R${amount.toLocaleString('en-ZA', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            })}`;
+        }
+
+        function escapeHtml(value) {
+            return String(value)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+    </script>
+
+    <footer class="site-footer">
+        <div class="footer-container">
+            <div class="footer-brand">
+                <div class="logo">
+                    <div class="logo-circle"></div>
+                    <span>ProQ Pilot</span>
+                </div>
+                <p>Next-gen laptop shopping designed for the modern user.</p>
+            </div>
+            <div class="footer-links">
+                <h4>Shop</h4>
+                <a href="store.html">Gaming Laptops</a>
+                <a href="store.html">Business Laptops</a>
+                <a href="brands.html">Brands</a>
+            </div>
+            <div class="footer-links">
+                <h4>Support</h4>
+                <a href="contact.html">Contact Us</a>
+                <a href="about.html">Warranty Policy</a>
+                <a href="about.html">Shipping Info</a>
+            </div>
+            <div class="footer-links">
+                <h4>Contact Us</h4>
+                <a href="mailto:info@stackopsit.co.za"><i class='bx bx-envelope'></i> info@stackopsit.co.za</a>
+                <a href="mailto:support@stackopsit.co.za"><i class='bx bx-envelope'></i> support@stackopsit.co.za</a>
+                <a href="mailto:sales@stackopsit.co.za"><i class='bx bx-envelope'></i> sales@stackopsit.co.za</a>
+                <a href="tel:0115689337"><i class='bx bx-phone'></i> 011 568 9337</a>
+                <p><i class='bx bx-map'></i> Mia Drive, Waterfall City, Johannesburg, 1685</p>
+            </div>
+            <div class="footer-newsletter">
+                <h4>Join the Future</h4>
+                <p>Subscribe for hardware updates.</p>
+                <div class="subscribe-box">
+                    <input type="email" placeholder="Email address">
+                    <button class="btn btn-primary">Join</button>
+                </div>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2026 ProQ Pilot. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script src="js/site-footer.js"></script>
+    <script src="js/script.js"></script>
+    <script src="js/auth-ui.js"></script>
+</body>
+</html>

@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Create Account</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- Google Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400&display=swap" rel="stylesheet">
+
+    <!-- Main Styles -->
+    <link rel="stylesheet" href="css/style.css">
+    <script src="js/auth-ui.js"></script>
+
+    <!-- Extra styles for password helper -->
+    <style>
+        .password-hints {
+            text-align: left;
+            font-size: 0.8rem;
+            margin-top: 5px;
+            color: #555;
+        }
+
+        .password-hints li {
+            list-style: none;
+            margin-bottom: 4px;
+        }
+
+        .password-hints li.valid {
+            color: #16a34a;
+        }
+
+        .password-hints li.invalid {
+            color: #dc2626;
+        }
+
+        .error-text {
+            font-size: 0.8rem;
+            color: #dc2626;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+<section class="auth-page">
+    <div class="auth-card">
+        <h2>Create Account</h2>
+        <p>Join us in just a few steps</p>
+
+        <form class="auth-form" method="POST" action="/signup" id="signupForm">
+
+            <input type="text" name="firstName" placeholder="First name" required>
+            <input type="text" name="lastName" placeholder="Last name" required>
+
+            <input type="email" name="email" placeholder="Email address" required>
+            <input type="text" name="contact" placeholder="Phone (optional)">
+
+            <input type="password" id="password" name="password" placeholder="Password" required>
+
+            <ul class="password-hints" id="passwordHints">
+                <li class="invalid" id="length">• At least 8 characters</li>
+                <li class="invalid" id="upper">• One uppercase letter</li>
+                <li class="invalid" id="number">• One number</li>
+                <li class="invalid" id="special">• One special character</li>
+            </ul>
+
+            <input type="password" id="confirmPassword" placeholder="Confirm password" required>
+            <span class="error-text" id="matchError">Passwords do not match</span>
+            <span class="error-text" id="apiError"></span>
+
+            <button class="btn btn-primary" type="submit">
+                Sign Up
+            </button>
+        </form>
+
+        <div class="auth-links">
+            <p>
+                Already have an account?
+                <a href="signin.html">Sign in</a>
+            </p>
+        </div>
+    </div>
+</section>
+
+<script>
+    const password = document.getElementById('password');
+    const confirmPassword = document.getElementById('confirmPassword');
+    const matchError = document.getElementById('matchError');
+
+    const rules = {
+        length: document.getElementById('length'),
+        upper: document.getElementById('upper'),
+        number: document.getElementById('number'),
+        special: document.getElementById('special')
+    };
+
+    password.addEventListener('input', () => {
+        const value = password.value;
+
+        toggleRule(rules.length, value.length >= 8);
+        toggleRule(rules.upper, /[A-Z]/.test(value));
+        toggleRule(rules.number, /[0-9]/.test(value));
+        toggleRule(rules.special, /[^A-Za-z0-9]/.test(value));
+    });
+
+    confirmPassword.addEventListener('input', () => {
+        if (confirmPassword.value !== password.value) {
+            matchError.style.display = 'block';
+        } else {
+            matchError.style.display = 'none';
+        }
+    });
+
+    function toggleRule(element, valid) {
+        element.classList.toggle('valid', valid);
+        element.classList.toggle('invalid', !valid);
+    }
+
+    document.getElementById('signupForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const apiError = document.getElementById('apiError');
+        apiError.style.display = 'none';
+
+        if (password.value !== confirmPassword.value) {
+            matchError.style.display = 'block';
+            return;
+        }
+
+        const formData = new FormData(e.target);
+        const data = Object.fromEntries(formData.entries());
+        data.passwordConfirm = confirmPassword.value;
+
+        showLoading('Creating Account...');
+
+        try {
+            const response = await fetch('http://localhost:3000/api/v1/users/signup', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            });
+
+            const result = await response.json();
+
+            if (response.ok) {
+                showStatus('Account Created', 'Deployment successful! Redirecting to login...');
+                
+                setTimeout(() => {
+                    window.location.href = 'signin.html';
+                }, 2000);
+            } else {
+                hideOverlay();
+                apiError.textContent = result.message || 'Signup failed';
+                apiError.style.display = 'block';
+            }
+        } catch (err) {
+            hideOverlay();
+            apiError.textContent = 'An error occurred. Please try again later.';
+            apiError.style.display = 'block';
+        }
+    });
+</script>
+
+</body>
+</html>

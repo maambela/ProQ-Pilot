@@ -1,0 +1,716 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ProQ Pilot | Next-Gen Laptop Store</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/duo-store.css">
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+</head>
+<body class="store-page">
+
+    <header class="main-header">
+        <div class="header-container">
+            <div class="logo-area">
+                <span class="logo-icon">P</span>
+                <span class="brand-name">ProQ Pilot</span>
+            </div>
+            <nav class="nav-links" id="nav-links">
+                <a href="index.html">Home</a>
+                <a href="store.html" class="active">Store</a>
+                <a href="user-orders.html">Orders</a>
+                <a href="my-account.html">My Account</a>
+            </nav>
+            <div class="header-actions">
+                <a href="wishlist.html" class="wishlist-wrapper">
+                    <span class="wishlist-icon"><i class='bx bx-heart'></i></span>
+                    <span class="wishlist-badge">0</span>
+                </a>
+                <a href="signin.html" class="auth-wrapper">
+                    <span class="auth-icon"><i class='bx bx-user'></i></span>
+                </a>
+                <a href="cart.html" class="cart-wrapper">
+                    <span class="cart-icon"><i class='bx bx-cart'></i></span>
+                    <span class="cart-badge" id="cart-count">0</span>
+                </a>
+                <div class="hamburger" id="hamburger">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="store-container">
+        <div class="store-layout">
+            <aside class="sidebar">
+                <div class="sidebar-header">
+                    <h3>Filters</h3>
+                    <button class="mobile-filter-toggle" id="mobileFilterToggle" type="button" aria-expanded="false" aria-controls="storeFilterGroups">
+                        <span>Filters</span>
+                        <i class='bx bx-chevron-down'></i>
+                    </button>
+                    <button class="clear-filters-btn" id="clearFilters" style="display: none;"><i class='bx bx-trash'></i></button>
+                </div>
+
+                <div class="filter-groups" id="storeFilterGroups">
+                    <!-- Modern Category Navigation System -->
+                    <div class="filter-group">
+                        <p class="filter-label">Categories</p>
+                        
+                        <!-- All Products Button -->
+                        <button class="category-main-btn active" id="allProductsPill" data-category="all">
+                            <i class='bx bx-grid'></i>
+                            <span>All Products</span>
+                        </button>
+
+                        <!-- Laptops Collapsible Category -->
+                        <div class="category-tree">
+                            <button class="category-main-btn" data-toggle="laptops-submenu">
+                                <i class='bx bx-laptop'></i>
+                                <span>Laptops</span>
+                                <i class='bx bx-chevron-down'></i>
+                            </button>
+                            <div class="category-submenu" id="laptops-submenu" data-category="laptops" aria-hidden="true">
+                                <button class="subcategory-item" data-category="laptops">
+                                    <span class="item-icon">•</span>
+                                    View All Laptops
+                                </button>
+                                <button class="subcategory-item" data-brand="Dell">
+                                    <span class="item-icon">•</span>
+                                    Dell
+                                </button>
+                                <button class="subcategory-item" data-brand="HP">
+                                    <span class="item-icon">•</span>
+                                    HP
+                                </button>
+                                <button class="subcategory-item" data-brand="Lenovo">
+                                    <span class="item-icon">•</span>
+                                    Lenovo
+                                </button>
+                                <button class="subcategory-item" data-brand="Acer">
+                                    <span class="item-icon">•</span>
+                                    Acer
+                                </button>
+                                <button class="subcategory-item" data-brand="Microsoft">
+                                    <span class="item-icon">•</span>
+                                    Microsoft
+                                </button>
+                                <button class="subcategory-item" data-brand="MacBook">
+                                    <span class="item-icon">•</span>
+                                    Apple MacBook
+                                </button>
+                            </div>
+                        </div>
+
+                        <button class="category-main-btn optional-category" data-category="desktops">
+                            <i class='bx bx-desktop'></i>
+                            <span>Desktops</span>
+                        </button>
+
+                        <button class="category-main-btn optional-category" data-category="workstations">
+                            <i class='bx bx-chip'></i>
+                            <span>Workstations</span>
+                        </button>
+
+                        <button class="category-main-btn" data-category="monitors">
+                            <i class='bx bx-desktop'></i>
+                            <span>Monitors</span>
+                        </button>
+
+                        <!-- Accessories Collapsible Category -->
+                        <div class="category-tree">
+                            <button class="category-main-btn" data-toggle="accessories-submenu">
+                                <i class='bx bx-package'></i>
+                                <span>Accessories</span>
+                                <i class='bx bx-chevron-down'></i>
+                            </button>
+                            <div class="category-submenu" id="accessories-submenu" data-category="accessories" aria-hidden="true">
+                                <button class="subcategory-item" data-category="accessories">
+                                    <span class="item-icon">•</span>
+                                    View All Accessories
+                                </button>
+                                <button class="subcategory-item" data-category="mice">
+                                    <span class="item-icon">•</span>
+                                    Mouse
+                                </button>
+                                <button class="subcategory-item" data-category="keyboards">
+                                    <span class="item-icon">•</span>
+                                    Keyboards
+                                </button>
+                                <button class="subcategory-item" data-category="laptop-bags">
+                                    <span class="item-icon">•</span>
+                                    Laptop Bags
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Licenses Collapsible Category -->
+                        <div class="category-tree">
+                            <button class="category-main-btn" data-toggle="licenses-submenu">
+                                <i class='bx bx-shield-quarter'></i>
+                                <span>Licenses</span>
+                                <i class='bx bx-chevron-down'></i>
+                            </button>
+                            <div class="category-submenu" id="licenses-submenu" data-category="licenses" aria-hidden="true">
+                                <button class="subcategory-item" data-category="licenses">
+                                    <span class="item-icon">•</span>
+                                    View All Licenses
+                                </button>
+                                <button class="subcategory-item" data-category="licenses" data-brand="Microsoft">
+                                    <span class="item-icon">•</span>
+                                    Microsoft
+                                </button>
+                                <button class="subcategory-item" data-category="licenses" data-brand="Duo">
+                                    <span class="item-icon">•</span>
+                                    Cisco Duo
+                                </button>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </aside>
+
+            <div class="main-content">
+                <section class="store-header">
+                    <div class="search-sort-bar">
+                        <div class="search-box">
+                            <span class="search-icon"><i class='bx bx-search'></i></span>
+                            <input type="text" id="productSearch" placeholder="Search products...">
+                        </div>
+                        <div class="custom-dropdown">
+                            <button class="sort-dropdown" id="sortDropdown">
+                                <span id="selectedOption">Featured</span>
+                                <i class='bx bx-chevron-down'></i>
+                            </button>
+                            <div class="dropdown-menu" id="dropdownMenu">
+                                <div class="dropdown-option" data-value="featured">Featured</div>
+                                <div class="dropdown-option" data-value="low">Price: Low to High</div>
+                                <div class="dropdown-option" data-value="high">Price: High to Low</div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="products-area">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                        <p class="results-count">Syncing with database...</p>
+                    </div>
+                    
+                    <div class="product-grid" id="productGrid">
+                        <div class="loading-state">
+                            <p>Loading products...</p>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="microsoft-license-section" id="microsoftLicenseSection">
+                    <div class="license-hub-header">
+                        <div>
+                            <p class="license-eyebrow">Microsoft Licenses</p>
+                            <h2>Live Microsoft License Report</h2>
+                            <p>Live license records from Westcon Comstor. Product names, customer references, status, and seat counts come from the API response.</p>
+                        </div>
+                        <div class="license-source-pill" id="microsoftLicenseSource">Syncing catalog</div>
+                    </div>
+
+                    <div class="microsoft-license-toolbar">
+                        <div class="search-box microsoft-license-search">
+                            <span class="search-icon"><i class='bx bx-search'></i></span>
+                            <input type="text" id="microsoftLicenseSearch" placeholder="Search Microsoft licenses...">
+                        </div>
+                        <div class="custom-dropdown">
+                            <button class="sort-dropdown" id="microsoftLicenseFilter">
+                                <span id="microsoftLicenseFilterLabel">All Microsoft</span>
+                                <i class='bx bx-chevron-down'></i>
+                            </button>
+                            <div class="dropdown-menu microsoft-filter-menu" id="microsoftLicenseFilterMenu">
+                                <div class="dropdown-option" data-value="all">All Microsoft</div>
+                                <div class="dropdown-option" data-value="productivity">Productivity</div>
+                                <div class="dropdown-option" data-value="security">Security</div>
+                                <div class="dropdown-option" data-value="collaboration">Collaboration</div>
+                                <div class="dropdown-option" data-value="email">Email</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="microsoft-license-grid" id="microsoftLicenseGrid">
+                        <div class="loading-state">
+                            <p>Loading Microsoft licenses...</p>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="duo-license-section" id="duoLicenseSection">
+                     
+                  <!-- ===== EXISTING ORGANIZATIONS SECTION ===== -->
+                  <div id="existing-organizations" style="margin-bottom: 60px;"></div>
+
+                  <!-- ===== 1. HERO SECTION ===== -->
+                  <section class="duo-hero">
+                      <div class="duo-hero-content">
+                          <div class="duo-hero-text">
+                              <h1>Secure Your Team with Duo</h1>
+                              <p class="duo-hero-subtitle">
+                                  Enterprise-grade multi-factor authentication and security. Protect your logins. Control access. Manage everything.
+                              </p>
+                              <div class="hero-stats">
+                                  <div class="stat-item"><i class='bx bx-time'></i> 99.9% <span>Uptime</span></div>
+                                  <div class="stat-item"><i class='bx bx-shield-quarter'></i> Military-Grade <span>Security</span></div>
+                                  <div class="stat-item"><i class='bx bx-rocket'></i> Easy <span>Setup</span></div>
+                              </div>
+                          </div>
+                          <div class="duo-hero-visual">
+                              <div class="hero-icon-container">
+                                  <div class="icon-card icon-card-1">
+                                      <i class='bx bx-shield-check'></i>
+                                      <span>Login Protection</span>
+                                  </div>
+                                  <div class="icon-card icon-card-2">
+                                      <i class='bx bx-mobile-alt'></i>
+                                      <span>Phone Approval</span>
+                                  </div>
+                                  <div class="icon-card icon-card-3">
+                                      <i class='bx bx-lock-open-alt'></i>
+                                      <span>Secure Access</span>
+                                  </div>
+                              </div>
+                          </div>
+                      </div>
+                  </section>
+
+                  <!-- ===== 2. HOW IT WORKS SECTION ===== -->
+                  <section class="duo-how-it-works">
+                      <h2>How Duo Works</h2>
+                      <p class="section-subtitle">Three simple steps to secure your organization</p>
+                      
+                      <div class="steps-container">
+                          <div class="step-card">
+                              <div class="step-number">1</div>
+                              <div class="step-icon">
+                                  <i class='bx bx-building'></i>
+                              </div>
+                              <h3>Create Your Organization</h3>
+                              <p>Set up your organization, name your team, and define admins who'll manage security policies and user access.</p>
+                              <div class="step-feature">
+                                  <i class='bx bx-check'></i> Instant setup
+                              </div>
+                          </div>
+
+                          <div class="step-divider"></div>
+
+                          <div class="step-card">
+                              <div class="step-number">2</div>
+                              <div class="step-icon">
+                                  <i class='bx bx-group'></i>
+                              </div>
+                              <h3>Assign Licenses</h3>
+                              <p>Each license protects one user. Choose how many team members need protection, and pricing scales with your needs.</p>
+                              <div class="step-feature">
+                                  <i class='bx bx-check'></i> Flexible scaling
+                              </div>
+                          </div>
+
+                          <div class="step-divider"></div>
+
+                          <div class="step-card">
+                              <div class="step-number">3</div>
+                              <div class="step-icon">
+                                  <i class='bx bx-lock-alt'></i>
+                              </div>
+                              <h3>Protect Logins</h3>
+                              <p>Enable multi-factor authentication. Users approve logins on their phones. Unauthorized access stops instantly.</p>
+                              <div class="step-feature">
+                                  <i class='bx bx-check'></i> Real-time protection
+                              </div>
+                          </div>
+                      </div>
+                  </section>
+
+                  <!-- ===== 3. LICENSE BUILDER SECTION ===== -->
+                  <section class="duo-license-builder">
+                      <h2>Build Your Security Package</h2>
+                      
+                      <div class="builder-container">
+                          <!-- Left: Builder Form -->
+                          <div class="builder-form-panel">
+                              <h3>Configure Your Setup</h3>
+                              
+                              <!-- Organization Name -->
+                              <div class="form-group">
+                                  <label for="orgName">
+                                      <i class='bx bx-buildings'></i> Organization Name
+                                      <span class="info-tooltip" title="Your company or team name">?</span>
+                                  </label>
+                                  <input 
+                                      type="text" 
+                                      id="orgName" 
+                                      placeholder="Organisation Name" 
+                                      value=""
+                                      class="form-input"
+                                  >
+                                  <small class="helper-text">This will be the name of your Duo organization</small>
+                              </div>
+
+                              <!-- Edition/Tier Selection -->
+                              <div class="form-group">
+                                  <label for="duoEdition">
+                                      <i class='bx bx-crown'></i> Security Tier
+                                      <span class="info-tooltip" title="Choose your Duo Security edition">?</span>
+                                  </label>
+                                  <div id="editionOptions" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px;">
+                                      <label class="edition-option">
+                                          <input type="radio" name="duoEdition" value="ENTERPRISE" checked>
+                                          <div class="edition-card">
+                                              <div class="edition-name">Essentials</div>
+                                              <div class="edition-price">R 3 <span class="per-unit">/user</span></div>
+                                              <small class="edition-description">Core 2FA and access control</small>
+                                          </div>
+                                      </label>
+                                      <label class="edition-option">
+                                          <input type="radio" name="duoEdition" value="PLATFORM">
+                                          <div class="edition-card">
+                                              <div class="edition-name">Advantage</div>
+                                              <div class="edition-price">R 5 <span class="per-unit">/user</span></div>
+                                              <small class="edition-description">Advanced policies + API access</small>
+                                          </div>
+                                      </label>
+                                      <label class="edition-option">
+                                          <input type="radio" name="duoEdition" value="BEYOND">
+                                          <div class="edition-card">
+                                              <div class="edition-name">Premier</div>
+                                              <div class="edition-price">R 7 <span class="per-unit">/user</span></div>
+                                              <small class="edition-description">All features + priority support</small>
+                                          </div>
+                                      </label>
+                                  </div>
+                                  <small class="helper-text">Upgrade anytime to higher tiers</small>
+                              </div>
+
+                              <!-- Number of Users -->
+                              <div class="form-group">
+                                  <label for="userCount">
+                                      <i class='bx bx-user-check'></i> Number of Users (Licenses)
+                                      <span class="info-tooltip" title="Each user = 1 protected login">?</span>
+                                  </label>
+                                  <div class="slider-container">
+                                      <input 
+                                          type="range" 
+                                          id="userCount" 
+                                          min="1" 
+                                          max="500" 
+                                          value="5"
+                                          class="slider"
+                                      >
+                                      <div class="slider-value">
+                                          <span id="userCountDisplay">5</span>
+                                          <span class="unit">users</span>
+                                      </div>
+                                  </div>
+                                  <div class="slider-labels">
+                                      <span>1</span>
+                                      <span>250</span>
+                                      <span>500</span>
+                                  </div>
+                                  <small class="helper-text">Each user = 1 protected login. Scale up anytime.</small>
+                              </div>
+
+                              <!-- Admin Emails -->
+                              <div class="form-group">
+                                  <label for="adminEmail">
+                                      <i class='bx bx-lock-open-alt'></i> Admin Emails
+                                      <span class="info-tooltip" title="Admins manage the system">?</span>
+                                  </label>
+                                  <div id="adminsList" class="admins-list">
+                                      <div class="admin-input-group">
+                                          <input 
+                                              type="email" 
+                                              class="admin-email-input" 
+                                              placeholder="admin@example.com"
+                                          >
+                                          <button class="btn-remove-admin" style="display:none;">
+                                              <i class='bx bx-x'></i>
+                                          </button>
+                                      </div>
+                                  </div>
+                                  <button id="btnAddAdmin" class="btn-add-admin">
+                                      <i class='bx bx-plus'></i> Add Another Admin
+                                  </button>
+                                  <small class="helper-text">At least one admin required. You can add more later.</small>
+                              </div>
+
+                              <!-- Features List -->
+                              <div class="features-list">
+                                  <h4>What's Included</h4>
+                                  <ul>
+                                      <li><i class='bx bx-check-circle'></i> Multi-factor authentication (MFA)</li>
+                                      <li><i class='bx bx-check-circle'></i> App-based push notifications</li>
+                                      <li><i class='bx bx-check-circle'></i> SMS & phone call backup</li>
+                                      <li><i class='bx bx-check-circle'></i> Admin dashboard & controls</li>
+                                      <li><i class='bx bx-check-circle'></i> Integration & API access</li>
+                                      <li><i class='bx bx-check-circle'></i> 24/7 support</li>
+                                  </ul>
+                              </div>
+                          </div>
+
+                          <!-- Right: Live Preview Panel -->
+                          <div class="builder-preview-panel">
+                              <div class="preview-card">
+                                  <div class="preview-header">
+                                      <h3>Your Configuration</h3>
+                                      <span class="preview-label">Live Preview</span>
+                                  </div>
+
+                                  <!-- Organization Summary -->
+                                  <div class="preview-section">
+                                      <div class="preview-item">
+                                          <span class="preview-label-text"><i class='bx bx-buildings'></i> Organization</span>
+                                          <span class="preview-value" id="previewOrg">Organisation Name</span>
+                                      </div>
+                                  </div>
+
+                                  <!-- Users Summary -->
+                                  <div class="preview-section">
+                                      <div class="preview-item">
+                                          <span class="preview-label-text"><i class='bx bx-group'></i> Protected Users</span>
+                                          <span class="preview-value" id="previewUsers">5</span>
+                                      </div>
+                                      <small class="preview-description">Each user can authenticate securely</small>
+                                  </div>
+
+                                  <!-- Admins Summary -->
+                                  <div class="preview-section">
+                                      <div class="preview-label-text"><i class='bx bx-lock-open-alt'></i> Administrators</div>
+                                      <div id="previewAdmins" class="preview-admins-list">
+                                          <span class="admin-badge">admin@example.com</span>
+                                      </div>
+                                      <small class="preview-description">Will have full management access</small>
+                                  </div>
+
+                                  <!-- Pricing Section -->
+                                  <div class="pricing-section">
+                                      <div class="price-breakdown">
+                                          <div class="price-row">
+                                              <span class="price-label">Per License</span>
+                                              <span class="price-amount" id="pricePerLicense">R 300</span>
+                                          </div>
+                                          <div class="price-row">
+                                              <span class="price-label">Users</span>
+                                              <span class="price-amount" id="pricingUsers">5</span>
+                                          </div>
+                                          <div class="price-divider"></div>
+                                          <div class="price-row total">
+                                              <span class="price-label">Total</span>
+                                              <span class="price-amount" id="totalPrice">R 1,500</span>
+                                          </div>
+                                      </div>
+
+                                      <!-- What Happens Next -->
+                                      <div class="what-happens-next">
+                                          <h4>What Happens Next:</h4>
+                                          <ol>
+                                              <li><strong>Add to Cart</strong> → Review your full order</li>
+                                              <li><strong>Checkout</strong> → Complete payment</li>
+                                              <li><strong>Instant Setup</strong> → We create your Duo account</li>
+                                              <li><strong>Email Confirmation</strong> → Admin credentials & setup guide</li>
+                                              <li><strong>Start Securing</strong> → Monitor logins immediately</li>
+                                          </ol>
+                                      </div>
+
+                                      <!-- Action Buttons -->
+                                      <div class="builder-actions">
+                                          <button id="btnAddToCart" class="btn primary-btn">
+                                              <i class='bx bx-cart-add'></i> Add to Cart
+                                          </button>
+                                      </div>
+                                  </div>
+
+                                  <!-- Trust Badges -->
+                                  <div class="trust-badges">
+                                      <span class="trust-badge"><i class='bx bx-shield-check'></i> Enterprise Trusted</span>
+                                      <span class="trust-badge"><i class='bx bx-check'></i> SOC 2 Compliant</span>
+                                      <span class="trust-badge"><i class='bx bx-globe'></i> Global Coverage</span>
+                                  </div>
+                              </div>
+                          </div>
+                      </div>
+                  </section>
+
+                  <!-- ===== FEATURES SHOWCASE ===== -->
+                  <section class="duo-features">
+                      <h2>Why Choose Duo?</h2>
+                      <div class="features-grid">
+                          <div class="feature-card">
+                              <div class="feature-icon">
+                                  <i class='bx bx-bolt'></i>
+                              </div>
+                              <h3>Instant Deployment</h3>
+                              <p>Your account is created and ready to secure logins in minutes, not days.</p>
+                          </div>
+                          <div class="feature-card">
+                              <div class="feature-icon">
+                                  <i class='bx bx-phone'></i>
+                              </div>
+                              <h3>Mobile-First</h3>
+                              <p>Push notifications to smartphones. Users approve logins with a single tap.</p>
+                          </div>
+                          <div class="feature-card">
+                              <div class="feature-icon">
+                                  <i class='bx bx-sliders'></i>
+                              </div>
+                              <h3>Full Control</h3>
+                              <p>Admin dashboard for policies, user management, and real-time monitoring.</p>
+                          </div>
+                          <div class="feature-card">
+                              <div class="feature-icon">
+                                  <i class='bx bx-infinity'></i>
+                              </div>
+                              <h3>Scale Anytime</h3>
+                              <p>Add licenses whenever you hire new team members. Flexible and no long-term contracts.</p>
+                          </div>
+                          <div class="feature-card">
+                              <div class="feature-icon">
+                                  <i class='bx bx-code-alt'></i>
+                              </div>
+                              <h3>API Access</h3>
+                              <p>Full API for custom integrations and programmable security workflows.</p>
+                          </div>
+                          <div class="feature-card">
+                              <div class="feature-icon">
+                                  <i class='bx bx-headphone'></i>
+                              </div>
+                              <h3>24/7 Support</h3>
+                              <p>Enterprise support team ready to help whenever you need assistance.</p>
+                          </div>
+                      </div>
+                  </section>
+
+                  <!-- ===== FAQ SECTION ===== -->
+                  <section class="duo-faq">
+                      <h2>Frequently Asked Questions</h2>
+                      <div class="faq-container">
+                          <div class="faq-item">
+                              <button class="faq-question">
+                                  <span>How many users does a license cover?</span>
+                                  <i class='bx bx-chevron-down'></i>
+                              </button>
+                              <div class="faq-answer">
+                                  <p>One license covers one user. Each licensed user can authenticate securely using multi-factor authentication. You can add or remove licenses anytime.</p>
+                              </div>
+                          </div>
+
+                          <div class="faq-item">
+                              <button class="faq-question">
+                                  <span>Can I change the number of users after purchase?</span>
+                                  <i class='bx bx-chevron-down'></i>
+                              </button>
+                              <div class="faq-answer">
+                                  <p>Yes! You can upgrade or downgrade your user limit anytime. Changes take effect immediately, and billing adjusts accordingly.</p>
+                              </div>
+                          </div>
+
+                          <div class="faq-item">
+                              <button class="faq-question">
+                                  <span>What happens when I check out?</span>
+                                  <i class='bx bx-chevron-down'></i>
+                              </button>
+                              <div class="faq-answer">
+                                  <p>After successful payment, we automatically create your Duo organization with your specified name, user limit, and admin emails. You'll receive a confirmation email with your dashboard access.</p>
+                              </div>
+                          </div>
+
+                          <div class="faq-item">
+                              <button class="faq-question">
+                                  <span>Is my data secure?</span>
+                                  <i class='bx bx-chevron-down'></i>
+                              </button>
+                              <div class="faq-answer">
+                                  <p>Absolutely. Duo uses military-grade encryption, undergoes regular security audits, and is SOC 2 Type II certified. Your data is protected at the highest level.</p>
+                              </div>
+                          </div>
+
+                          <div class="faq-item">
+                              <button class="faq-question">
+                                  <span>What if I need more support?</span>
+                                  <i class='bx bx-chevron-down'></i>
+                              </button>
+                              <div class="faq-answer">
+                                  <p>Our team is available 24/7. Contact us through the dashboard, email, or phone. We also provide integration guides and API documentation.</p>
+                              </div>
+                          </div>
+                      </div>
+                  </section>
+
+                  <!-- ===== CTA SECTION ===== -->
+                  <section class="duo-cta">
+                      <div class="duo-cta-content">
+                          <h2>Ready to Secure Your Team?</h2>
+                          <p>Start with any number of users and scale as you grow. Set up takes just minutes.</p>
+                          <button class="btn primary-btn" onclick="document.querySelector('.duo-license-builder').scrollIntoView({behavior: 'smooth'})">
+                              Configure Now
+                          </button>
+                      </div>
+                  </section>
+                </section>
+
+
+            </div>
+        </div>
+    </main>
+
+    <footer class="site-footer">
+        <div class="footer-container">
+            <div class="footer-brand">
+                <div class="logo">
+                    <div class="logo-circle"></div>
+                    <span>ProQ Pilot</span>
+                </div>
+                <p>Next-gen laptop shopping designed for the modern user.</p>
+            </div>
+            <div class="footer-links">
+                <h4>Shop</h4>
+                <a href="store.html">Gaming Laptops</a>
+                <a href="store.html">Business Laptops</a>
+                <a href="brands.html">Brands</a>
+            </div>
+            <div class="footer-links">
+                <h4>Support</h4>
+                <a href="contact.html">Contact Us</a>
+                <a href="about.html">Warranty Policy</a>
+                <a href="about.html">Shipping Info</a>
+            </div>
+            <div class="footer-links">
+                <h4>Contact Us</h4>
+                <a href="mailto:info@stackopsit.co.za"><i class='bx bx-envelope'></i> info@stackopsit.co.za</a>
+                <a href="mailto:support@stackopsit.co.za"><i class='bx bx-envelope'></i> support@stackopsit.co.za</a>
+                <a href="mailto:sales@stackopsit.co.za"><i class='bx bx-envelope'></i> sales@stackopsit.co.za</a>
+                <a href="tel:0115689337"><i class='bx bx-phone'></i> 011 568 9337</a>
+                <p><i class='bx bx-map'></i> Mia Drive, Waterfall City, Johannesburg, 1685</p>
+            </div>
+            <div class="footer-newsletter">
+                <h4>Join the Future</h4>
+                <p>Subscribe for hardware updates.</p>
+                <div class="subscribe-box">
+                    <input type="email" placeholder="Email address">
+                    <button class="btn btn-primary">Join</button>
+                </div>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2026 ProQ Pilot. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script src="js/site-footer.js"></script>
+    <script src="js/category-nav.js"></script>
+    <script src="js/script.js"></script>
+    <script src="js/auth-ui.js"></script>
+    <script src="js/duo-license.js"></script>
+    <script src="js/microsoft-license.js"></script>
+    <script src="diagnostics.js"></script>
+    <script src="js/duo-store.js"></script>
+</body>
+</html>

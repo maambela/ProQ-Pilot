@@ -1,0 +1,1598 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - Core API Products</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <link href="css/style.css" rel="stylesheet">
+    <style>
+        :root {
+            --soft-white: #f8fafc;
+            --ice-mint: #a3e9d9;
+            --sky-blue: #69d7ff;
+            --pale-pink: #ffadc8;
+            --text-main: #334155;
+            --accent-blue: #00bcd4;
+            --accent-teal: #00d2be;
+            --white: #ffffff;
+            --pill-radius: 50px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background: linear-gradient(45deg, var(--ice-mint), var(--sky-blue), var(--pale-pink));
+            background-attachment: fixed;
+            min-height: 100vh;
+            color: var(--text-main);
+            line-height: 1.6;
+        }
+
+        /* Liquid Glass Header */
+        .main-header {
+            position: sticky;
+            top: 20px;
+            z-index: 1000;
+            display: flex;
+            justify-content: center;
+            margin: 0 auto 2rem;
+        }
+
+        .header-container {
+            width: 92%;
+            max-width: 1800px;
+            background: linear-gradient(
+                135deg,
+                rgba(255, 255, 255, 0.178),
+                rgba(220, 240, 255, 0.158),
+                rgba(255, 230, 245, 0.247)
+            );
+            backdrop-filter: blur(22px) saturate(160%);
+            -webkit-backdrop-filter: blur(22px) saturate(160%);
+            border-radius: var(--pill-radius);
+            padding: 12px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 12px 35px rgba(0, 0, 0, 0.08),
+                        inset 0 5px 10px rgba(255, 255, 255, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.35);
+        }
+
+        .logo {
+            font-weight: 200;
+            font-size: 1.2rem;
+            letter-spacing: -0.5px;
+            color: var(--text-main);
+            text-transform: uppercase;
+        }
+
+        .admin-label {
+            font-weight: 200;
+            font-size: 0.75rem;
+            color: var(--accent-blue);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-left: 1rem;
+            border-left: 2px solid var(--accent-blue);
+            padding-left: 1rem;
+        }
+
+        /* Main Content */
+        main {
+            padding: 0 5%;
+            max-width: 900px;
+            margin: 0 auto 3rem;
+        }
+
+        .page-header {
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
+
+        .page-title {
+            font-size: 2rem;
+            font-weight: 200;
+            color: var(--text-main);
+        }
+
+        /* Navigation */
+        .admin-nav {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .nav-link {
+            text-decoration: none;
+            color: var(--text-main);
+            font-size: 0.85rem;
+            font-weight: 200;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 0.6rem 1.2rem;
+            border-radius: var(--pill-radius);
+            background: linear-gradient(
+                135deg,
+                rgba(255, 255, 255, 0.22),
+                rgba(255, 255, 255, 0.05)
+            );
+            backdrop-filter: blur(18px) saturate(180%);
+            -webkit-backdrop-filter: blur(18px) saturate(180%);
+            border: 1px solid rgba(255, 255, 255, 0.35);
+            transition: all 0.35s ease;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1),
+                        inset 0 1px 1px rgba(255, 255, 255, 0.6);
+        }
+
+        .nav-link:hover, .nav-link.active {
+            background: linear-gradient(to right, var(--accent-blue), var(--accent-teal));
+            color: white;
+            border-color: var(--accent-blue);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 188, 212, 0.3);
+        }
+
+        /* Filters & Controls */
+        .controls-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .filter-group {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            justify-content: center;
+            flex: 1;
+        }
+
+        .filter-btn {
+            padding: 0.6rem 1rem;
+            border: 1px solid rgba(255, 255, 255, 0.35);
+            background: linear-gradient(
+                135deg,
+                rgba(255, 255, 255, 0.22),
+                rgba(255, 255, 255, 0.05)
+            );
+            backdrop-filter: blur(18px) saturate(180%);
+            -webkit-backdrop-filter: blur(18px) saturate(180%);
+            border-radius: var(--pill-radius);
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: 200;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+            color: var(--text-main);
+            transition: all 0.35s ease;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1),
+                        inset 0 1px 1px rgba(255, 255, 255, 0.6);
+        }
+
+        .filter-btn:hover, .filter-btn.active {
+            background: linear-gradient(to right, var(--accent-blue), var(--accent-teal));
+            color: white;
+            border-color: var(--accent-blue);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 188, 212, 0.3);
+        }
+
+        .sync-btn {
+            padding: 0.6rem 1.2rem;
+            background: linear-gradient(to right, var(--accent-blue), var(--accent-teal));
+            color: white;
+            border: none;
+            border-radius: var(--pill-radius);
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: 200;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            transition: all 0.35s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            box-shadow: 0 8px 25px rgba(0, 188, 212, 0.3);
+        }
+
+        .sync-btn:hover {
+            background: linear-gradient(to right, #00a8c4, #00c2ae);
+            transform: translateY(-2px);
+            box-shadow: 0 12px 35px rgba(0, 188, 212, 0.4);
+        }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            gap: 2rem;
+            margin-bottom: 2rem;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.35);
+            justify-content: center;
+        }
+
+        .tab-btn {
+            background: none;
+            border: none;
+            padding: 0.8rem 0;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 200;
+            color: #a0aec0;
+            border-bottom: 2px solid transparent;
+            transition: all 0.35s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .tab-btn:hover {
+            color: var(--accent-blue);
+        }
+
+        .tab-btn.active {
+            color: var(--accent-blue);
+            border-bottom-color: var(--accent-blue);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Product List */
+        .products-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .products-list.admin-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(450px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .product-item {
+            background: linear-gradient(
+                135deg,
+                rgba(255, 255, 255, 0.7),
+                rgba(255, 255, 255, 0.4)
+            );
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.35);
+            border-radius: 16px;
+            padding: 1rem;
+            transition: all 0.35s ease;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06);
+        }
+
+        .product-item:hover {
+            box-shadow: 0 12px 30px rgba(0, 188, 212, 0.15);
+            transform: translateY(-2px);
+        }
+
+        .product-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 1rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .product-title {
+            font-size: 1rem;
+            font-weight: 200;
+            color: var(--text-main);
+            flex: 1;
+        }
+
+        .product-brand {
+            font-size: 0.75rem;
+            color: var(--accent-blue);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-top: 0.2rem;
+            font-weight: 200;
+        }
+
+        .status-badge {
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.7rem;
+            font-weight: 200;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+            white-space: nowrap;
+        }
+
+        .status-pending {
+            background: #fef3c7;
+            color: #b45309;
+        }
+
+        .status-approved {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .status-rejected {
+            background: #fee2e2;
+            color: #7f1d1d;
+        }
+
+        .product-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 0.75rem;
+            margin-bottom: 0.75rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.35);
+        }
+
+        .detail-item {
+            display: flex;
+            flex-direction: column;
+            gap: 0.2rem;
+        }
+
+        .detail-label {
+            font-size: 0.7rem;
+            color: #a0aec0;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 200;
+        }
+
+        .detail-value {
+            font-size: 0.95rem;
+            color: var(--text-main);
+            font-weight: 200;
+        }
+
+        /* Image Section */
+        .image-area {
+            margin-bottom: 0.75rem;
+        }
+
+        .image-label {
+            font-size: 0.75rem;
+            color: #a0aec0;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 200;
+            display: block;
+            margin-bottom: 0.5rem;
+        }
+
+        .image-grid {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .image-thumbnail {
+            position: relative;
+            width: 60px;
+            height: 60px;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.35);
+            background: rgba(255, 255, 255, 0.5);
+        }
+
+        .image-thumbnail img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .image-delete-btn {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0, 0, 0, 0.6);
+            opacity: 0;
+            transition: opacity 0.2s;
+            cursor: pointer;
+            border-radius: 12px;
+        }
+
+        .image-thumbnail:hover .image-delete-btn {
+            opacity: 1;
+        }
+
+        .add-image-box {
+            width: 60px;
+            height: 60px;
+            border: 2px dashed rgba(0, 188, 212, 0.5);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.35s ease;
+            background: linear-gradient(
+                135deg,
+                rgba(255, 255, 255, 0.3),
+                rgba(255, 255, 255, 0.1)
+            );
+            color: var(--accent-blue);
+        }
+
+        .add-image-box:hover {
+            border-color: var(--accent-blue);
+            background: linear-gradient(
+                135deg,
+                rgba(0, 188, 212, 0.1),
+                rgba(0, 188, 212, 0.05)
+            );
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        /* Action Buttons */
+        .action-buttons {
+            display: flex;
+            gap: 0.5rem;
+            justify-content: flex-end;
+        }
+
+        .btn {
+            padding: 0.6rem 1rem;
+            border: none;
+            border-radius: var(--pill-radius);
+            cursor: pointer;
+            font-size: 0.8rem;
+            font-weight: 200;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+            transition: all 0.35s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+        }
+
+        .btn-success {
+            background: linear-gradient(to right, #10b981, #059669);
+            color: white;
+            box-shadow: 0 8px 20px rgba(16, 185, 129, 0.2);
+        }
+
+        .btn-success:hover {
+            background: linear-gradient(to right, #059669, #047857);
+            transform: translateY(-2px);
+            box-shadow: 0 12px 30px rgba(16, 185, 129, 0.3);
+        }
+
+        .btn-danger {
+            background: linear-gradient(to right, #ef4444, #dc2626);
+            color: white;
+            box-shadow: 0 8px 20px rgba(239, 68, 68, 0.2);
+        }
+
+        .btn-danger:hover {
+            background: linear-gradient(to right, #dc2626, #b91c1c);
+            transform: translateY(-2px);
+            box-shadow: 0 12px 30px rgba(239, 68, 68, 0.3);
+        }
+
+        .btn-deactivate {
+            background: linear-gradient(to right, #f59e0b, #d97706);
+            color: white;
+            box-shadow: 0 8px 20px rgba(245, 158, 11, 0.2);
+        }
+
+        .btn-deactivate:hover {
+            background: linear-gradient(to right, #d97706, #b45309);
+            transform: translateY(-2px);
+            box-shadow: 0 12px 30px rgba(245, 158, 11, 0.3);
+        }
+
+        .toggle-switch {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.75rem;
+            cursor: pointer;
+            user-select: none;
+            padding: 0.5rem 1rem;
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 0.5rem;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+        }
+
+        .toggle-switch:hover {
+            background: rgba(255, 255, 255, 0.12);
+            border-color: rgba(255, 255, 255, 0.25);
+        }
+
+        .toggle-track {
+            position: relative;
+            width: 50px;
+            height: 28px;
+            background: #ef4444;
+            border-radius: 14px;
+            transition: background 0.3s ease;
+            cursor: pointer;
+        }
+
+        .toggle-track.active {
+            background: #10b981;
+        }
+
+        .toggle-thumb {
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 24px;
+            height: 24px;
+            background: white;
+            border-radius: 50%;
+            transition: left 0.3s ease;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .toggle-track.active .toggle-thumb {
+            left: calc(100% - 26px);
+        }
+
+        .toggle-label {
+            font-size: 0.85rem;
+            font-weight: 200;
+            color: #e5e7eb;
+        }
+
+        .approval-action {
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.35);
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 2rem;
+            color: #a0aec0;
+            background: linear-gradient(
+                135deg,
+                rgba(255, 255, 255, 0.4),
+                rgba(255, 255, 255, 0.2)
+            );
+            border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.35);
+        }
+
+        .empty-icon {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            opacity: 0.5;
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 2000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(5px);
+        }
+
+        .modal.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background: linear-gradient(
+                135deg,
+                rgba(255, 255, 255, 0.9),
+                rgba(255, 255, 255, 0.8)
+            );
+            backdrop-filter: blur(10px);
+            padding: 2rem;
+            border-radius: 16px;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.35);
+        }
+
+        .modal-title {
+            font-size: 1.2rem;
+            font-weight: 200;
+            margin-bottom: 1rem;
+            color: var(--text-main);
+        }
+
+        .modal-body {
+            margin-bottom: 1.5rem;
+        }
+
+        textarea {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid rgba(0, 188, 212, 0.3);
+            border-radius: 12px;
+            font-family: inherit;
+            resize: vertical;
+            min-height: 100px;
+            background: rgba(255, 255, 255, 0.5);
+        }
+
+        .modal-footer {
+            display: flex;
+            gap: 1rem;
+            justify-content: flex-end;
+        }
+
+        /* Admin Product Card - Beautiful Design with Image */
+        .admin-product-card {
+            background: linear-gradient(
+                135deg,
+                rgba(255, 255, 255, 0.7),
+                rgba(255, 255, 255, 0.4)
+            );
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.35);
+            border-radius: 16px;
+            overflow: hidden;
+            display: flex;
+            transition: all 0.35s ease;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06);
+            position: relative;
+        }
+
+        .admin-product-card:hover {
+            box-shadow: 0 12px 30px rgba(0, 188, 212, 0.15);
+            transform: translateY(-2px);
+        }
+
+        .card-image-section {
+            overflow: hidden;
+            background: linear-gradient(135deg, #f0f9ff, #f5f3ff);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 340px;
+            width: 340px;
+            min-height: 200px;
+            flex-shrink: 0;
+        }
+
+        .card-image-placeholder {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .product-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .card-body-admin {
+            padding: 1.25rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .card-header-admin {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.75rem;
+            gap: 0.5rem;
+        }
+
+        .brand-badge {
+            background: linear-gradient(to right, #00bcd4, #00d2be);
+            color: white;
+            padding: 0.35rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.7rem;
+            font-weight: 200;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+
+        .status-live {
+            background: #d1fae5;
+            color: #065f46;
+            padding: 0.35rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.7rem;
+            font-weight: 200;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+
+        .status-inactive {
+            background: #fee2e2;
+            color: #7f1d1d;
+            padding: 0.35rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.7rem;
+            font-weight: 200;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+
+        .product-title-admin {
+            font-size: 1.05rem;
+            font-weight: 200;
+            color: var(--text-main);
+            margin-bottom: 0.75rem;
+            line-height: 1.3;
+        }
+
+        .admin-specs {
+            display: flex;
+            flex-direction: column;
+            gap: 0.6rem;
+        }
+
+        .spec-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.35);
+        }
+
+        .spec-row:last-child {
+            border-bottom: none;
+        }
+
+        .spec-label {
+            font-size: 0.75rem;
+            color: #a0aec0;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 200;
+        }
+
+        .spec-value {
+            font-size: 0.9rem;
+            color: var(--text-main);
+            font-weight: 200;
+        }
+
+        .image-badge {
+            display: inline-block;
+            background: #d1fae5;
+            color: #065f46;
+            padding: 0.25rem 0.6rem;
+            border-radius: 16px;
+            font-size: 0.7rem;
+            font-weight: 200;
+        }
+
+        .image-badge.no-image {
+            background: #fee2e2;
+            color: #7f1d1d;
+        }
+
+        /* Admin Product Grid Layout */
+        .products-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(450px, 1fr));
+            gap: 1.5rem;
+        }
+
+        @media (max-width: 1200px) {
+            .products-grid {
+                grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+            }
+            .card-image-section {
+                min-width: 200px;
+                width: 200px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .products-list {
+                grid-template-columns: 1fr;
+            }
+            .admin-product-card {
+                flex-direction: column;
+            }
+            .card-image-section {
+                min-width: 100%;
+                width: 100%;
+                min-height: 220px;
+            }
+            .card-body-admin {
+                padding: 1rem;
+            }
+            .product-title-admin {
+                font-size: 0.95rem;
+            }
+            .spec-label {
+                font-size: 0.65rem;
+            }
+            .spec-value {
+                font-size: 0.85rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            main {
+                padding: 0 2%;
+            }
+            .admin-product-card {
+                border-radius: 12px;
+            }
+            .card-body-admin {
+                padding: 0.75rem;
+            }
+            .product-title-admin {
+                font-size: 0.9rem;
+                margin-bottom: 0.5rem;
+            }
+            .admin-specs {
+                gap: 0.4rem;
+            }
+            .spec-row {
+                padding: 0.4rem 0;
+            }
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            main {
+                padding: 0 3%;
+            }
+
+            .header-container {
+                width: 95%;
+                padding: 10px 20px;
+            }
+
+            .page-title {
+                font-size: 1.5rem;
+            }
+
+            .controls-bar {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .filter-group {
+                width: 100%;
+            }
+
+            .product-details {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .action-buttons {
+                width: 100%;
+                flex-direction: column;
+            }
+
+            .btn {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .admin-nav {
+                flex-direction: column;
+            }
+
+            .nav-link {
+                width: 100%;
+                text-align: center;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .product-details {
+                grid-template-columns: 1fr;
+            }
+
+            .modal-content {
+                width: 95%;
+            }
+
+            .tabs {
+                gap: 1rem;
+            }
+        }
+    </style>
+    <link href="css/admin-clean.css" rel="stylesheet">
+</head>
+<body>
+
+    <header class="main-header">
+        <div class="header-container">
+            <div class="logo-area">
+                <span class="logo-icon">P</span>
+                <span class="brand-name">ProQ Pilot</span>
+            </div>
+            <nav class="nav-links" id="nav-links">
+                <a href="admin_dashboard.html">Dashboard</a>
+                <a href="admin_products.html">Manual Products</a>
+                <a href="admin_core_products.html" class="active">Core Products</a>
+                <a href="store.html">Store</a>
+            </nav>
+            <div class="header-actions">
+                <a href="index.html" class="auth-wrapper" aria-label="View storefront">
+                    <span class="auth-icon"><i class='bx bx-store'></i></span>
+                </a>
+                <a href="my-account.html" class="cart-wrapper" aria-label="My account">
+                    <span class="cart-icon"><i class='bx bx-user'></i></span>
+                </a>
+                <div class="hamburger" id="hamburger">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <div class="page-header">
+            <h1 class="page-title">Core API Products</h1>
+        </div>
+
+        <div class="core-admin-layout">
+            <aside class="core-filter-sidebar">
+                <div class="controls-container">
+                    <div class="controls-title">Filter Products</div>
+                    <div class="controls-bar">
+                        <div class="filter-group">
+                            <button class="filter-btn active" onclick="filterByCategory('all', this)"><i class='bx bx-grid-alt'></i><span>All</span></button>
+                            <button class="filter-btn" onclick="filterByCategory('watch', this)"><i class='bx bx-watch'></i><span>Watches</span></button>
+                            <button class="filter-btn" onclick="filterByCategory('laptop', this)"><i class='bx bx-laptop'></i><span>Laptops / MacBooks</span></button>
+                            <button class="filter-btn" onclick="filterByCategory('phone', this)"><i class='bx bx-mobile-alt'></i><span>Phones</span></button>
+                            <button class="filter-btn" onclick="filterByCategory('other', this)"><i class='bx bx-package'></i><span>Other</span></button>
+                        </div>
+                        <button class="sync-btn" onclick="syncCoreProducts(this)">
+                            <i class='bx bx-sync'></i> Sync Core
+                        </button>
+                    </div>
+                </div>
+            </aside>
+
+            <div class="core-products-workspace">
+                <!-- Tabs -->
+                <div class="tabs">
+                    <button class="tab-btn active" onclick="switchTab('pending')">Pending</button>
+                    <button class="tab-btn" onclick="switchTab('approved')">Approved</button>
+                    <button class="tab-btn" onclick="switchTab('rejected')">Rejected</button>
+                </div>
+
+                <!-- Pending Tab -->
+                <div id="pending" class="tab-content active">
+                    <div id="pending-products-list" class="products-list"></div>
+                </div>
+
+                <!-- Approved Tab -->
+                <div id="approved" class="tab-content">
+                    <div id="approved-products-list" class="products-list admin-grid"></div>
+                </div>
+
+                <!-- Rejected Tab -->
+                <div id="rejected" class="tab-content">
+                    <div id="rejected-products-list" class="products-list"></div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Rejection Modal -->
+    <div id="rejectionModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-title">Reject Product</div>
+            <div class="modal-body">
+                <label style="display: block; margin-bottom: 0.5rem; font-weight: 200; font-size: 0.9rem;">Reason for rejection:</label>
+                <textarea id="rejectionReason" placeholder="Enter reason..."></textarea>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-danger" onclick="closeRejectionModal()" style="background: #ccc; color: #333;">Cancel</button>
+                <button class="btn btn-success" onclick="confirmReject()">Confirm Reject</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentRejectProductId = null;
+        let allProducts = [];
+        let currentCategory = 'all';
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadPendingProducts();
+            loadApprovedProducts();
+            loadRejectedProducts();
+        });
+
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById(tabName).classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        function filterByCategory(category, trigger) {
+            currentCategory = category;
+            document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+            if (trigger) trigger.classList.add('active');
+            loadPendingProducts();
+            loadApprovedProducts();
+        }
+
+        function getCategoryFromName(name) {
+            const nameLower = name.toLowerCase();
+
+            // Watches
+            if (nameLower.includes('watch') || nameLower.includes('band') || (nameLower.includes('ultra') && nameLower.includes('apple'))) {
+                return 'watch';
+            }
+            
+            // Phones & Tablets (iPad)
+            // Explicitly match iphone, ipad, tablet
+            if (nameLower.includes('iphone') || nameLower.includes('ipad') || nameLower.includes('tablet')) {
+                return 'phone';
+            }
+            
+            // For generic "phone" matches, exclude audio/accessory items
+            if (nameLower.includes('phone')) {
+                // Excluded keywords that shouldn't match as phones
+                const excluded = ['earphone', 'airphone', 'headphone', 'airpod', 'buds', 'speaker', 'microphone', 'charger', 'cable', 'adapter', 'case', 'screen', 'protector'];
+                if (!excluded.some(word => nameLower.includes(word))) {
+                    return 'phone';
+                }
+            }
+            
+            // Laptops
+            if (nameLower.includes('macbook') || nameLower.includes('laptop') || nameLower.includes('mba') || nameLower.includes('mbp')) {
+                return 'laptop';
+            }
+            
+            return 'other';
+        }
+
+        async function syncCoreProducts(button) {
+            if (button) button.disabled = true;
+            try {
+                const response = await fetch('/api/v1/sync-core', { method: 'POST' });
+                const data = await response.json();
+                if (data.status === 'success') {
+                    alert('✓ Synced successfully!');
+                    location.reload();
+                } else {
+                    alert('✗ Sync failed: ' + data.message);
+                }
+            } catch (error) {
+                alert('✗ Error: ' + error.message);
+            }
+            if (button) button.disabled = false;
+        }
+
+        async function loadPendingProducts() {
+            try {
+                const response = await fetch('/api/v1/core-products/pending');
+                const data = await response.json();
+                allProducts = (data.data.products || []).filter(product => Number(product.quantity || 0) > 0);
+
+                let filtered = currentCategory === 'all' 
+                    ? allProducts 
+                    : allProducts.filter(p => getCategoryFromName(p.product_name) === currentCategory);
+
+                // Limit to first 50 products to prevent browser resource exhaustion
+                const limited = filtered.slice(0, 50);
+
+                const container = document.getElementById('pending-products-list');
+                if (limited.length === 0) {
+                    container.innerHTML = '<div class="empty-state"><div class="empty-icon">📦</div><p>No products</p></div>';
+                    return;
+                }
+
+                container.innerHTML = limited.map(product => `
+                    <div class="product-item" data-product-id="${product.id}">
+                        <div class="product-header">
+                            <div>
+                                <div class="product-title">${product.product_name}</div>
+                                <div class="product-brand">${product.brand}</div>
+                            </div>
+                            <span class="status-badge status-pending">PENDING</span>
+                        </div>
+
+                        <div class="product-details">
+                            <div class="detail-item">
+                                <span class="detail-label">Code</span>
+                                <span class="detail-value">${product.product_number}</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Price</span>
+                                <span class="detail-value">R${parseFloat(product.price).toLocaleString()}</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Stock</span>
+                                <span class="detail-value">${product.quantity} units</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Images</span>
+                                <span class="detail-value">${product.image_count} img(s)</span>
+                            </div>
+                        </div>
+
+                        <div class="image-area minimal-image-area">
+                            <span class="image-label">Images</span>
+                            <div class="image-grid image-summary" id="image-grid-${product.id}">
+                                <span class="image-count" id="image-count-${product.id}">${product.image_count || 0} image(s)</span>
+                                <button class="add-image-box" onclick="triggerImageUpload(${product.id})">
+                                    <i class='bx bx-upload'></i>
+                                    <span>Upload</span>
+                                    <input type="file" class="file-input" id="file-${product.id}" multiple accept="image/*" onchange="handleImageUpload(event, ${product.id})">
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="action-buttons">
+                            <button class="btn btn-success" onclick="approveProduct(${product.id})">✓ Approve</button>
+                            <button class="btn btn-danger" onclick="openRejectionModal(${product.id})">✗ Reject</button>
+                        </div>
+                    </div>
+                `).join('');
+
+                // Load images for all rendered pending products
+                limited.forEach(product => loadProductImages(product.id));
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        }
+
+        async function loadPendingProductImage(productId) {
+            try {
+                const response = await fetch(`/api/v1/core-products/${productId}/images`);
+                const data = await response.json();
+                
+                if (data.data.images && data.data.images.length > 0) {
+                    const imageContainer = document.getElementById(`pending-image-${productId}`);
+                    if (imageContainer) {
+                        const firstImage = data.data.images[0];
+                        const img = imageContainer.querySelector('img');
+                        img.src = `/product_images/${firstImage.image_url}`;
+                        img.style.objectFit = 'cover';
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading image for product', productId, error);
+            }
+        }
+
+        function openImageUploadModal(productId) {
+            // Not used in pending tab anymore
+        }
+
+        function closeImageUploadModal() {
+            // Not used in pending tab anymore
+        }
+
+        async function loadProductImages(productId) {
+            try {
+                console.log(`[Admin] Loading images for product ${productId}`);
+                const response = await fetch(`/api/v1/core-products/${productId}/images`);
+                const data = await response.json();
+                console.log(`[Admin] Images response:`, data);
+
+                const grid = document.getElementById(`image-grid-${productId}`);
+                if (!grid) {
+                    console.error(`[Admin] Grid element not found: image-grid-${productId}`);
+                    return;
+                }
+
+                const images = data.data.images || [];
+                grid.querySelectorAll('.image-thumbnail').forEach(el => el.remove());
+                const imageCountLabel = document.getElementById(`image-count-${productId}`);
+                if (imageCountLabel) imageCountLabel.textContent = `${images.length} image(s)`;
+
+                // Update the image count display in the detail items
+                const productItem = document.querySelector(`[data-product-id="${productId}"]`);
+                if (productItem) {
+                    const detailItems = productItem.querySelectorAll('.detail-item');
+                    detailItems.forEach(item => {
+                        const label = item.querySelector('.detail-label');
+                        if (label && label.textContent.includes('Images')) {
+                            const imageCount = images.length;
+                            item.querySelector('.detail-value').textContent = `${imageCount} img(s)`;
+                            console.log(`[Admin] Updated image count display to ${imageCount}`);
+                        }
+                    });
+                }
+            } catch (error) {
+                console.error('[Admin] Error loading images:', error);
+            }
+        }
+
+        function triggerImageUpload(productId) {
+            document.getElementById(`file-${productId}`).click();
+        }
+
+        async function handleImageUpload(event, productId) {
+            const files = event.target.files;
+            if (files.length === 0) return;
+
+            console.log(`[Admin] Uploading ${files.length} image(s) for product ${productId}`);
+            const formData = new FormData();
+            Array.from(files).forEach(file => {
+                console.log(`[Admin] Adding file: ${file.name} (${file.size} bytes)`);
+                formData.append('images', file);
+            });
+
+            try {
+                console.log(`[Admin] POSTing to /api/v1/core-products/${productId}/images`);
+                const response = await fetch(`/api/v1/core-products/${productId}/images`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                console.log(`[Admin] Upload response status: ${response.status}`);
+                const data = await response.json();
+                console.log(`[Admin] Upload response data:`, data);
+                
+                if (data.status === 'success') {
+                    alert(`✓ ${data.imagesUploaded} image(s) uploaded successfully!`);
+                    // Load images immediately without full page reload
+                    loadProductImages(productId);
+                } else {
+                    alert('✗ Error: ' + data.message);
+                }
+            } catch (error) {
+                console.error('[Admin] Upload error:', error);
+                alert('✗ Error uploading images: ' + error.message);
+            }
+        }
+
+        async function deleteProductImage(productId, imageId) {
+            if (!confirm('Delete this image?')) return;
+
+            try {
+                // Ensure IDs are numbers
+                const prodId = Number(productId);
+                const imgId = Number(imageId);
+                
+                // Validate IDs
+                if (!Number.isInteger(prodId) || !Number.isInteger(imgId)) {
+                    console.error(`[Admin] Invalid IDs - prodId: ${prodId}, imgId: ${imgId}`);
+                    alert('✗ Invalid image ID. Please refresh and try again.');
+                    return;
+                }
+                
+                console.log(`[Admin] Deleting image ${imgId} from product ${prodId}`);
+                const url = `/api/v1/core-products/${prodId}/images/${imgId}`;
+                console.log(`[Admin] DELETE URL: ${url}`);
+                
+                const response = await fetch(url, { method: 'DELETE' });
+                console.log(`[Admin] Delete response status: ${response.status}`);
+                
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    console.error(`[Admin] Delete error: ${response.status} - ${errorText}`);
+                    
+                    // Try to parse as JSON for better error message
+                    try {
+                        const errorData = JSON.parse(errorText);
+                        alert(`✗ Error: ${errorData.message || 'Failed to delete image'}`);
+                    } catch (e) {
+                        alert(`✗ Error: Server returned ${response.status}`);
+                    }
+                    return;
+                }
+                
+                const data = await response.json();
+                console.log(`[Admin] Delete response:`, data);
+
+                if (data.status === 'success') {
+                    console.log(`[Admin] Image deleted, reloading images for product ${prodId}`);
+                    // Reload images to update the display and count
+                    await loadProductImages(prodId);
+                } else {
+                    alert('✗ Error: ' + (data.message || 'Unknown error'));
+                }
+            } catch (error) {
+                console.error('Unexpected error deleting image:', error);
+                alert('✗ Unexpected error: ' + error.message);
+            }
+        }
+
+        async function approveProduct(productId) {
+            try {
+                const response = await fetch(`/api/v1/core-products/${productId}/approve`, { method: 'PATCH' });
+                const data = await response.json();
+
+                if (data.status === 'success') {
+                    alert('✓ Product approved! It will now appear in the store.');
+                    loadPendingProducts();
+                    loadApprovedProducts();
+                    // Trigger store refresh if available
+                    setTimeout(() => {
+                        if (typeof window.refreshStore === 'function') {
+                            console.log('Refreshing store with new approved product');
+                            window.refreshStore();
+                        }
+                    }, 500);
+                } else {
+                    alert('✗ Error: ' + data.message);
+                }
+            } catch (error) {
+                console.error('Approval error:', error);
+                alert('✗ Error approving product');
+            }
+        }
+
+        async function deactivateProduct(productId) {
+            if (!confirm('Are you sure you want to deactivate this product? It will be removed from the store.')) return;
+            
+            try {
+                console.log(`[Admin] Deactivating product ${productId}`);
+                const response = await fetch(`/api/v1/core-products/${productId}/deactivate`, { method: 'PATCH' });
+                console.log(`[Admin] Deactivate response status: ${response.status}`);
+                
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    console.error(`[Admin] Deactivate error: ${response.status} - ${errorText}`);
+                    alert(`✗ Error: Server responded with ${response.status}`);
+                    return;
+                }
+                
+                const data = await response.json();
+                console.log(`[Admin] Deactivate response data:`, data);
+
+                if (data.status === 'success') {
+                    alert('✓ Product deactivated! It has been removed from the store.');
+                    loadApprovedProducts();
+                    // Trigger store refresh if available
+                    setTimeout(() => {
+                        if (typeof window.refreshStore === 'function') {
+                            console.log('Refreshing store after product deactivation');
+                            window.refreshStore();
+                        }
+                    }, 500);
+                } else {
+                    alert('✗ Error: ' + data.message);
+                }
+            } catch (error) {
+                console.error('Deactivation error:', error);
+                alert('✗ Error deactivating product: ' + error.message);
+            }
+        }
+
+        function openRejectionModal(productId) {
+            currentRejectProductId = productId;
+            document.getElementById('rejectionModal').classList.add('active');
+        }
+
+        function closeRejectionModal() {
+            document.getElementById('rejectionModal').classList.remove('active');
+            document.getElementById('rejectionReason').value = '';
+            currentRejectProductId = null;
+        }
+
+        async function confirmReject() {
+            const reason = document.getElementById('rejectionReason').value.trim();
+            if (!reason) {
+                alert('Please enter a reason');
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/v1/core-products/${currentRejectProductId}/reject`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ reason })
+                });
+
+                const data = await response.json();
+                if (data.status === 'success') {
+                    alert('✓ Product rejected');
+                    closeRejectionModal();
+                    loadPendingProducts();
+                    loadRejectedProducts();
+                } else {
+                    alert('✗ Error: ' + data.message);
+                }
+            } catch (error) {
+                alert('✗ Error rejecting product');
+            }
+        }
+
+        async function loadApprovedProducts() {
+            const container = document.getElementById('approved-products-list');
+            
+            try {
+                const response = await fetch('/api/v1/core-products/approved/list');
+                const data = await response.json();
+                
+                if (!data.data.products || data.data.products.length === 0) {
+                    container.innerHTML = '<div class="empty-state"><div class="empty-icon">✓</div><p>Approved products appear here</p></div>';
+                    return;
+                }
+
+                // Filter by current category
+                let filtered = (data.data.products || []).filter(product => Number(product.quantity || 0) > 0);
+                if (currentCategory !== 'all') {
+                    filtered = filtered.filter(product => getCategoryFromName(product.product_name) === currentCategory);
+                }
+                
+                if (filtered.length === 0) {
+                    container.innerHTML = '<div class="empty-state"><div class="empty-icon">✓</div><p>No approved products in this category</p></div>';
+                    return;
+                }
+
+                // Display all approved products
+                container.innerHTML = '';
+                filtered.forEach(product => {
+                    const card = document.createElement('div');
+                    card.className = 'admin-product-card';
+                    
+                    const imageCount = product.image_count || 0;
+                    const imageStatus = imageCount > 0 ? `<span class="image-badge">📸 ${imageCount}</span>` : '<span class="image-badge no-image">⚠ No images</span>';
+                    const cleanName = product.product_name.split(/\s+/).slice(0, 4).join(' ');
+                    
+                    card.innerHTML = `
+                        <div class="card-image-section">
+                            <div class="card-image-placeholder" id="approved-image-${product.id}">
+                                <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjMwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMzAwIiBoZWlnaHQ9IjMwMCIgZmlsbD0iI2Y0ZjRmNCI+PC9yZWN0Pjwvc3ZnPg==" alt="Loading" class="product-image">
+                            </div>
+                        </div>
+                        <div class="card-body-admin">
+                            <div class="card-header-admin">
+                                <span class="brand-badge">${product.brand}</span>
+                                <span class="brand-badge" style="background: linear-gradient(to right, #8b5cf6, #7c3aed); color: white; padding: 0.35rem 0.8rem;">${product.product_type || 'Product'}</span>
+                                <span class="status-badge" style="${product.is_active === 1 ? 'background: #10b981; color: #fff;' : 'background: #fee2e2; color: #7f1d1d;'} padding: 0.25rem 0.75rem; border-radius: 0.25rem; font-size: 0.75rem; font-weight: 200;">${product.is_active === 1 ? 'Active' : 'Inactive'}</span>
+                            </div>
+                            <h3 class="product-title-admin">${cleanName}</h3>
+                            <div class="admin-specs">
+                                <div class="spec-row">
+                                    <span class="spec-label">SKU:</span>
+                                    <span class="spec-value">${product.product_number}</span>
+                                </div>
+                                <div class="spec-row">
+                                    <span class="spec-label">Price:</span>
+                                    <span class="spec-value">R${parseFloat(product.price).toLocaleString()}</span>
+                                </div>
+                                <div class="spec-row">
+                                    <span class="spec-label">Stock:</span>
+                                    <span class="spec-value">${product.quantity} units</span>
+                                </div>
+                                <div class="spec-row">
+                                    <span class="spec-label">Images:</span>
+                                    <span>${imageStatus}</span>
+                                </div>
+                            </div>
+                            <div class="approval-action" style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid rgba(255, 255, 255, 0.35);">
+                                <div class="toggle-switch" data-product-id="${product.id}" data-product-active="${product.is_active}">
+                                    <span class="toggle-label">Store Visibility:</span>
+                                    <div class="toggle-track ${product.is_active === 1 ? 'active' : ''}">
+                                        <div class="toggle-thumb"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    
+                    // Add event listener to the toggle switch
+                    const toggleSwitch = card.querySelector('.toggle-switch');
+                    if (toggleSwitch) {
+                        toggleSwitch.addEventListener('click', function() {
+                            const productId = this.getAttribute('data-product-id');
+                            const isActive = this.getAttribute('data-product-active') === '1';
+                            if (isActive) {
+                                deactivateProduct(productId);
+                            } else {
+                                activateProduct(productId);
+                            }
+                        });
+                    }
+                    
+                    container.appendChild(card);
+                    loadApprovedProductImage(product.id);
+                });
+            } catch (error) {
+                console.error('Error loading approved products:', error);
+                container.innerHTML = '<div class="empty-state"><p>Error loading approved products</p></div>';
+            }
+        }
+
+        async function loadApprovedProductImage(productId) {
+            try {
+                const response = await fetch(`/api/v1/core-products/${productId}/images`);
+                const data = await response.json();
+                
+                if (data.data.images && data.data.images.length > 0) {
+                    const imageContainer = document.getElementById(`approved-image-${productId}`);
+                    if (imageContainer) {
+                        const firstImage = data.data.images[0];
+                        const img = imageContainer.querySelector('img');
+                        img.src = `/product_images/${firstImage.image_url}`;
+                        img.style.objectFit = 'cover';
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading image for product', productId, error);
+            }
+        }
+
+        async function loadRejectedProducts() {
+            const container = document.getElementById('rejected-products-list');
+            container.innerHTML = '<div class="empty-state"><div class="empty-icon">✗</div><p>Rejected products appear here</p></div>';
+        }
+
+        async function activateProduct(productId) {
+            if (!confirm('Are you sure you want to reactivate this product? It will be visible in the store again.')) return;
+            
+            try {
+                console.log(`[Admin] Activating product ${productId}`);
+                const response = await fetch(`/api/v1/core-products/${productId}/activate`, { method: 'PATCH' });
+                console.log(`[Admin] Activate response status: ${response.status}`);
+                
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    console.error(`[Admin] Activate error: ${response.status} - ${errorText}`);
+                    alert(`✗ Error: Server responded with ${response.status}`);
+                    return;
+                }
+                
+                const data = await response.json();
+                console.log(`[Admin] Activate response data:`, data);
+
+                if (data.status === 'success') {
+                    alert('✓ Product activated! It is now visible in the store.');
+                    loadApprovedProducts();
+                    // Trigger store refresh if available
+                    setTimeout(() => {
+                        if (typeof window.refreshStore === 'function') {
+                            console.log('Refreshing store after product activation');
+                            window.refreshStore();
+                        }
+                    }, 500);
+                } else {
+                    alert('✗ Error: ' + data.message);
+                }
+            } catch (error) {
+                console.error('Activation error:', error);
+                alert('✗ Error activating product: ' + error.message);
+            }
+        }
+    </script>
+    <script src="js/auth-ui.js"></script>
+</body>
+</html>

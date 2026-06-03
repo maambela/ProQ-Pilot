@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ProQ Pilot | Cart</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+</head>
+<body>
+    <header class="main-header">
+        <div class="header-container">
+            <div class="logo-area">
+                <span class="logo-icon">P</span>
+                <span class="brand-name">ProQ Pilot</span>
+            </div>
+            <nav class="nav-links" id="nav-links">
+                <a href="index.html">Home</a>
+                <a href="store.html">Store</a>
+                <a href="user-orders.html">Orders</a>
+                <a href="my-account.html">My Account</a>
+            </nav>
+            <div class="header-actions">
+                <a href="wishlist.html" class="wishlist-wrapper">
+                    <span class="wishlist-icon"><i class='bx bx-heart'></i></span>
+                    <span class="wishlist-badge">0</span>
+                </a>
+                <a href="signin.html" class="auth-wrapper">
+                    <span class="auth-icon"><i class='bx bx-user'></i></span>
+                </a>
+                <a href="cart.html" class="cart-wrapper">
+                    <span class="cart-icon"><i class='bx bx-cart'></i></span>
+                    <span class="cart-badge" id="cart-count">0</span>
+                </a>
+                <div class="hamburger" id="hamburger">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+
+
+    <main class="cart-container">
+        <div class="cart-items-heading" style="text-align: left; position: sticky; top: 100px; z-index: 900; padding: 0px 0; max-width: 1200px; margin: 0 auto;">
+            <h2 style="font-size: 2rem; color: var(--text-main);">Shopping cart</h2>
+        </div>
+        
+        <!-- Smart info banner for digital license items -->
+        <div id="duoInfoBanner" style="display: none; margin-bottom: 20px;">
+            <div style="background: linear-gradient(135deg, rgba(0, 188, 212, 0.15), rgba(105, 215, 255, 0.08)); border: 1px solid rgba(0, 188, 212, 0.4); padding: 16px 20px; border-radius: 12px; color: #69d7ff; font-size: 0.95rem; max-width: 1200px; margin: 0 auto;">
+                <div style="display: flex; align-items: flex-start; gap: 12px;">
+                    <i class='bx bx-cloud-download' style="font-size: 1.3rem; flex-shrink: 0; margin-top: 2px;"></i>
+                    <div>
+                        <strong style="color: var(--accent-blue);">Digital Licenses Detected</strong>
+                        <p style="margin: 4px 0 0 0; color: rgba(255, 255, 255, 0.8);">Digital licenses have no shipping fees and will be activated immediately after payment. Check out with confidence!</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="cart-layout">
+            <div class="cart-items-wrapper">
+
+                <div id="cartItemsList">
+                    <div class="empty-cart-msg">
+                        <i class='bx bx-cart'></i>
+                        <h3>Your cart is empty</h3>
+                        <p>Add procurement-ready products to begin checkout.</p>
+                        <a href="store.html" class="btn btn-primary">Return to Shopping</a>
+                    </div>
+                </div>
+
+                <section id="cartRecommendations" class="recommendation-slot recommendation-slot--cart" aria-label="Recommended for your cart"></section>
+            </div>
+
+            <aside class="cart-summary">
+                <div class="summary-card">
+                    <h3 style="margin-bottom: 20px;">Order Summary</h3>
+                    <div class="summary-row" style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                        <span>Subtotal</span>
+                        <span id="subtotal-price">R0</span>
+                    </div>
+                    <div class="summary-row" style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                        <span>Transport Fee</span>
+                        <span id="delivery-cost">R75</span>
+                    </div>
+                    <hr style="border: 0; border-top: 1px solid rgba(255, 255, 255, 0.2); margin: 15px 0;">
+                    <div class="summary-row total" style="display: flex; justify-content: space-between; font-size: 1.2rem; color: var(--accent-blue);">
+                        <span>Total</span>
+                        <span id="total-price">R0</span>
+                    </div>
+                    <button class="btn-checkout" id="checkoutBtn">
+                        Proceed to Checkout
+                    </button>
+                </div>
+
+                <!-- New secure checkout message below the summary -->
+                <div class="secure-checkout" style="margin-top:16px; background: rgba(255, 255, 255, 0.08); backdrop-filter: blur(18px); padding: 16px; border-radius: 12px; text-align: left; box-shadow: 0 8px 20px rgba(0,0,0,0.2); border: 1px solid rgba(255, 255, 255, 0.25);">
+                    <div class="secure-item"><i class='bx bx-lock'></i><span>Secure Checkout</span></div>
+                    <div class="secure-item"><i class='bx bx-credit-card'></i><span>Many ways to pay</span></div>
+                    <div class="secure-item"><i class='bx bxs-truck'></i><span>Fast, reliable delivery</span></div>
+                    <div class="payment-icons" style="margin-top:10px; display: flex; justify-content: left; gap:10px; align-items:center;">
+                        <img src="https://img.icons8.com/color/48/000000/visa.png" alt="Visa" style="width:32px; height:auto;">
+                        <img src="https://img.icons8.com/color/48/000000/mastercard-logo.png" alt="MasterCard" style="width:32px; height:auto;">
+                        <img src="https://img.icons8.com/color/48/000000/paypal.png" alt="PayPal" style="width:32px; height:auto;">
+                        <img src="https://img.icons8.com/color/48/000000/google-pay-india.png" alt="Google Pay" style="width:32px; height:auto;">
+                        <img src="https://img.icons8.com/color/48/000000/apple-pay.png" alt="Apple Pay" style="width:32px; height:auto;">
+                    </div>
+                </div>
+            </aside>
+        </div>
+    </main>
+
+    <script src="js/script.js"></script>
+    <script src="js/recommendations.js"></script>
+    <script src="js/cart-logic.js"></script>
+    <script src="js/auth-ui.js"></script>
+</body>
+</html>

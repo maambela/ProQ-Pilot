@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order Details - ProQ Pilot</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <style>
+        .order-container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 120px 20px 40px;
+        }
+        .order-header {
+            background: rgba(255, 255, 255, 0.08);
+            color: white;
+            padding: 30px;
+            border-radius: 8px;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .order-header h1 {
+            margin: 0;
+            font-size: 28px;
+        }
+        .order-header p {
+            margin: 8px 0 0 0;
+            font-size: 18px;
+            opacity: 0.95;
+        }
+        .order-content {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid #eee;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .section {
+            padding: 24px;
+            border-bottom: 1px solid #eee;
+        }
+        .section:last-child {
+            border-bottom: none;
+        }
+        .section h2 {
+            margin: 0 0 16px 0;
+            color: #333;
+            font-size: 18px;
+            border-bottom: 2px solid #00bcd4;
+            padding-bottom: 12px;
+        }
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 16px;
+        }
+        .info-item {
+            display: flex;
+            flex-direction: column;
+        }
+        .info-label {
+            font-size: 12px;
+            color: #888;
+            text-transform: uppercase;
+            margin-bottom: 4px;
+        }
+        .info-value {
+            font-size: 16px;
+            color: #333;
+            font-weight: 200;
+        }
+        .address-block {
+            background: #f9f9f9;
+            padding: 16px;
+            border-radius: 6px;
+        }
+        .items-list {
+            margin: 0;
+            padding: 0;
+        }
+        .item {
+            display: flex;
+            gap: 16px;
+            padding: 16px 0;
+            border-bottom: 1px solid #eee;
+        }
+        .item:last-child {
+            border-bottom: none;
+        }
+        .item-image {
+            width: 100px;
+            height: 100px;
+            object-fit: cover;
+            border-radius: 6px;
+            flex-shrink: 0;
+        }
+        .item-details {
+            flex: 1;
+        }
+        .item-name {
+            margin: 0;
+            font-size: 16px;
+            font-weight: 200;
+            color: #333;
+        }
+        .item-qty {
+            margin: 4px 0;
+            font-size: 14px;
+            color: #666;
+        }
+        .item-price {
+            margin: 8px 0 0 0;
+            font-size: 16px;
+            font-weight: bold;
+            color: #00bcd4;
+        }
+        .summary {
+            display: flex;
+            justify-content: flex-end;
+            margin-top: 24px;
+            padding-top: 24px;
+            border-top: 2px solid #eee;
+        }
+        .summary-box {
+            width: 300px;
+            padding: 16px;
+            background: #f9f9f9;
+            border-radius: 6px;
+        }
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 12px;
+            color: #666;
+        }
+        .summary-row.total {
+            font-size: 18px;
+            font-weight: bold;
+            color: #00bcd4;
+            border-top: 2px solid #ddd;
+            padding-top: 12px;
+            margin-top: 12px;
+        }
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+        .success-message {
+            background: #e8f5e9;
+            border: 1px solid #4caf50;
+            color: #2e7d32;
+            padding: 16px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+        }
+        .button-group {
+            display: flex;
+            gap: 12px;
+            justify-content: flex-start;
+            margin-top: 10px;
+            margin-bottom: 20px;
+        }
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            font-weight: 200;
+        }
+        .btn-primary {
+            background: #00bcd4;
+            color: white;
+            border-radius: 40px;
+            height: 45px;
+            
+        }
+        .btn-primary:hover {
+            background: #00a8cc;
+        }
+        .btn-secondary {
+            background: #f0f0f0;
+            color: #333;
+        }
+        .btn-secondary:hover {
+            background: #e0e0e0;
+        }
+        @media (max-width: 768px) {
+            .info-grid {
+                grid-template-columns: 1fr;
+            }
+            .summary {
+                justify-content: center;
+            }
+            .button-group {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    
+    <header class="main-header">
+        <div class="header-container">
+            <div class="logo-area">
+                <span class="logo-icon">P</span>
+                <span class="brand-name">ProQ Pilot</span>
+            </div>
+            <nav class="nav-links" id="nav-links">
+                <a href="index.html">Home</a>
+                <a href="store.html">Store</a>
+                <a href="user-orders.html">Orders</a>
+                <a href="my-account.html">My Account</a>
+            </nav>
+            <div class="header-actions">
+                <a href="wishlist.html" class="wishlist-wrapper">
+                    <span class="wishlist-icon"><i class='bx bx-heart'></i></span>
+                    <span class="wishlist-badge">0</span>
+                </a>
+                <a href="signin.html" class="auth-wrapper">
+                    <span class="auth-icon"><i class='bx bx-user'></i></span>
+                </a>
+                <a href="cart.html" class="cart-wrapper">
+                    <span class="cart-icon"><i class='bx bx-cart'></i></span>
+                    <span class="cart-badge" id="cart-count">0</span>
+                </a>
+                <div class="hamburger" id="hamburger">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="order-container">
+        <div class="button-group">
+            <a href="/store.html" class="btn btn-primary">Continue Shopping</a>
+        </div>
+        <div class="order-header">
+            <h1>✓ Order Confirmed</h1>
+            <p id="orderId">Order #-</p>
+        </div>
+
+        <div class="loading" id="loading">
+            <p>Loading order details...</p>
+        </div>
+
+        <div class="order-content" id="orderContent" style="display: none;">
+            <div class="success-message">
+                <strong>Thank you for your purchase!</strong> Your order has been confirmed. You will receive an email with all the details shortly.
+            </div>
+
+            <div class="section">
+                <h2>Order Information</h2>
+                <div class="info-grid">
+                    <div class="info-item">
+                        <span class="info-label">Order Number</span>
+                        <span class="info-value" id="orderNumber">-</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Order Date</span>
+                        <span class="info-value" id="orderDate">-</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Status</span>
+                        <span class="info-value" id="orderStatus">Confirmed</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Expected Delivery</span>
+                        <span class="info-value">Within 1 week</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section">
+                <h2>Delivery Address</h2>
+                <div class="address-block">
+                    <p id="addressLine1" style="margin: 0 0 4px 0;"></p>
+                    <p id="addressLine2" style="margin: 0 0 4px 0;"></p>
+                    <p id="addressCity" style="margin: 0 0 4px 0;"></p>
+                    <p id="addressCountry" style="margin: 0 0 12px 0;"></p>
+                    <p id="addressPhone" style="margin: 0;"></p>
+                </div>
+                <p id="deliveryInstructions" style="margin: 16px 0 0 0; color: #666;"></p>
+            </div>
+
+            <div class="section">
+                <h2>Order Items</h2>
+                <div class="items-list" id="itemsList"></div>
+                <div class="summary">
+                    <div class="summary-box">
+                        <div class="summary-row">
+                            <span>Subtotal</span>
+                            <span id="subtotal">-</span>
+                        </div>
+                        <div class="summary-row">
+                            <span>Delivery Fee</span>
+                            <span>R75.00</span>
+                        </div>
+                        <div class="summary-row total">
+                            <span>Total Paid</span>
+                            <span id="total">-</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section">
+                <h2>Next Steps</h2>
+                <p style="color: #666; line-height: 1.6;">
+                    📦 Your order is being prepared by our team and will ship within 1 week. You'll receive an email update with tracking information once your order has been dispatched.
+                </p>
+                <p style="color: #666; line-height: 1.6;">
+                    For any questions about your order, please contact us at:<br>
+                    <strong>info@stackopsit.co.za</strong><br>
+                    <strong>support@stackopsit.co.za</strong><br>
+                    <strong>sales@stackopsit.co.za</strong><br>
+                    or call <strong>011 568 9337</strong>.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <footer class="site-footer">
+        <div class="footer-container">
+            <div class="footer-brand">
+                <div class="logo">
+                    <div class="logo-circle"></div>
+                    <span>ProQ Pilot</span>
+                </div>
+                <p>Next-gen laptop shopping designed for the modern user.</p>
+            </div>
+            <div class="footer-links">
+                <h4>Shop</h4>
+                <a href="store.html">Gaming Laptops</a>
+                <a href="store.html">Business Laptops</a>
+                <a href="brands.html">Brands</a>
+            </div>
+            <div class="footer-links">
+                <h4>Support</h4>
+                <a href="contact.html">Contact Us</a>
+                <a href="about.html">Warranty Policy</a>
+                <a href="about.html">Shipping Info</a>
+            </div>
+            <div class="footer-links">
+                <h4>Contact Us</h4>
+                <a href="mailto:info@stackopsit.co.za"><i class='bx bx-envelope'></i> info@stackopsit.co.za</a>
+                <a href="mailto:support@stackopsit.co.za"><i class='bx bx-envelope'></i> support@stackopsit.co.za</a>
+                <a href="mailto:sales@stackopsit.co.za"><i class='bx bx-envelope'></i> sales@stackopsit.co.za</a>
+                <a href="tel:0115689337"><i class='bx bx-phone'></i> 011 568 9337</a>
+                <p><i class='bx bx-map'></i> Mia Drive, Waterfall City, Johannesburg, 1685</p>
+            </div>
+            <div class="footer-newsletter">
+                <h4>Join the Future</h4>
+                <p>Subscribe for hardware updates.</p>
+                <div class="subscribe-box">
+                    <input type="email" placeholder="Email address">
+                    <button class="btn btn-primary">Join</button>
+                </div>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2026 ProQ Pilot. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script src="js/site-footer.js"></script>
+    <script src="js/script.js"></script>
+    <script src="js/auth-ui.js"></script>
+    <script src="js/authentication.js"></script>
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const orderId = urlParams.get('orderId');
+
+        if (!orderId) {
+            // Try to get from sessionStorage (set after YOCO redirect)
+            const sessionOrderId = sessionStorage.getItem('currentOrderId');
+            if (sessionOrderId) {
+                window.location.href = `/order-details.html?orderId=${sessionOrderId}`;
+                sessionStorage.removeItem('currentOrderId');
+            } else {
+                // No order found, redirect to store
+                setTimeout(() => {
+                    window.location.href = '/store.html';
+                }, 2000);
+            }
+        } else {
+            fetchOrderDetails(orderId);
+        }
+
+async function fetchOrderDetails(orderId) {
+            try {
+                const response = await fetch(`/api/v1/orders/${orderId}`);
+                if (!response.ok) {
+                    throw new Error('Order not found');
+                }
+                const result = await response.json();
+                const order = result.data;
+
+                // Clear cart after successful payment
+                localStorage.removeItem('cart');
+
+                // Update header ⚔️
+                document.getElementById('orderId').textContent = `Order #${order.id}`;
+                const orderNumEl = document.getElementById('orderNumber');
+                if (orderNumEl) orderNumEl.textContent = `#${order.id}`;
+                document.getElementById('orderDate').textContent = new Date(order.created_at || Date.now()).toLocaleDateString();
+
+                // Update address (Null-safe for Digital/Physical) 🏰
+                const addressLine1 = document.getElementById('addressLine1');
+                const addressCity = document.getElementById('addressCity');
+                const addressCountry = document.getElementById('addressCountry');
+                const addressPhone = document.getElementById('addressPhone');
+                const deliveryInstructions = document.getElementById('deliveryInstructions');
+
+                if (order.addressID) {
+                    // Physical Delivery: Use properties directly from the order object
+                    if (addressLine1) addressLine1.textContent = (order.line1 || '') + (order.line2 ? ', ' + order.line2 : '');
+                    if (addressCity) addressCity.textContent = `${order.city || ''}, ${order.province || ''} ${order.postal_code || ''}`;
+                    if (addressCountry) addressCountry.textContent = order.country || '';
+                    if (addressPhone) {
+                        addressPhone.innerHTML = order.phone ? `<strong>Phone:</strong> ${order.phone}` : '';
+                    }
+                    if (deliveryInstructions) {
+                        deliveryInstructions.innerHTML = order.delivery_instructions ? `<strong>Notes:</strong> ${order.delivery_instructions}` : '';
+                    }
+                } else {
+                    // Digital Delivery 💎
+                    if (addressLine1) addressLine1.innerHTML = `<strong>Digital Delivery</strong>`;
+                    if (addressCity) addressCity.textContent = `Sent to: ${order.email || 'Account Email'}`;
+                    if (addressCountry) addressCountry.textContent = `Access granted to license portal`;
+                    if (addressPhone) addressPhone.innerHTML = ``;
+                    if (deliveryInstructions) deliveryInstructions.innerHTML = ``;
+                }
+
+                // Update items list 🎒
+                const itemsList = document.getElementById('itemsList');
+                itemsList.innerHTML = ''; // Clear loader content
+                order.items.forEach(item => {
+                    const itemDiv = document.createElement('div');
+                    itemDiv.className = 'item';
+                    
+                    // Determine image path
+                    const imgUrl = item.image_url 
+                        ? (item.image_url.startsWith('http') || item.image_url.startsWith('/') ? item.image_url : '/product_images/' + item.image_url)
+                        : '/Images/placeholder.png';
+
+                    itemDiv.innerHTML = `
+                        <img src="${imgUrl}" alt="${item.product_name}" class="item-image">
+                        <div class="item-details">
+                            <p class="item-name">${item.product_name}</p>
+                            <p class="item-qty">Quantity: ${item.quantity}</p>
+                            <p class="item-price">R${parseFloat(item.price).toLocaleString()}</p>
+                        </div>
+                    `;
+                    itemsList.appendChild(itemDiv);
+                });
+
+                // Update totals 🪙
+                // Only subtract delivery fee if it was a physical order (addressID exists)
+                const deliveryFee = order.addressID ? 75 : 0;
+                const subtotal = parseFloat(order.total_amount) - deliveryFee;
+                
+                document.getElementById('subtotal').textContent = `R${subtotal.toLocaleString()}`;
+                document.getElementById('total').textContent = `R${parseFloat(order.total_amount).toLocaleString()}`;
+
+                // Show content
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('orderContent').style.display = 'block';
+
+            } catch (err) {
+                console.error('Error fetching order:', err);
+                document.getElementById('loading').innerHTML = `
+                    <p style="color: #d32f2f;">Quest Failed: Unable to load order details.</p>
+                    <p style="color: #666;">Please refresh or contact support at sales@stackopsit.co.za</p>
+                    <button onclick="location.href='/store.html'" class="btn btn-primary" style="margin-top: 20px;">Return to Store</button>
+                `;
+            }
+        }
+    </script>
+</body>
+</html>

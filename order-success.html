@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Order Complete - ProQ Pilot</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+  <style>
+    body.success-page { min-height: 100vh; }
+    .success-container { max-width: 700px; width: calc(100% - 40px); margin: 145px auto 70px; padding: 40px; text-align: center; }
+    .success-icon { font-size: 80px; margin: 0 0 20px 0; }
+    .success-title { font-size: 28px; font-weight: 200; color: #00bcd4; margin: 0 0 12px 0; }
+    .success-subtitle { font-size: 16px; color: #666; margin: 0 0 24px 0; }
+    .order-id { background: #f0f7ff; padding: 16px; border-radius: 12px; margin: 20px 0; border-left: 4px solid #00bcd4; }
+    .order-id-label { font-size: 12px; color: #999; text-transform: uppercase; margin-bottom: 4px; }
+    .order-id-value { font-size: 24px; font-weight: 200; color: #333; font-family: monospace; }
+    .status-message { color: #666; font-size: 14px; margin: 20px 0; line-height: 1.6; }
+    .actions { display: flex; gap: 12px; margin-top: 30px; flex-wrap: wrap; }
+    .btn { padding: 12px 24px; border-radius: 8px; font-weight: 200; border: none; cursor: pointer; text-decoration: none; transition: all 0.2s; display: inline-block; }
+    .btn-primary { background: #00bcd4; color: white; }
+    .btn-primary:hover { background: #00a8c4; transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,188,212,0.3); }
+    .btn-secondary { background: #f0f0f0; color: #333; }
+    .btn-secondary:hover { background: #e0e0e0; }
+    .email-note { font-size: 13px; color: #999; margin-top: 20px; padding-top: 20px; border-top: 1px solid #eee; }
+    .loading { display: inline-block; width: 20px; height: 20px; border: 3px solid #f0f0f0; border-top: 3px solid #00bcd4; border-radius: 50%; animation: spin 1s linear infinite; }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+  </style>
+</head>
+<body class="success-page">
+
+<header class="main-header">
+  <div class="header-container">
+    <div class="logo-area">
+      <span class="logo-icon">P</span>
+      <span class="brand-name">ProQ Pilot</span>
+    </div>
+    <nav class="nav-links" id="nav-links">
+      <a href="index.html">Home</a>
+      <a href="store.html">Store</a>
+      <a href="user-orders.html">Orders</a>
+      <a href="my-account.html">My Account</a>
+    </nav>
+    <div class="header-actions">
+      <a href="wishlist.html" class="wishlist-wrapper">
+        <span class="wishlist-icon"><i class='bx bx-heart'></i></span>
+        <span class="wishlist-badge">0</span>
+      </a>
+      <a href="signin.html" class="auth-wrapper">
+        <span class="auth-icon"><i class='bx bx-user'></i></span>
+      </a>
+      <a href="cart.html" class="cart-wrapper">
+        <span class="cart-icon"><i class='bx bx-cart'></i></span>
+        <span class="cart-badge" id="cart-count">0</span>
+      </a>
+      <div class="hamburger" id="hamburger">
+        <span></span>
+        <span></span>
+        <span></span>
+      </div>
+    </div>
+  </div>
+</header>
+
+<div class="success-container">
+  <div class="success-icon">✓</div>
+  <h1 class="success-title">Order Placed Successfully!</h1>
+  <p class="success-subtitle">Thank you for your purchase</p>
+  
+  <div class="order-id">
+    <div class="order-id-label">Order ID</div>
+    <div class="order-id-value" id="orderId">Loading...</div>
+  </div>
+  
+  <div class="status-message" id="statusMessage">
+    <p>Your payment has been confirmed. We're processing your order and will send you a confirmation email shortly.</p>
+    <p id="emailStatus" style="color: #00bcd4; font-weight: 200;"><span class="loading"></span> Sending confirmation email...</p>
+  </div>
+  
+  <div class="actions">
+    <a href="store.html" id="continueShoppingBtn" class="btn btn-primary">Continue Shopping</a>
+    <a href="#" id="viewOrderDetailsBtn" class="btn btn-secondary">View Order Details</a>
+  </div>
+  
+  <div class="email-note">
+    <p>A confirmation email will be sent to your registered email address within the next few minutes.</p>
+  </div>
+</div>
+
+<footer class="site-footer"></footer>
+
+<script src="js/duo-payment-integration.js"></script>
+  <script>
+  document.addEventListener('DOMContentLoaded', async () => {
+    const params = new URLSearchParams(window.location.search);
+    const orderId = params.get('orderId');
+    
+    const orderIdEl = document.getElementById('orderId');
+    const emailStatusEl = document.getElementById('emailStatus');
+    const viewOrderDetailsBtn = document.getElementById('viewOrderDetailsBtn');
+    const continueShoppingBtn = document.getElementById('continueShoppingBtn');
+    
+    if (!orderId) {
+      orderIdEl.innerHTML = 'Not found';
+      emailStatusEl.innerHTML = '❌ We could not find your order ID.';
+      return;
+    }
+    
+    orderIdEl.textContent = orderId;
+    viewOrderDetailsBtn.href = `/order-details.html?orderId=${orderId}`;
+    
+    // Get user from localStorage
+    const user = JSON.parse(localStorage.getItem('user'));
+    
+    // Clear the cart from localStorage AND the backend
+    async function clearCart() {
+      try {
+        const user = JSON.parse(localStorage.getItem('user'));
+        if (user && user.userID) {
+          // Call backend to clear cart
+          await fetch(`/api/v1/cart/${user.userID}`, {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' }
+          }).catch(e => console.log('[SUCCESS] Cart already cleared on backend:', e.message));
+        }
+        
+        // Clear all cart-related localStorage items
+        localStorage.removeItem('cart');
+        localStorage.removeItem('cartCount');
+        sessionStorage.removeItem('selectedAddress');
+        sessionStorage.removeItem('currentOrderId');
+        console.log('[SUCCESS] Cart cleared from localStorage and backend');
+      } catch (e) {
+        console.error('[SUCCESS] Error clearing cart:', e);
+      }
+    }
+
+    // Clear cart ONLY when navigating away
+    const handleNavigation = async (e, targetUrl) => {
+      e.preventDefault();
+      await clearCart();
+      window.location.href = targetUrl;
+    };
+
+    continueShoppingBtn.addEventListener('click', (e) => handleNavigation(e, 'store.html'));
+    viewOrderDetailsBtn.addEventListener('click', (e) => handleNavigation(e, `/order-details.html?orderId=${orderId}`));
+
+    // PROACTIVELY INITIATE DUO PROVISIONING (Like the Test Button)
+    async function initiateDuoProvisioning() {
+      try {
+        if (!user || !user.userID) return;
+
+        const cartRes = await fetch(`/api/v1/cart/${user.userID}`);
+        const cartData = await cartRes.json();
+        const items = cartData.data || [];
+        
+        const duoItems = items.filter(i => i.cart_type === 'duo-security' || i.cart_type === 'duo-security-upgrade')
+          .map(i => {
+            const config = i.duo_config_json || {};
+            return {
+              organization_name: config.organization_name,
+              user_limit: config.user_limit || config.new_user_limit,
+              admin_emails: config.admin_emails || [],
+              edition: config.edition || 'PLATFORM'
+            };
+          });
+
+        if (duoItems.length === 0) return;
+
+        const duoStatusEl = document.createElement('div');
+        duoStatusEl.id = 'duoProvisioningStatus';
+        duoStatusEl.style.cssText = 'margin-top: 20px; padding: 20px; border-radius: 12px; background: #f8fafc; border: 1px solid #e2e8f0; text-align: left;';
+        duoStatusEl.innerHTML = `
+          <h3 style="margin-top:0; color:#0f172a; font-size: 16px;"><i class='bx bx-cog bx-spin'></i> Provisioning Duo Licenses...</h3>
+          <p style="font-size: 14px; color: #64748b; margin-bottom: 0;">We are currently setting up your Duo security platform. This info is pulled from your cart data to ensure immediate activation.</p>
+        `;
+        document.getElementById('statusMessage').appendChild(duoStatusEl);
+
+        const response = await fetch('/api/v1/duo/test-api', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ items: duoItems })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+          duoStatusEl.style.background = '#f0fdf4';
+          duoStatusEl.style.borderColor = '#bbf7d0';
+          duoStatusEl.innerHTML = `
+            <h3 style="margin-top:0; color:#166534; font-size: 16px;"><i class='bx bx-check-circle'></i> Duo Provisioning Successful!</h3>
+            <p style="font-size: 14px; color: #166534; margin-bottom: 8px;">Your Duo account(s) have been created and configured successfully.</p>
+            <div style="font-size: 13px; color: #15803d; background: rgba(255,255,255,0.5); padding: 10px; border-radius: 8px;">
+              ${result.created_accounts.map(acc => `• <strong>${acc.organization_name}</strong> (ID: ${acc.account_id})`).join('<br>')}
+            </div>
+          `;
+        } else {
+          duoStatusEl.style.background = '#fef2f2';
+          duoStatusEl.style.borderColor = '#fecaca';
+          duoStatusEl.innerHTML = `
+            <h3 style="margin-top:0; color:#991b1b; font-size: 16px;"><i class='bx bx-error-circle'></i> Duo Provisioning Delayed</h3>
+            <p style="font-size: 14px; color: #991b1b; margin-bottom: 0;">Automatic setup from cart data failed: ${result.error || 'Unknown error'}. Our system will retry via secure webhook.</p>
+          `;
+        }
+      } catch (err) {
+        console.error('Error in proactive Duo provisioning:', err);
+      }
+    }
+
+    // Call proactive provisioning immediately
+    initiateDuoProvisioning();
+
+    // Wait a bit for the webhook to process and send emails (Background check)
+    try {
+      // Check order status periodically or just once after a delay
+      setTimeout(async () => {
+        const res = await fetch(`/api/v1/orders/${orderId}`);
+        const data = await res.json();
+        
+        if (res.ok && data.data) {
+          const order = data.data;
+          if (order.status === 'paid') {
+            emailStatusEl.innerHTML = '✓ Confirmation email sent to <strong>' + order.customer.email + '</strong>';
+            emailStatusEl.style.color = '#16a34a';
+          }
+        }
+      }, 3000);
+    } catch (err) {
+      console.error('Error checking order status:', err);
+    }
+  });
+</script>
+<script src="js/site-footer.js"></script>
+<script src="js/auth-ui.js"></script>
+
+</body>
+</html>

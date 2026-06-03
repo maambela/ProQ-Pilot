@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@200;300;400;500;600&display=swap" rel="stylesheet">
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <link href="css/style.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --fifa-blue: #008cff;
+            --fifa-dark: #000000;
+            --fifa-gray: #f4f4f4;
+            --fifa-border: #e2e8f0;
+            --fifa-white: #ffffff;
+            --fifa-text: #1a202c;
+            --fifa-green: #10b981;
+            --fifa-orange: #f59e0b;
+            --fifa-red: #ef4444;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background: linear-gradient(45deg, #a3e9d9, #bce6f5, #fce4ec);
+            background-attachment: fixed;
+            min-height: 100vh;
+            color: var(--fifa-text);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        header.main-header {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(10px);
+            padding: 1rem 5%;
+            position: fixed;
+            top: 0;
+            width: 100%;
+            z-index: 1000;
+            border-bottom: 1px solid var(--fifa-border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-weight: 200;
+            font-size: 1.5rem;
+            letter-spacing: -1px;
+            color: var(--fifa-dark);
+            text-transform: uppercase;
+        }
+
+        .admin-label {
+            font-weight: 200;
+            font-size: 0.8rem;
+            color: var(--fifa-blue);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        main {
+            padding: 6rem 5% 3rem;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .page-title {
+            font-size: 2.5rem;
+            font-weight: 200;
+            margin-bottom: 2rem;
+            color: var(--fifa-dark);
+        }
+
+        /* --- Dashboard Grid --- */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 3rem;
+        }
+
+        .stat-card {
+            background: var(--fifa-white);
+            border: 1px solid var(--fifa-border);
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.02);
+            transition: transform 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .stat-label {
+            font-size: 0.75rem;
+            font-weight: 200;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #718096;
+            margin-bottom: 0.5rem;
+            display: block;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 200;
+            color: var(--fifa-dark);
+        }
+
+        .stat-sub {
+            font-size: 0.85rem;
+            color: #718096;
+            margin-top: 0.5rem;
+        }
+
+        .stat-sub.positive { color: var(--fifa-green); }
+        .stat-sub.warning { color: var(--fifa-orange); }
+        .stat-sub.negative { color: var(--fifa-red); }
+
+        /* --- Charts Section --- */
+        .charts-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 3rem;
+        }
+
+        .chart-container {
+            background: var(--fifa-white);
+            border: 1px solid var(--fifa-border);
+            border-radius: 12px;
+            padding: 1.5rem;
+            height: 350px;
+            position: relative;
+        }
+
+        .chart-title {
+            font-size: 0.9rem;
+            font-weight: 200;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 1rem;
+            color: #718096;
+        }
+
+        /* --- Large Grid Sections --- */
+        .dashboard-layout {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 2rem;
+        }
+
+        .panel {
+            background: var(--fifa-white);
+            border: 1px solid var(--fifa-border);
+            border-radius: 12px;
+            padding: 1.5rem;
+        }
+
+        .panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--fifa-gray);
+        }
+
+        .panel-title {
+            font-size: 1.25rem;
+            font-weight: 200;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* --- Activity Table --- */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            text-align: left;
+            font-size: 0.75rem;
+            font-weight: 200;
+            text-transform: uppercase;
+            padding: 1rem;
+            color: #718096;
+            border-bottom: 2px solid var(--fifa-gray);
+        }
+
+        td {
+            padding: 1rem;
+            font-size: 0.9rem;
+            border-bottom: 1px solid var(--fifa-gray);
+        }
+
+        .status-badge {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            font-weight: 200;
+        }
+
+        .status-paid { background: #d1fae5; color: #065f46; }
+        .status-pending { background: #fef3c7; color: #92400e; }
+        .status-shipped { background: #dbeafe; color: #1e40af; }
+        .status-completed { background: #e0e7ff; color: #3730a3; }
+
+        /* --- Low Stock List --- */
+        .low-stock-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid var(--fifa-gray);
+        }
+
+        .low-stock-info h4 {
+            font-size: 0.9rem;
+            font-weight: 200;
+        }
+
+        .low-stock-count {
+            background: #fee2e2;
+            color: #b91c1c;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 200;
+        }
+
+        /* --- Navigation Links --- */
+        .admin-nav {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .nav-link {
+            text-decoration: none;
+            color: var(--fifa-dark);
+            font-size: 0.9rem;
+            font-weight: 200;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            background: rgba(255,255,255,0.5);
+            transition: all 0.2s;
+        }
+
+        .nav-link:hover, .nav-link.active {
+            background: var(--fifa-blue);
+            color: white;
+        }
+
+        @media (max-width: 1024px) {
+            .dashboard-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+    <link href="css/admin-clean.css" rel="stylesheet">
+</head>
+<body>
+
+    <header class="main-header">
+        <div class="header-container">
+            <div class="logo-area">
+                <span class="logo-icon">P</span>
+                <span class="brand-name">ProQ Pilot</span>
+            </div>
+            <nav class="nav-links" id="nav-links">
+                <a href="admin_dashboard.html" class="active">Dashboard</a>
+                <a href="admin_products.html">Manual Products</a>
+                <a href="admin_core_products.html">Core Products</a>
+                <a href="store.html">Store</a>
+            </nav>
+            <div class="header-actions">
+                <a href="index.html" class="auth-wrapper" aria-label="View storefront">
+                    <span class="auth-icon"><i class='bx bx-store'></i></span>
+                </a>
+                <a href="my-account.html" class="cart-wrapper" aria-label="My account">
+                    <span class="cart-icon"><i class='bx bx-user'></i></span>
+                </a>
+                <div class="hamburger" id="hamburger">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <h1 class="page-title">Store Overview</h1>
+
+        <div class="admin-nav">
+            <a href="admin_dashboard.html" class="nav-link active">Dashboard</a>
+            <a href="admin_products.html" class="nav-link">Manual Products</a>
+            <a href="admin_core_products.html" class="nav-link">Core API Products</a>
+            <a href="index.html" class="nav-link">View Store</a>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <span class="stat-label">Total Sales (Today)</span>
+                <div class="stat-value" id="sales-today">R 0.00</div>
+                <div class="stat-sub" id="sales-week">This Week: R 0.00</div>
+            </div>
+            <div class="stat-card">
+                <span class="stat-label">Orders</span>
+                <div class="stat-value" id="order-count">0</div>
+                <div class="stat-sub" id="order-status-summary">Pending: 0</div>
+            </div>
+            <div class="stat-card">
+                <span class="stat-label">Avg. Order Value</span>
+                <div class="stat-value" id="aov">R 0.00</div>
+                <div class="stat-sub" id="total-revenue">Revenue: R 0.00</div>
+            </div>
+            <div class="stat-card">
+                <span class="stat-label">Customers</span>
+                <div class="stat-value" id="customer-count">0</div>
+                <div class="stat-sub" id="returning-customers">Returning: 0</div>
+            </div>
+        </div>
+
+        <section class="admin-insights-grid" aria-label="Shop health">
+            <article class="insight-card insight-feature">
+                <span class="stat-label">Procurement Health</span>
+                <div class="insight-score" id="procurement-health-score">Needs data</div>
+                <p id="procurement-health-copy">Sync core products, keep category images clean, and clear pending orders before the store gets busy.</p>
+            </article>
+            <article class="insight-card">
+                <span class="stat-label">Catalogue Quality</span>
+                <div class="metric-row"><span>Low stock</span><strong id="catalog-low-stock">0</strong></div>
+                <div class="metric-row"><span>Pending orders</span><strong id="catalog-pending-orders">0</strong></div>
+                <div class="metric-row"><span>Returning customers</span><strong id="catalog-returning-customers">0</strong></div>
+            </article>
+            <article class="insight-card">
+                <span class="stat-label">Recommended Focus</span>
+                <div class="admin-action-list" id="admin-action-list">
+                    <a href="admin_core_products.html">Review core API approvals</a>
+                    <a href="admin_products.html">Maintain manual products</a>
+                    <a href="store.html">Open storefront</a>
+                </div>
+            </article>
+        </section>
+
+        <div class="charts-section">
+            <div class="chart-container">
+                <h3 class="chart-title">Weekly Sales Trend</h3>
+                <canvas id="weeklySalesChart"></canvas>
+            </div>
+            <div class="chart-container">
+                <h3 class="chart-title">Monthly Sales Performance</h3>
+                <canvas id="monthlySalesChart"></canvas>
+            </div>
+        </div>
+
+        <div class="dashboard-layout">
+            <div class="panel">
+                <div class="panel-header">
+                    <h2 class="panel-title">Recent Activity</h2>
+                </div>
+                <div style="overflow-x: auto;">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Order ID</th>
+                                <th>Customer</th>
+                                <th>Amount</th>
+                                <th>Status</th>
+                                <th>Date</th>
+                            </tr>
+                        </thead>
+                        <tbody id="recent-activity-table">
+                            <!-- Data populated via JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="panel">
+                <div class="panel-header">
+                    <h2 class="panel-title">Low Stock Alerts</h2>
+                </div>
+                <div id="low-stock-list">
+                    <!-- Data populated via JS -->
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="js/admin-dashboard.js"></script>
+    <script src="js/auth-ui.js"></script>
+</body>
+</html>

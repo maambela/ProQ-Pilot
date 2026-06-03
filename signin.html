@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Sign In</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- Google Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400&display=swap" rel="stylesheet">
+
+    <!-- Main Styles -->
+    <link rel="stylesheet" href="css/style.css">
+    <script src="js/auth-ui.js"></script>
+</head>
+<body>
+
+    <a href="index.html" class="back-shopping">
+        ← Continue shopping
+    </a>
+
+
+    <section class="auth-page">
+        <div class="auth-card">
+            <h2>Welcome Back</h2>
+            <p>Sign in to your account</p>
+
+            <form class="auth-form" id="loginForm">
+                <input type="email" name="email" placeholder="Email address" required>
+                <input type="password" name="password" placeholder="Password" required>
+                <span class="error-text" id="apiError" style="color: #dc2626; display: none; font-size: 0.8rem; margin-top: 5px;"></span>
+
+                <button class="btn btn-primary" type="submit">
+                    Sign In
+                </button>
+            </form>
+
+            <div class="auth-links">
+                <p>
+                    <a href="resetpassword.html">Forgot password?</a>
+                </p>
+                <p>
+                    Don’t have an account?
+                    <a href="signup.html">Create one</a>
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <script>
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const apiError = document.getElementById('apiError');
+            apiError.style.display = 'none';
+
+            const formData = new FormData(e.target);
+            const data = Object.fromEntries(formData.entries());
+
+            showLoading('Authenticating...');
+
+            try {
+                const response = await fetch('http://localhost:3000/api/v1/users/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    showStatus('Access Granted', 'Welcome to ProQ Pilot!');
+                    
+                    // Store token and user data
+                    localStorage.setItem('token', result.token);
+                    localStorage.setItem('user', JSON.stringify(result.data.user));
+
+                    // Short delay for the user to see the success message
+                    setTimeout(() => {
+                        if (result.data.user.role === 'admin') {
+                            window.location.href = 'admin_products.html';
+                        } else {
+                            window.location.href = 'index.html';
+                        }
+                    }, 1500);
+                } else {
+                    hideOverlay();
+                    apiError.textContent = result.message || 'Login failed';
+                    apiError.style.display = 'block';
+                }
+            } catch (err) {
+                hideOverlay();
+                apiError.textContent = 'An error occurred. Please try again later.';
+                apiError.style.display = 'block';
+            }
+        });
+    </script>
+</body>
+</html>
