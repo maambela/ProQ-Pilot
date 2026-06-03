@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ProQ Pilot | My Wishlist</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+</head>
+<body>
+    <header class="main-header">
+        <div class="header-container">
+            <div class="logo-area">
+                <span class="logo-icon">P</span>
+                <span class="brand-name">ProQ Pilot</span>
+            </div>
+            <nav class="nav-links" id="nav-links">
+                <a href="index.html">Home</a>
+                <a href="store.html">Store</a>
+                <a href="user-orders.html">Orders</a>
+                <a href="my-account.html">My Account</a>
+            </nav>
+            <div class="header-actions">
+                <a href="wishlist.html" class="wishlist-wrapper">
+                    <span class="wishlist-icon"><i class='bx bx-heart'></i></span>
+                    <span class="wishlist-badge" id="wishlist-count">0</span>
+                </a>
+                <a href="signin.html" class="auth-wrapper">
+                    <span class="auth-icon"><i class='bx bx-user'></i></span>
+                </a>
+                <a href="cart.html" class="cart-wrapper">
+                    <span class="cart-icon"><i class='bx bx-cart'></i></span>
+                    <span class="cart-badge" id="cart-count">0</span>
+                </a>
+                <div class="hamburger" id="hamburger">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="wishlist-page">
+        <div class="wishlist-page-heading">
+            <span>Saved procurement picks</span>
+            <h1>My Wishlist</h1>
+        </div>
+        <div class="cart-layout wishlist-layout">
+            <div class="cart-items-wrapper">
+                <div id="wishlistItemsList">
+                    <div class="empty-wishlist-msg">
+                        <i class='bx bx-heart'></i>
+                        <h3>Your wishlist is empty</h3>
+                        <p>Save procurement picks to compare them later.</p>
+                        <a href="store.html" class="btn btn-primary">Continue Shopping</a>
+                    </div>
+                </div>
+            </div>
+
+            <aside class="cart-summary" style="display: none;" id="wishlistSummary">
+                <div class="summary-card">
+                    <h3>Wishlist Summary</h3>
+                    <div class="summary-row">
+                        <span>Total Items</span>
+                        <span id="wishlist-item-count">0</span>
+                    </div>
+                    <div class="summary-row">
+                        <span>Total Value</span>
+                        <span id="wishlist-total-price">R0</span>
+                    </div>
+                    <hr>
+                    <p>Move items to cart when you are ready to buy.</p>
+                </div>
+            </aside>
+        </div>
+    </main>
+
+    <footer class="site-footer">
+        <div class="footer-container">
+            <div class="footer-brand">
+                <div class="logo">
+                    <div class="logo-circle"></div>
+                    <span>ProQ Pilot</span>
+                </div>
+                <p>Business devices, licensing, and procurement kits for modern teams.</p>
+            </div>
+            <div class="footer-links">
+                <h4>Shop</h4>
+                <a href="store.html">All Products</a>
+                <a href="wishlist.html">My Wishlist</a>
+                <a href="cart.html">Shopping Cart</a>
+            </div>
+            <div class="footer-links">
+                <h4>Support</h4>
+                <a href="contact.html">Contact Us</a>
+                <a href="about.html">Warranty Policy</a>
+                <a href="about.html">Shipping Info</a>
+            </div>
+            <div class="footer-links">
+                <h4>Contact Us</h4>
+                <a href="mailto:info@stackopsit.co.za"><i class='bx bx-envelope'></i> info@stackopsit.co.za</a>
+                <a href="mailto:support@stackopsit.co.za"><i class='bx bx-envelope'></i> support@stackopsit.co.za</a>
+                <a href="mailto:sales@stackopsit.co.za"><i class='bx bx-envelope'></i> sales@stackopsit.co.za</a>
+                <a href="tel:0115689337"><i class='bx bx-phone'></i> 011 568 9337</a>
+                <p><i class='bx bx-map'></i> Mia Drive, Waterfall City, Johannesburg, 1685</p>
+            </div>
+            <div class="footer-newsletter">
+                <h4>Procurement Updates</h4>
+                <p>Subscribe for product and licensing updates.</p>
+                <div class="subscribe-box">
+                    <input type="email" placeholder="Email address">
+                    <button class="btn btn-primary">Subscribe</button>
+                </div>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2026 ProQ Pilot. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script src="js/site-footer.js"></script>
+    <script src="js/script.js"></script>
+    <script src="js/wishlist-logic.js"></script>
+    <script src="js/auth-ui.js"></script>
+</body>
+</html>

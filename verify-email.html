@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Email Verification - ProQ Pilot</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .verify-container {
+            max-width: 500px;
+            margin: 100px auto;
+            padding: 40px;
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        .status-icon {
+            font-size: 4rem;
+            margin-bottom: 20px;
+        }
+        .success { color: #16a34a; }
+        .error { color: #dc2626; }
+        .loading { color: #2563eb; }
+    </style>
+</head>
+<body>
+
+<div class="verify-container">
+    <div id="status">
+        <div class="status-icon loading">⏳</div>
+        <h2>Verifying your email...</h2>
+        <p>Please wait while we confirm your account.</p>
+    </div>
+</div>
+
+<script>
+    async function verifyEmail() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const token = urlParams.get('token');
+        const statusDiv = document.getElementById('status');
+
+        if (!token) {
+            statusDiv.innerHTML = `
+                <div class="status-icon error">❌</div>
+                <h2>Invalid Request</h2>
+                <p>No verification token provided.</p>
+                <a href="signup.html" class="btn btn-primary">Go to Signup</a>
+            `;
+            return;
+        }
+
+        try {
+            const response = await fetch(`/api/v1/users/verify-email/${token}`);
+            const result = await response.json();
+
+            if (response.ok) {
+                statusDiv.innerHTML = `
+                    <div class="status-icon success">✅</div>
+                    <h2>Email Verified!</h2>
+                    <p>Your account has been successfully verified. You can now sign in.</p>
+                    <a href="signin.html" class="btn btn-primary">Sign In</a>
+                `;
+            } else {
+                statusDiv.innerHTML = `
+                    <div class="status-icon error">❌</div>
+                    <h2>Verification Failed</h2>
+                    <p>${result.message || 'The verification link is invalid or has expired.'}</p>
+                    <a href="signup.html" class="btn btn-primary">Try Signup Again</a>
+                `;
+            }
+        } catch (err) {
+            statusDiv.innerHTML = `
+                <div class="status-icon error">❌</div>
+                <h2>Error</h2>
+                <p>Something went wrong. Please try again later.</p>
+            `;
+        }
+    }
+
+    verifyEmail();
+</script>
+
+</body>
+</html>
