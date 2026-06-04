@@ -11,11 +11,11 @@ function getBrandDisplay(brand) {
     
     const brandLower = brand.toLowerCase();
     const logos = {
-        'hp': ['Images/HP.PNG', 'Images/HP.png', 'Images/hp.PNG', 'Images/hp.png'],
+        'hp': ['Images/HP.png', 'Images/HP.PNG', 'Images/hp.PNG', 'Images/hp.png'],
         'dell': ['Images/DellLaptops.PNG', 'Images/DellLaptops.png', 'Images/delllaptops.PNG', 'Images/delllaptops.png'],
-        'apple': ['Images/Apple.PNG', 'Images/Apple.png', 'Images/apple.PNG', 'Images/apple.png'],
-        'macbook': ['Images/Apple.PNG', 'Images/Apple.png', 'Images/apple.PNG', 'Images/apple.png'],
-        'microsoft': ['Images/Microsoft.PNG', 'Images/Microsoft.png', 'Images/microsoft.PNG', 'Images/microsoft.png'],
+        'apple': ['Images/Apple.png', 'Images/Apple.PNG', 'Images/apple.PNG', 'Images/apple.png'],
+        'macbook': ['Images/Apple.png', 'Images/Apple.PNG', 'Images/apple.PNG', 'Images/apple.png'],
+        'microsoft': ['Images/Microsoft.png', 'Images/Microsoft.PNG', 'Images/microsoft.PNG', 'Images/microsoft.png'],
         'acer': ['Images/AcerStick.png', 'Images/AcerStick.PNG', 'Images/acerstick.png', 'Images/acerstick.PNG'],
         'lenovo': ['Images/lenovo.PNG', 'Images/lenovo.png', 'Images/Lenovo.PNG', 'Images/Lenovo.png'],
     };
@@ -1653,10 +1653,10 @@ function initBrandGrid() {
     if (!brandsGrid) return;
 
     const brands = [
-        { name: 'HP' , logos: ['Images/HP.PNG', 'Images/HP.png', 'Images/hp.PNG', 'Images/hp.png'] },
+        { name: 'HP' , logos: ['Images/HP.png', 'Images/HP.PNG', 'Images/hp.PNG', 'Images/hp.png'] },
         { name: 'Dell', logos: ['Images/DellLaptops.PNG', 'Images/DellLaptops.png', 'Images/delllaptops.PNG', 'Images/delllaptops.png'] },
-        { name: 'Apple', logos: ['Images/Apple.PNG', 'Images/Apple.png', 'Images/apple.PNG', 'Images/apple.png'] },
-        { name: 'Microsoft', logos: ['Images/Microsoft.PNG', 'Images/Microsoft.png', 'Images/microsoft.PNG', 'Images/microsoft.png'] },
+        { name: 'Apple', logos: ['Images/Apple.png', 'Images/Apple.PNG', 'Images/apple.PNG', 'Images/apple.png'] },
+        { name: 'Microsoft', logos: ['Images/Microsoft.png', 'Images/Microsoft.PNG', 'Images/microsoft.PNG', 'Images/microsoft.png'] },
         { name: 'Acer', logos: ['Images/AcerStick.png', 'Images/AcerStick.PNG', 'Images/acerstick.png', 'Images/acerstick.PNG'] },
         { name: 'Lenovo', logos: ['Images/lenovo.PNG', 'Images/lenovo.png', 'Images/Lenovo.PNG', 'Images/Lenovo.png'] },
         
