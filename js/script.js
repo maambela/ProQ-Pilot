@@ -13,6 +13,7 @@ function enforceDevelopmentGate() {
     const publicPages = new Set([
         'development.html',
         'signin.html',
+        'signup.html',
         'resetpassword.html'
     ]);
 
