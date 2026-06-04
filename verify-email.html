@@ -4,83 +4,214 @@
     <meta charset="UTF-8">
     <title>Email Verification - ProQ Pilot</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@200;300;400&display=swap" rel="stylesheet">
+    <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
     <link rel="stylesheet" href="css/style.css">
     <style>
-        .verify-container {
-            max-width: 500px;
-            margin: 100px auto;
-            padding: 40px;
-            background: #fff;
-            border-radius: 8px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        body.verify-page {
+            min-height: 100vh;
+            display: grid;
+            place-items: center;
+            padding: 24px;
+            font-family: 'Inter', sans-serif;
+            font-weight: 200;
+            background: url('Images/15.png') no-repeat center center fixed;
+            background-size: cover;
+            color: #fff;
+        }
+
+        body.verify-page::before {
+            content: "";
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(circle at center, rgba(0, 0, 0, 0.08), rgba(0, 0, 0, 0.78) 72%),
+                linear-gradient(180deg, rgba(0, 0, 0, 0.18), rgba(0, 0, 0, 0.72));
+            pointer-events: none;
+        }
+
+        .verify-shell {
+            position: relative;
+            z-index: 1;
+            width: min(620px, 100%);
             text-align: center;
         }
-        .status-icon {
-            font-size: 4rem;
-            margin-bottom: 20px;
+
+        .verify-logo {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 22px;
+            color: rgba(255, 255, 255, 0.88);
         }
-        .success { color: #16a34a; }
-        .error { color: #dc2626; }
-        .loading { color: #2563eb; }
+
+        .verify-card {
+            padding: clamp(28px, 5vw, 48px);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            box-shadow: 0 28px 90px rgba(0, 0, 0, 0.38);
+            backdrop-filter: blur(22px);
+        }
+
+        .verify-icon {
+            display: inline-grid;
+            place-items: center;
+            width: 76px;
+            height: 76px;
+            margin-bottom: 24px;
+            border-radius: 50%;
+            font-size: 2.4rem;
+            color: #07110f;
+            background: #31ffba;
+        }
+
+        .verify-icon.error {
+            color: #fff;
+            background: #e23a5f;
+        }
+
+        .verify-icon.loading {
+            background: rgba(255, 255, 255, 0.16);
+            color: #fff;
+        }
+
+        .verify-card h1 {
+            margin: 0 0 14px;
+            color: #fff;
+            font-size: clamp(2.1rem, 5vw, 4rem);
+            line-height: 1;
+            letter-spacing: 0;
+            font-weight: 200;
+        }
+
+        .verify-card p {
+            width: min(470px, 100%);
+            margin: 0 auto 28px;
+            color: rgba(255, 255, 255, 0.78);
+            line-height: 1.75;
+            font-weight: 200;
+        }
+
+        .verify-actions {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .verify-actions .btn {
+            min-width: 150px;
+        }
+
+        .btn-muted {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 44px;
+            padding: 0 20px;
+            border: 1px solid rgba(255, 255, 255, 0.24);
+            border-radius: 999px;
+            color: #fff;
+            background: rgba(255, 255, 255, 0.08);
+            text-decoration: none;
+        }
     </style>
 </head>
-<body>
+<body class="verify-page">
+    <main class="verify-shell">
+        <div class="verify-logo">
+            <span class="logo-icon"></span>
+            <span class="brand-name">ProQ Pilot</span>
+        </div>
 
-<div class="verify-container">
-    <div id="status">
-        <div class="status-icon loading">⏳</div>
-        <h2>Verifying your email...</h2>
-        <p>Please wait while we confirm your account.</p>
-    </div>
-</div>
+        <section class="verify-card" id="status">
+            <div class="verify-icon loading"><i class="bx bx-loader-alt bx-spin"></i></div>
+            <h1>Verifying your email</h1>
+            <p>Please wait while we confirm your ProQ Pilot account.</p>
+        </section>
+    </main>
 
-<script>
-    async function verifyEmail() {
-        const urlParams = new URLSearchParams(window.location.search);
-        const token = urlParams.get('token');
+    <script>
         const statusDiv = document.getElementById('status');
 
-        if (!token) {
-            statusDiv.innerHTML = `
-                <div class="status-icon error">❌</div>
-                <h2>Invalid Request</h2>
-                <p>No verification token provided.</p>
-                <a href="signup.html" class="btn btn-primary">Go to Signup</a>
-            `;
-            return;
+        function escapeHtml(value) {
+            return String(value || '').replace(/[&<>"']/g, char => ({
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#39;'
+            }[char]));
         }
 
-        try {
-            const response = await fetch(`/api/v1/users/verify-email/${token}`);
-            const result = await response.json();
+        function renderState(type, title, message, primaryHref, primaryLabel, secondaryHref, secondaryLabel) {
+            const icon = type === 'success' ? 'bx-check' : 'bx-x';
+            const iconClass = type === 'success' ? '' : 'error';
 
-            if (response.ok) {
-                statusDiv.innerHTML = `
-                    <div class="status-icon success">✅</div>
-                    <h2>Email Verified!</h2>
-                    <p>Your account has been successfully verified. You can now sign in.</p>
-                    <a href="signin.html" class="btn btn-primary">Sign In</a>
-                `;
-            } else {
-                statusDiv.innerHTML = `
-                    <div class="status-icon error">❌</div>
-                    <h2>Verification Failed</h2>
-                    <p>${result.message || 'The verification link is invalid or has expired.'}</p>
-                    <a href="signup.html" class="btn btn-primary">Try Signup Again</a>
-                `;
+            statusDiv.innerHTML = `
+                <div class="verify-icon ${iconClass}"><i class="bx ${icon}"></i></div>
+                <h1>${escapeHtml(title)}</h1>
+                <p>${escapeHtml(message)}</p>
+                <div class="verify-actions">
+                    <a href="${primaryHref}" class="btn btn-primary">${escapeHtml(primaryLabel)}</a>
+                    ${secondaryHref ? `<a href="${secondaryHref}" class="btn-muted">${escapeHtml(secondaryLabel)}</a>` : ''}
+                </div>
+            `;
+        }
+
+        async function verifyEmail() {
+            const token = new URLSearchParams(window.location.search).get('token');
+
+            if (!token) {
+                renderState(
+                    'error',
+                    'Verification link missing',
+                    'This email verification link does not include a token. Please sign in or create a tester account again.',
+                    'signin.html',
+                    'Sign in',
+                    'signup.html',
+                    'Sign up'
+                );
+                return;
             }
-        } catch (err) {
-            statusDiv.innerHTML = `
-                <div class="status-icon error">❌</div>
-                <h2>Error</h2>
-                <p>Something went wrong. Please try again later.</p>
-            `;
+
+            try {
+                const response = await fetch(`/api/v1/users/verify-email/${encodeURIComponent(token)}`);
+                const result = await response.json();
+
+                if (response.ok) {
+                    renderState(
+                        'success',
+                        'Email verified',
+                        'Your account is active. You can now sign in and enter the ProQ Pilot development preview.',
+                        'signin.html?redirect=index.html',
+                        'Sign in'
+                    );
+                    return;
+                }
+
+                renderState(
+                    'error',
+                    'Verification could not be completed',
+                    result.message || 'This link may have expired or already been used. Try signing in first, or create the tester account again.',
+                    'signin.html',
+                    'Sign in',
+                    'signup.html',
+                    'Sign up again'
+                );
+            } catch (err) {
+                renderState(
+                    'error',
+                    'Verification service unavailable',
+                    'Something went wrong while checking your link. Please try again in a moment.',
+                    'signin.html',
+                    'Back to sign in'
+                );
+            }
         }
-    }
 
-    verifyEmail();
-</script>
-
+        verifyEmail();
+    </script>
 </body>
 </html>
