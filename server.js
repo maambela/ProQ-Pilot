@@ -21,7 +21,11 @@ const catchAsync = require('./utils/catchAsync');
 
 const app = express();
 app.use(cors());
-app.use(express.json());
+app.use(express.json({
+    verify: (req, res, buf) => {
+        req.rawBody = buf.toString('utf8');
+    }
+}));
 app.use(express.urlencoded({ extended: true }));
 
 app.use((req, res, next) => {
@@ -34,6 +38,51 @@ app.use((req, res, next) => {
 
 const ONE_DAY_MS = 24 * 60 * 60 * 1000;
 const ONE_YEAR_MS = 365 * ONE_DAY_MS;
+
+function getPublicBaseUrl(req) {
+    const configuredUrl = process.env.PUBLIC_BASE_URL || process.env.APP_BASE_URL || process.env.BASE_URL;
+    if (configuredUrl) return configuredUrl.replace(/\/+$/, '');
+
+    const protocol = req.get('x-forwarded-proto') || req.protocol || 'https';
+    const host = req.get('x-forwarded-host') || req.get('host');
+    return `${protocol}://${host}`;
+}
+
+function isYocoWebhookSignatureValid(req) {
+    const secret = process.env.YOCO_WEBHOOK_SECRET;
+    if (!secret) {
+        console.warn('[YOCO WEBHOOK] YOCO_WEBHOOK_SECRET is not configured; skipping signature verification.');
+        return true;
+    }
+
+    const webhookId = req.get('webhook-id');
+    const timestamp = req.get('webhook-timestamp');
+    const signatureHeader = req.get('webhook-signature');
+    const rawBody = req.rawBody;
+
+    if (!webhookId || !timestamp || !signatureHeader || !rawBody) return false;
+
+    const timestampMs = Number(timestamp) * 1000;
+    if (!Number.isFinite(timestampMs) || Math.abs(Date.now() - timestampMs) > 3 * 60 * 1000) {
+        return false;
+    }
+
+    const secretValue = secret.startsWith('whsec_') ? secret.split('_')[1] : secret;
+    const expectedSignature = crypto
+        .createHmac('sha256', Buffer.from(secretValue, 'base64'))
+        .update(`${webhookId}.${timestamp}.${rawBody}`)
+        .digest('base64');
+
+    return signatureHeader
+        .split(' ')
+        .map(part => part.split(',')[1])
+        .filter(Boolean)
+        .some(signature => {
+            const expected = Buffer.from(expectedSignature);
+            const actual = Buffer.from(signature);
+            return actual.length === expected.length && crypto.timingSafeEqual(actual, expected);
+        });
+}
 
 function setLongLivedAssetCache(res) {
     res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
@@ -3316,20 +3365,23 @@ app.post('/api/v1/checkout-payment', async (req, res, next) => {
         // Step 3: Create YOCO checkout (outside transaction, so no lock conflicts)
         const yocoSecretKey = process.env.YOCO_SECRET_KEY;
         if (!yocoSecretKey) throw new Error('YOCO secret key not configured');
+        const publicBaseUrl = getPublicBaseUrl(req);
 
         const yocoResponse = await fetch('https://payments.yoco.com/api/checkouts', {
             method: 'POST',
             headers: {
                 'Authorization': `Bearer ${yocoSecretKey}`,
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                'Idempotency-Key': `proq-order-${orderId}`
             },
             body: JSON.stringify({
                 amount: Math.round(totalAmount * 100), // Convert to cents
                 currency: 'ZAR',
-                description: `ProQ Pilot Order #${orderId}`,
-                successUrl: `http://localhost:3000/order-success.html?orderId=${orderId}`,
-                cancelUrl: `http://localhost:3000/review.html`,
-                notifyUrl: `http://localhost:3000/webhook/yoco-order`,
+                successUrl: `${publicBaseUrl}/order-success.html?orderId=${orderId}`,
+                cancelUrl: `${publicBaseUrl}/review.html`,
+                failureUrl: `${publicBaseUrl}/review.html`,
+                externalId: `proq-order-${orderId}`,
+                clientReferenceId: String(orderId),
                 metadata: {
                     orderId: orderId,
                     userID: userID
@@ -3338,6 +3390,8 @@ app.post('/api/v1/checkout-payment', async (req, res, next) => {
         });
 
         if (!yocoResponse.ok) {
+            const yocoError = await yocoResponse.text();
+            console.error('YOCO checkout creation failed:', yocoResponse.status, yocoError);
             throw new Error('Failed to create YOCO checkout');
         }
 
@@ -3347,7 +3401,12 @@ app.post('/api/v1/checkout-payment', async (req, res, next) => {
         connection = await db.getConnection();
         await connection.query(
             'UPDATE Payments SET provider_response = ? WHERE order_id = ?',
-            [JSON.stringify({ yoco_checkout_id: yocoData.id }), orderId]
+            [JSON.stringify({
+                yoco_checkout_id: yocoData.id,
+                yoco_redirect_url: yocoData.redirectUrl,
+                public_base_url: publicBaseUrl,
+                mode: 'live'
+            }), orderId]
         );
         connection.release();
 
@@ -3372,13 +3431,24 @@ app.post('/webhook/yoco-order', async (req, res) => {
     console.log('[YOCO WEBHOOK] ✉️ WEBHOOK RECEIVED FROM YOCO');
     console.log('[YOCO WEBHOOK] ===============================================');
     
+    if (!isYocoWebhookSignatureValid(req)) {
+        console.error('[YOCO WEBHOOK] Invalid webhook signature. Rejecting event.');
+        return res.sendStatus(403);
+    }
+
     const event = req.body;
     console.log('[YOCO WEBHOOK] Event Type:', event?.type);
-    console.log('[YOCO WEBHOOK] Checkout ID:', event?.data?.id);
+    const eventCheckoutId = event?.data?.id || event?.metadata?.checkoutId || event?.data?.metadata?.checkoutId;
+    console.log('[YOCO WEBHOOK] Checkout ID:', eventCheckoutId);
 
     if (event?.type === 'checkout.paid') {
-        const checkoutId = event.data.id;
+        const checkoutId = eventCheckoutId;
         let connection;
+
+        if (!checkoutId) {
+            console.error('[YOCO WEBHOOK] Missing checkout id in paid event.');
+            return res.sendStatus(200);
+        }
 
         try {
             connection = await db.getConnection();
@@ -3390,7 +3460,9 @@ app.post('/webhook/yoco-order', async (req, res) => {
             // 1. Find the payment and associated order FIRST
             console.log('[YOCO WEBHOOK] Step 1: Looking up payment record for checkout:', checkoutId);
             const [payments] = await connection.query(
-                'SELECT p.id as paymentId, p.order_id, p.userID FROM Payments p WHERE JSON_EXTRACT(provider_response, "$.yoco_checkout_id") = ?',
+                `SELECT p.id as paymentId, p.order_id, p.userID, p.status
+                 FROM Payments p
+                 WHERE JSON_UNQUOTE(JSON_EXTRACT(provider_response, "$.yoco_checkout_id")) = ?`,
                 [checkoutId]
             );
 
@@ -3404,9 +3476,22 @@ app.post('/webhook/yoco-order', async (req, res) => {
             const { order_id: orderId, userID, paymentId } = payments[0];
             console.log(`[YOCO WEBHOOK] ✅ Found payment: ID ${paymentId}, Order #${orderId}, User #${userID}`);
 
+            if (payments[0].status === 'paid') {
+                console.log(`[YOCO WEBHOOK] ℹ️ Payment ${paymentId} already marked paid. Acknowledging duplicate webhook.`);
+                await connection.rollback();
+                connection.release();
+                return res.sendStatus(200);
+            }
+
             // 2. Update statuses to PAID
             console.log('[YOCO WEBHOOK] Step 2: Updating payment and order status to PAID...');
-            await connection.query('UPDATE Payments SET status = "paid" WHERE id = ?', [paymentId]);
+            await connection.query(
+                `UPDATE Payments
+                 SET status = "paid",
+                     provider_response = JSON_SET(COALESCE(provider_response, JSON_OBJECT()), "$.last_webhook_event", ?)
+                 WHERE id = ?`,
+                [JSON.stringify(event), paymentId]
+            );
             await connection.query('UPDATE Orders SET status = "paid" WHERE id = ?', [orderId]);
             console.log(`[YOCO WEBHOOK] ✅ Order #${orderId} marked as PAID`);
 
