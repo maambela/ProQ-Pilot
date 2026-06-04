@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ProQ Pilot | Development Preview</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/development.css">
+    <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
+</head>
+<body class="development-page">
+    <main class="dev-gate">
+        <section class="dev-hero">
+            <div class="dev-hero-media" aria-hidden="true">
+                <img src="Images/BusinessLaptop.jpg" alt="">
+            </div>
+
+            <div class="dev-hero-content">
+                <div class="logo-area dev-logo">
+                    <span class="logo-icon">P</span>
+                    <span class="brand-name">ProQ Pilot</span>
+                </div>
+
+                <span class="badge-pill">Private Development Preview</span>
+                <h1>ProQ Pilot is currently in testing.</h1>
+                <p>
+                    The platform is public for deployment checks, supplier sync testing, payments, and Cloud SQL verification.
+                    Access is limited to authenticated developers until the site is ready for customers.
+                </p>
+
+                <div class="dev-actions">
+                    <a href="signin.html?redirect=index.html" class="btn btn-primary" id="devAccessButton">
+                        Developer sign in
+                    </a>
+                </div>
+            </div>
+        </section>
+
+        <section class="dev-preview" aria-label="Preview of ProQ Pilot">
+            <article class="dev-preview-card">
+                <i class="bx bx-laptop"></i>
+                <h2>Procurement Store</h2>
+                <p>Curated laptops, monitors, desktops, and workstations are being prepared for business purchasing.</p>
+            </article>
+
+            <article class="dev-preview-card">
+                <i class="bx bx-data"></i>
+                <h2>Live Supplier Sync</h2>
+                <p>Tarson product data, stock, pricing, and images are being tested against Cloud SQL.</p>
+            </article>
+
+            <article class="dev-preview-card">
+                <i class="bx bx-shield-quarter"></i>
+                <h2>Secure Checkout</h2>
+                <p>Developer testing is validating login, cart, payments, orders, and license workflows.</p>
+            </article>
+        </section>
+    </main>
+
+    <script>
+        (function () {
+            function hasDeveloperAccess() {
+                try {
+                    const token = localStorage.getItem('token');
+                    const user = JSON.parse(localStorage.getItem('user') || 'null');
+                    return Boolean(token && user && user.userID);
+                } catch (err) {
+                    return false;
+                }
+            }
+
+            if (hasDeveloperAccess()) {
+                const button = document.getElementById('devAccessButton');
+                button.href = 'index.html';
+                button.textContent = 'Enter developer preview';
+            }
+        })();
+    </script>
+</body>
+</html>

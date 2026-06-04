@@ -1,3 +1,28 @@
+function hasDeveloperAccess() {
+    try {
+        const token = localStorage.getItem('token');
+        const user = JSON.parse(localStorage.getItem('user') || 'null');
+        return Boolean(token && user && user.userID);
+    } catch (err) {
+        return false;
+    }
+}
+
+function enforceDevelopmentGate() {
+    const currentPage = (window.location.pathname.split('/').pop() || 'index.html').toLowerCase();
+    const publicPages = new Set([
+        'development.html',
+        'signin.html',
+        'resetpassword.html'
+    ]);
+
+    if (!publicPages.has(currentPage) && !hasDeveloperAccess()) {
+        window.location.replace('development.html');
+    }
+}
+
+enforceDevelopmentGate();
+
 // Helper function to extract clean laptop name (limit to 4 words max)
 function cleanProductName(fullName) {
     if (!fullName) return "Laptop";
@@ -440,10 +465,9 @@ document.addEventListener('DOMContentLoaded', () => {
             filteredProducts.sort(sortByStorePriority);
         }
         
-        // Keep unwanted and no-image products out.
+        // Keep unwanted products out while supplier images are still syncing.
         filteredProducts = filteredProducts.filter(product =>
             (Number(product.quantity) || 0) > 0 &&
-            productHasImage(product) &&
             !shouldHideStoreProduct(product)
         );
         

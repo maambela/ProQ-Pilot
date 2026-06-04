@@ -22,7 +22,7 @@
     <section class="auth-page">
         <div class="auth-card">
             <h2>Welcome Back</h2>
-            <p>Sign in to your account</p>
+            <p>Sign in with an approved developer account</p>
 
             <form class="auth-form" id="loginForm">
                 <input type="email" name="email" placeholder="Email address" required>
@@ -38,10 +38,7 @@
                 <p>
                     <a href="resetpassword.html">Forgot password?</a>
                 </p>
-                <p>
-                    Don’t have an account?
-                    <a href="signup.html">Create one</a>
-                </p>
+                <p>Access is limited while ProQ Pilot is in development testing.</p>
             </div>
         </div>
     </section>
@@ -58,7 +55,7 @@
             showLoading('Authenticating...');
 
             try {
-                const response = await fetch('http://localhost:3000/api/v1/users/login', {
+                const response = await fetch('/api/v1/users/login', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
@@ -77,11 +74,9 @@
 
                     // Short delay for the user to see the success message
                     setTimeout(() => {
-                        if (result.data.user.role === 'admin') {
-                            window.location.href = 'admin_products.html';
-                        } else {
-                            window.location.href = 'index.html';
-                        }
+                        const params = new URLSearchParams(window.location.search);
+                        const redirectTo = params.get('redirect') || 'index.html';
+                        window.location.href = redirectTo;
                     }, 1500);
                 } else {
                     hideOverlay();

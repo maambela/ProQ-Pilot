@@ -4,6 +4,19 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ProQ Pilot | Next-Gen Laptop Store</title>
+    <script>
+        (function () {
+            try {
+                const token = localStorage.getItem('token');
+                const user = JSON.parse(localStorage.getItem('user') || 'null');
+                if (!(token && user && user.userID)) {
+                    window.location.replace('development.html');
+                }
+            } catch (err) {
+                window.location.replace('development.html');
+            }
+        })();
+    </script>
     <link rel="stylesheet" href="css/style.css">
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
 </head>
@@ -343,16 +356,16 @@
             </div>
             <div class="brands-grid">
                 <div class="brand-card animate-on-scroll fade-in-scale">
-                    <img src="Images/HP.PNG" alt="HP" class="brand-image">
+                    <img src="Images/HP.png" alt="HP" class="brand-image">
                 </div>
                 <div class="brand-card animate-on-scroll fade-in-scale">
                     <img src="Images/DellLaptops.PNG" alt="Dell" class="brand-image">
                 </div>
                 <div class="brand-card animate-on-scroll fade-in-scale">
-                    <img src="Images/Apple.PNG" alt="Apple" class="brand-image">
+                    <img src="Images/Apple.png" alt="Apple" class="brand-image">
                 </div>
                 <div class="brand-card animate-on-scroll fade-in-scale">
-                    <img src="Images/Microsoft.PNG" alt="Microsoft" class="brand-image">
+                    <img src="Images/Microsoft.png" alt="Microsoft" class="brand-image">
                 </div>
                 <div class="brand-card animate-on-scroll fade-in-scale">
                     <img src="Images/AcerStick.png" alt="Acer" class="brand-image">
