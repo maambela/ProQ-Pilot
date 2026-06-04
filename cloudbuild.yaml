@@ -34,7 +34,7 @@ steps:
       - ${_REGION}
       - --platform
       - managed
-      - --allow-unauthenticated
+      - --no-invoker-iam-check
       - --service-account
       - ${_SERVICE_ACCOUNT}
       - --add-cloudsql-instances
