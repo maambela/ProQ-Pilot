@@ -5,22 +5,27 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ProQ Pilot | Development Preview</title>
     <link rel="stylesheet" href="css/style.css">
-    <link rel="stylesheet" href="css/development.css">
+    <link rel="stylesheet" href="css/development.css?v=testing-bg-1">
     <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
 </head>
 <body class="development-page">
+    <header class="main-header dev-header">
+        <div class="header-container">
+            <div class="logo-area">
+                <span class="logo-icon">P</span>
+                <span class="brand-name">ProQ Pilot</span>
+            </div>
+            <nav class="nav-links">
+                <a href="development.html" class="active">Preview</a>
+                <a href="signin.html?redirect=index.html">Developer Access</a>
+            </nav>
+
+        </div>
+    </header>
+
     <main class="dev-gate">
         <section class="dev-hero">
-            <div class="dev-hero-media" aria-hidden="true">
-                <img src="Images/BusinessLaptop.jpg" alt="">
-            </div>
-
             <div class="dev-hero-content">
-                <div class="logo-area dev-logo">
-                    <span class="logo-icon">P</span>
-                    <span class="brand-name">ProQ Pilot</span>
-                </div>
-
                 <span class="badge-pill">Private Development Preview</span>
                 <h1>ProQ Pilot is currently in testing.</h1>
                 <p>
@@ -36,23 +41,29 @@
             </div>
         </section>
 
-        <section class="dev-preview" aria-label="Preview of ProQ Pilot">
+        <section class="dev-preview" aria-label="Development status">
             <article class="dev-preview-card">
-                <i class="bx bx-laptop"></i>
-                <h2>Procurement Store</h2>
-                <p>Curated laptops, monitors, desktops, and workstations are being prepared for business purchasing.</p>
+                <i class="bx bx-data"></i>
+                <div>
+                    <h2>Cloud SQL Connected</h2>
+                    <p>Product data is being validated against the production Google Cloud database.</p>
+                </div>
             </article>
 
             <article class="dev-preview-card">
-                <i class="bx bx-data"></i>
-                <h2>Live Supplier Sync</h2>
-                <p>Tarson product data, stock, pricing, and images are being tested against Cloud SQL.</p>
+                <i class="bx bx-package"></i>
+                <div>
+                    <h2>Supplier Sync Testing</h2>
+                    <p>Tarson inventory, availability, pricing, and product images are still being reviewed.</p>
+                </div>
             </article>
 
             <article class="dev-preview-card">
                 <i class="bx bx-shield-quarter"></i>
-                <h2>Secure Checkout</h2>
-                <p>Developer testing is validating login, cart, payments, orders, and license workflows.</p>
+                <div>
+                    <h2>Developer Access Only</h2>
+                    <p>Only authenticated testing accounts can enter the website until launch approval.</p>
+                </div>
             </article>
         </section>
     </main>

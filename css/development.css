@@ -1,9 +1,14 @@
 .development-page {
     min-height: 100vh;
-    background: #000;
-    color: #fff;
-    overflow-x: hidden;
+    font-family: 'Inter', sans-serif;
     font-weight: 200;
+    background: url('../Images/15.png') no-repeat center center fixed;
+    background-size: cover;
+    background-attachment: fixed;
+    color: var(--text-main);
+    line-height: 1.6;
+    overflow-x: hidden;
+    width: 100%;
 }
 
 .development-page * {
@@ -14,26 +19,11 @@
     content: "";
     position: fixed;
     inset: 0;
-    z-index: -3;
+    z-index: -1;
     background:
-        radial-gradient(ellipse at 12% 52%, rgba(151, 53, 255, 0.48), transparent 30%),
-        radial-gradient(ellipse at 52% 76%, rgba(232, 28, 31, 0.54), transparent 35%),
-        radial-gradient(ellipse at 78% 42%, rgba(255, 181, 33, 0.36), transparent 30%),
-        #000;
-}
-
-.development-page::after {
-    content: "";
-    position: fixed;
-    inset: 0;
-    z-index: -2;
-    opacity: 0.9;
-    background:
-        linear-gradient(105deg, transparent 6%, rgba(255, 255, 255, 0.18) 16%, transparent 28%),
-        linear-gradient(165deg, transparent 28%, rgba(49, 255, 186, 0.22) 44%, rgba(255, 211, 66, 0.3) 54%, transparent 68%),
-        repeating-radial-gradient(ellipse at 8% 58%, rgba(255,255,255,0.22) 0 1px, transparent 1px 8px);
-    filter: blur(0.5px);
-    mask-image: linear-gradient(180deg, transparent 3%, #000 18%, #000 86%, transparent 100%);
+        radial-gradient(circle at center, rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 0.78) 72%),
+        linear-gradient(180deg, rgba(0, 0, 0, 0.18), rgba(0, 0, 0, 0.72));
+    pointer-events: none;
 }
 
 .dev-header {
@@ -49,126 +39,63 @@
 
 .dev-gate {
     min-height: calc(100vh - 96px);
-    padding: 22px 0 42px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 36px 0 48px;
 }
 
 .dev-hero {
     width: min(1240px, calc(100% - 44px));
-    min-height: 64vh;
     margin: 0 auto;
+    min-height: 56vh;
     display: grid;
-    grid-template-columns: minmax(0, 0.9fr) minmax(420px, 1.1fr);
-    gap: 42px;
-    align-items: center;
+    place-items: center;
+    text-align: center;
 }
 
 .dev-hero-content {
-    padding: 48px 0;
+    width: min(1120px, 100%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.dev-hero .badge-pill {
+    margin-bottom: 22px;
 }
 
 .dev-hero h1 {
-    max-width: 720px;
-    margin: 18px 0;
-    font-size: clamp(3rem, 7vw, 7.2rem);
-    line-height: 0.92;
+    width: 100%;
+    margin: 0 0 22px;
+    font-size: clamp(1.2rem, 8vw, 4.2rem);
+    line-height: 0.96;
     letter-spacing: 0;
+    text-align: center;
+    font-weight: 100;
 }
 
 .dev-hero p {
-    max-width: 640px;
-    color: rgba(255, 255, 255, 0.78);
-    font-size: 1.08rem;
-    line-height: 1.75;
+    width: min(980px, 100%);
+    margin: 0 auto;
+    color: rgba(255, 255, 255, 0.82);
+    font-size: clamp(1rem, 1.45vw, 1.32rem);
+    line-height: 1.8;
+    text-align: center;
 }
 
 .dev-actions {
     display: flex;
+    justify-content: center;
     align-items: center;
     flex-wrap: wrap;
     gap: 16px;
-    margin-top: 30px;
-}
-
-.dev-status-pill {
-    display: inline-flex;
-    align-items: center;
-    min-height: 42px;
-    padding: 0 18px;
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    border-radius: 999px;
-    color: rgba(255, 255, 255, 0.82);
-    background: rgba(255, 255, 255, 0.08);
-    backdrop-filter: blur(18px);
-    font-size: 0.92rem;
-}
-
-.dev-product-preview {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 18px;
-    align-items: end;
-}
-
-.dev-product-card {
-    min-height: 420px;
-    overflow: hidden;
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    border-radius: 28px;
-    background: rgba(255, 255, 255, 0.11);
-    box-shadow: 0 30px 90px rgba(0, 0, 0, 0.35);
-    backdrop-filter: blur(18px);
-}
-
-.dev-product-card:nth-child(2) {
-    transform: translateY(34px);
-}
-
-.dev-product-image {
-    height: 190px;
-    display: grid;
-    place-items: center;
-    background: #fff;
-}
-
-.dev-product-image img {
-    max-width: 72%;
-    max-height: 132px;
-    object-fit: contain;
-}
-
-.dev-product-body {
-    min-height: 230px;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    padding: 26px;
-    text-align: center;
-    background: rgba(0, 0, 0, 0.28);
-}
-
-.dev-product-body span {
-    margin-bottom: 18px;
-    color: rgba(255, 255, 255, 0.76);
-    font-size: 0.78rem;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-}
-
-.dev-product-body h2 {
-    margin: 0 0 14px;
-    font-size: 1.18rem;
-    letter-spacing: 0;
-}
-
-.dev-product-body p {
-    margin: 0;
-    color: rgba(255, 255, 255, 0.7);
-    line-height: 1.6;
+    margin-top: 34px;
 }
 
 .dev-preview {
     width: min(1180px, calc(100% - 44px));
-    margin: 16px auto 0;
+    margin: 8px auto 0;
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 16px;
@@ -205,45 +132,27 @@
 
 .dev-preview-card p {
     margin: 0;
-    color: rgba(255, 255, 255, 0.7);
+    color: rgba(255, 255, 255, 0.72);
     line-height: 1.58;
 }
 
-@media (max-width: 1080px) {
-    .dev-hero {
-        grid-template-columns: 1fr;
-        min-height: auto;
-    }
-
-    .dev-product-preview {
-        max-width: 860px;
-    }
-
-    .dev-product-card:nth-child(2) {
-        transform: none;
-    }
-}
-
-@media (max-width: 760px) {
+@media (max-width: 900px) {
     .dev-header .nav-links {
         display: none;
     }
 
+    .dev-preview {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 640px) {
     .dev-hero,
     .dev-preview {
         width: min(100% - 28px, 1180px);
     }
 
     .dev-hero h1 {
-        font-size: clamp(2.7rem, 16vw, 4.8rem);
-    }
-
-    .dev-product-preview,
-    .dev-preview {
-        grid-template-columns: 1fr;
-    }
-
-    .dev-product-card {
-        min-height: 360px;
+        font-size: clamp(2.8rem, 15vw, 4.6rem);
     }
 }
