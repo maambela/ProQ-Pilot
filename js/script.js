@@ -11,20 +11,37 @@ function getBrandDisplay(brand) {
     
     const brandLower = brand.toLowerCase();
     const logos = {
-        'hp': 'Images/HP.PNG',
-        'dell': 'Images/DellLaptops.PNG',
-        'apple': 'Images/Apple.PNG',
-        'macbook': 'Images/Apple.PNG',
-        'microsoft': 'Images/Microsoft.PNG',
-        'acer': 'Images/AcerStick.png',
-        'lenovo': 'Images/lenovo.PNG',
+        'hp': ['Images/HP.PNG', 'Images/HP.png', 'Images/hp.PNG', 'Images/hp.png'],
+        'dell': ['Images/DellLaptops.PNG', 'Images/DellLaptops.png', 'Images/delllaptops.PNG', 'Images/delllaptops.png'],
+        'apple': ['Images/Apple.PNG', 'Images/Apple.png', 'Images/apple.PNG', 'Images/apple.png'],
+        'macbook': ['Images/Apple.PNG', 'Images/Apple.png', 'Images/apple.PNG', 'Images/apple.png'],
+        'microsoft': ['Images/Microsoft.PNG', 'Images/Microsoft.png', 'Images/microsoft.PNG', 'Images/microsoft.png'],
+        'acer': ['Images/AcerStick.png', 'Images/AcerStick.PNG', 'Images/acerstick.png', 'Images/acerstick.PNG'],
+        'lenovo': ['Images/lenovo.PNG', 'Images/lenovo.png', 'Images/Lenovo.PNG', 'Images/Lenovo.png'],
     };
 
     if (logos[brandLower]) {
-        return `<img src="${logos[brandLower]}" alt="${brand}" class="brand-logo-tag" style="height: 40px; width: auto; display: block; object-fit: contain;" onerror="this.replaceWith(Object.assign(document.createElement('span'), { className: 'brand-tag', textContent: '${brand.toUpperCase()}' }))">`;
+        const logoOptions = logos[brandLower];
+        return `<img src="${logoOptions[0]}" data-logo-options="${logoOptions.join('|')}" data-logo-index="0" alt="${brand}" class="brand-logo-tag" style="height: 40px; width: auto; display: block; object-fit: contain;" onerror="tryNextBrandLogo(this)">`;
     }
 
     return `<span class="brand-tag" style="background: rgba(255,255,255,0.14); color: white; padding: 4px 10px; border-radius: 4px; font-size: 11px; font-weight: 200;">${brand.toUpperCase()}</span>`;
+}
+
+function tryNextBrandLogo(img) {
+    const options = String(img.dataset.logoOptions || '').split('|').filter(Boolean);
+    const nextIndex = Number(img.dataset.logoIndex || 0) + 1;
+
+    if (nextIndex < options.length) {
+        img.dataset.logoIndex = String(nextIndex);
+        img.src = options[nextIndex];
+        return;
+    }
+
+    const fallback = document.createElement('span');
+    fallback.className = 'brand-tag';
+    fallback.textContent = String(img.alt || 'Brand').toUpperCase();
+    img.replaceWith(fallback);
 }
 
 // Custom dropdown functionality
@@ -291,10 +308,9 @@ document.addEventListener('DOMContentLoaded', () => {
             console.log('[Store] API Response Data:', data);
 
             if (data.status === 'success') {
-                // Show synced store products with images only.
+                // Show synced store products even while supplier images are still being imported.
                 allProducts = (data.data.products || []).filter(p =>
                     (Number(p.quantity) || 0) > 0 &&
-                    productHasImage(p) &&
                     !shouldHideStoreProduct(p)
                 );
                 console.log('[Store] Loaded', allProducts.length, 'store products');
@@ -1637,18 +1653,18 @@ function initBrandGrid() {
     if (!brandsGrid) return;
 
     const brands = [
-        { name: 'HP' , logo: 'Images/HP.PNG' },
-        { name: 'Dell', logo: 'Images/DellLaptops.PNG' },
-        { name: 'Apple', logo: 'Images/Apple.PNG' },
-        { name: 'Microsoft', logo: 'Images/Microsoft.PNG' },
-        { name: 'Acer', logo: 'Images/AcerStick.png' },
-        { name: 'Lenovo', logo: 'Images/lenovo.PNG' },
+        { name: 'HP' , logos: ['Images/HP.PNG', 'Images/HP.png', 'Images/hp.PNG', 'Images/hp.png'] },
+        { name: 'Dell', logos: ['Images/DellLaptops.PNG', 'Images/DellLaptops.png', 'Images/delllaptops.PNG', 'Images/delllaptops.png'] },
+        { name: 'Apple', logos: ['Images/Apple.PNG', 'Images/Apple.png', 'Images/apple.PNG', 'Images/apple.png'] },
+        { name: 'Microsoft', logos: ['Images/Microsoft.PNG', 'Images/Microsoft.png', 'Images/microsoft.PNG', 'Images/microsoft.png'] },
+        { name: 'Acer', logos: ['Images/AcerStick.png', 'Images/AcerStick.PNG', 'Images/acerstick.png', 'Images/acerstick.PNG'] },
+        { name: 'Lenovo', logos: ['Images/lenovo.PNG', 'Images/lenovo.png', 'Images/Lenovo.PNG', 'Images/Lenovo.png'] },
         
     ];
 
     brandsGrid.innerHTML = brands.map(brand => `
-        <div class="brand-card animate-on-scroll fade-in-scale ${brand.logo ? '' : 'brand-card-text'}">
-            ${brand.logo ? `<img src="${brand.logo}" alt="${brand.name}" class="brand-image" onerror="this.parentElement.classList.add('brand-card-text'); this.parentElement.textContent='${brand.name}';">` : brand.name}
+        <div class="brand-card animate-on-scroll fade-in-scale ${brand.logos ? '' : 'brand-card-text'}">
+            ${brand.logos ? `<img src="${brand.logos[0]}" data-logo-options="${brand.logos.join('|')}" data-logo-index="0" alt="${brand.name}" class="brand-image" onerror="tryNextBrandLogo(this)">` : brand.name}
         </div>
     `).join('');
 
