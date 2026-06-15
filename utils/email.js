@@ -147,16 +147,23 @@ async function sendMailOptions(mailOptions = {}) {
 }
 
 async function sendEmail(options = {}) {
-    return sendGraphEmail({
-        from: options.from || EMAIL_SENDERS.support,
-        to: options.email || options.to,
-        cc: options.cc,
-        bcc: options.bcc,
-        replyTo: options.replyTo,
-        subject: options.subject,
-        html: options.html,
-        text: options.text
-    });
+    try {
+        const result = await sendGraphEmail({
+            from: options.from || EMAIL_SENDERS.support,
+            to: options.email || options.to,
+            cc: options.cc,
+            bcc: options.bcc,
+            replyTo: options.replyTo,
+            subject: options.subject,
+            html: options.html,
+            text: options.text
+        });
+        console.log('[EMAIL] ✅ Email sent successfully to:', options.email || options.to);
+        return result;
+    } catch (error) {
+        console.error('[EMAIL] ❌ Failed to send email:', error.message);
+        throw error;
+    }
 }
 
 async function sendSalesEmail(options = {}) {

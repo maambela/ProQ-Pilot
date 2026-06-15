@@ -2918,40 +2918,51 @@ app.get('/api/v1/cart/:userID', async (req, res, next) => {
 app.patch('/api/v1/cart/:userID/:productID', async (req, res, next) => {
     const { action } = req.body; // expecting { action: 'increment' } or { action: 'decrement' }
     try {
+        const userID = parseInt(req.params.userID);
+        const productID = parseInt(req.params.productID);
+        
+        console.log(`[Cart PATCH] userID: ${userID}, productID: ${productID}, action: ${action}`);
         const connection = await db.getConnection();
+        
         if (action === 'increment') {
             await connection.query('UPDATE Cart SET quantity = quantity + 1 WHERE userID = ? AND productID = ?', 
-            [req.params.userID, req.params.productID]);
+            [userID, productID]);
+            console.log('[Cart PATCH] ✅ Incremented');
         } else if (action === 'decrement') {
-            await connection.query('UPDATE Cart SET quantity = quantity - 1 WHERE userID = ? AND productID = ?', 
-            [req.params.userID, req.params.productID]);
+            await connection.query('UPDATE Cart SET quantity = GREATEST(1, quantity - 1) WHERE userID = ? AND productID = ?', 
+            [userID, productID]);
+            console.log('[Cart PATCH] ✅ Decremented');
         }
         connection.release();
         res.status(200).json({ status: 'success' });
-    } catch (err) { next(err); }
+    } catch (err) { 
+        console.error('[Cart PATCH] Error:', err);
+        next(err); 
+    }
 });
 
 // REMOVE FROM DATABASE
 app.delete('/api/v1/cart/:userID/:productID', async (req, res, next) => {
     try {
         const connection = await db.getConnection();
-        const userID = req.params.userID;
-        const productID = req.params.productID;
+        const userID = parseInt(req.params.userID);
+        const productID = parseInt(req.params.productID);
+        
+        console.log(`[Cart DELETE] userID: ${userID}, productID: ${productID}`);
         
         // Check if it's a virtual digital license item
-        if (productID === '0' || productID === 0) {
-            console.log(`[Cart API] Deleting Duo items for user ${userID}`);
+        if (productID === 0) {
+            console.log(`[Cart DELETE] Deleting all Duo items for user ${userID}`);
             await connection.query('DELETE FROM duo_cart_items WHERE userID = ?', [userID]);
-        } else if (String(productID).startsWith('ms-')) {
-            console.log(`[Cart API] Deleting Microsoft license item ${productID} for user ${userID}`);
-            await connection.query('DELETE FROM duo_cart_items WHERE userID = ? AND cart_product_id = ?', [userID, productID]);
+            console.log('[Cart DELETE] ✅ Duo items deleted');
         } else {
             // Regular product
-            await connection.query('DELETE FROM Cart WHERE userID = ? AND productID = ?', 
+            const [result] = await connection.query('DELETE FROM Cart WHERE userID = ? AND productID = ?', 
             [userID, productID]);
+            console.log(`[Cart DELETE] ✅ Deleted - affected rows: ${result.affectedRows}`);
         }
         connection.release();
-        res.status(204).json({ status: 'success' });
+        res.status(200).json({ status: 'success', deleted: true });
     } catch (err) { next(err); }
 });
 
@@ -2959,10 +2970,10 @@ app.delete('/api/v1/cart/:userID/:productID', async (req, res, next) => {
 app.delete('/api/v1/cart/:userID/duo/:orgName', async (req, res, next) => {
     try {
         const connection = await db.getConnection();
-        const userID = req.params.userID;
-        const orgName = req.params.orgName;
+        const userID = parseInt(req.params.userID);
+        const orgName = decodeURIComponent(req.params.orgName);
         
-        console.log(`[Cart API] Deleting Duo item for user ${userID}, org: ${orgName}`);
+        console.log(`[Cart DUO DELETE] userID: ${userID}, orgName: ${orgName}`);
         
         // Delete the specific Duo organization from duo_cart_items
         const [result] = await connection.query(`
@@ -2970,22 +2981,27 @@ app.delete('/api/v1/cart/:userID/duo/:orgName', async (req, res, next) => {
             WHERE userID = ? AND JSON_EXTRACT(duo_config_json, '$.organization_name') = ?
         `, [userID, orgName]);
         
-        console.log(`[Cart API] Deleted Duo item - rows affected: ${result.affectedRows}`);
+        console.log(`[Cart DUO DELETE] ✅ Deleted - rows affected: ${result.affectedRows}`);
         connection.release();
         res.status(200).json({ status: 'success', deleted: result.affectedRows > 0 });
-    } catch (err) { next(err); }
+    } catch (err) { 
+        console.error('[Cart DUO DELETE] Error:', err);
+        next(err); 
+    }
 });
 
 // Clear entire cart for user (both regular and Duo items)
 app.delete('/api/v1/cart/:userID', async (req, res, next) => {
     try {
         const connection = await db.getConnection();
-        const userID = req.params.userID;
+        const userID = parseInt(req.params.userID);
         
+        console.log(`[Cart CLEAR] Clearing entire cart for userID: ${userID}`);
         await connection.beginTransaction();
         
         // Delete regular cart items
-        await connection.query('DELETE FROM Cart WHERE userID = ?', [userID]);
+        const [regularResult] = await connection.query('DELETE FROM Cart WHERE userID = ?', [userID]);
+        console.log(`[Cart CLEAR] Regular items deleted: ${regularResult.affectedRows}`);
         
         // Delete Duo cart items
         await connection.query('DELETE FROM duo_cart_items WHERE userID = ?', [userID]);

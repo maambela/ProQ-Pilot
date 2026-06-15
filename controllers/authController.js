@@ -42,6 +42,8 @@ exports.signup = catchAsync(async (req, res, next) => {
         passwordConfirm: req.body.passwordConfirm
     });
 
+    console.log(`[AUTH] User created: ${newUser.email}, verification token: ${newUser.verificationToken ? 'YES' : 'NO'}`);
+
     // 4) Send verification email
     const verifyURL = `${req.protocol}://${req.get('host')}/verify-email.html?token=${newUser.verificationToken}`;
     
@@ -53,18 +55,21 @@ exports.signup = catchAsync(async (req, res, next) => {
     `;
 
     try {
+        console.log(`[AUTH] Attempting to send verification email to: ${newUser.email}`);
         await sendEmail({
             email: newUser.email,
             subject: 'Email Verification - ProQ Pilot',
             html
         });
 
+        console.log(`[AUTH] ✅ Verification email sent successfully to ${newUser.email}`);
         res.status(201).json({
             status: 'success',
             message: 'Verification email sent to ' + newUser.email
         });
     } catch (err) {
-        return next(new AppError('There was an error sending the email. Try again later.', 500));
+        console.error(`[AUTH] ❌ Email sending failed:`, err.message);
+        return next(new AppError('Email configuration error. Please contact support. Error: ' + err.message, 500));
     }
 });
 
