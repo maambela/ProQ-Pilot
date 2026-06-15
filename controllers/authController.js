@@ -3,7 +3,37 @@ const catchAsync = require('./../utils/catchAsync');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const AppError = require('../utils/appError');
-const sendEmail = require('../utils/email');
+const { sendNoReplyEmail } = require('../utils/email');
+
+function getPublicBaseUrl(req) {
+    return (process.env.PUBLIC_BASE_URL || `${req.protocol}://${req.get('host')}`).replace(/\/+$/, '');
+}
+
+function validatePassword(password, passwordConfirm) {
+    if (!password || password.length < 8) return 'Password must be at least 8 characters';
+    if (!/[A-Z]/.test(password)) return 'Password must include an uppercase letter';
+    if (!/[0-9]/.test(password)) return 'Password must include a number';
+    if (!/[^A-Za-z0-9]/.test(password)) return 'Password must include a special character';
+    if (password !== passwordConfirm) return 'Passwords do not match';
+    return null;
+}
+
+async function sendVerificationEmail(req, user, verificationToken) {
+    const verifyURL = `${getPublicBaseUrl(req)}/verify-email.html?token=${encodeURIComponent(verificationToken)}`;
+    const html = `
+        <h1>Welcome to ProQ Pilot!</h1>
+        <p>Please verify your email by clicking the link below:</p>
+        <p><a href="${verifyURL}" target="_blank">Verify Email</a></p>
+        <p>This link will expire in 24 hours.</p>
+    `;
+
+    await sendNoReplyEmail({
+        to: user.email,
+        subject: 'Email Verification - ProQ Pilot',
+        html,
+        text: `Welcome to ProQ Pilot. Verify your email within 24 hours: ${verifyURL}`
+    });
+}
 
 function getJwtSecret() {
     const secret = process.env.ACCESS_TOKEN_SECRET || process.env.JWT_SECRET;
@@ -29,6 +59,15 @@ exports.signup = catchAsync(async (req, res, next) => {
     // 2) Check if user already exists
     const existingUser = await User.findByEmail(req.body.email);
     if (existingUser) {
+        if (!existingUser.isActive) {
+            const verificationToken = await User.refreshVerificationToken(existingUser.userID);
+            await sendVerificationEmail(req, existingUser, verificationToken);
+
+            return res.status(200).json({
+                status: 'success',
+                message: `A new verification email has been sent to ${existingUser.email}`
+            });
+        }
         return next(new AppError('Email already in use', 400));
     }
 
@@ -45,22 +84,9 @@ exports.signup = catchAsync(async (req, res, next) => {
     console.log(`[AUTH] User created: ${newUser.email}, verification token: ${newUser.verificationToken ? 'YES' : 'NO'}`);
 
     // 4) Send verification email
-    const verifyURL = `${req.protocol}://${req.get('host')}/verify-email.html?token=${newUser.verificationToken}`;
-    
-    const html = `
-        <h1>Welcome to ProQ Pilot!</h1>
-        <p>Please verify your email by clicking the link below:</p>
-        <a href="${verifyURL}" target="_blank">Verify Email</a>
-        <p>This link will expire in 24 hours.</p>
-    `;
-
     try {
         console.log(`[AUTH] Attempting to send verification email to: ${newUser.email}`);
-        await sendEmail({
-            email: newUser.email,
-            subject: 'Email Verification - ProQ Pilot',
-            html
-        });
+        await sendVerificationEmail(req, newUser, newUser.verificationToken);
 
         console.log(`[AUTH] ✅ Verification email sent successfully to ${newUser.email}`);
         res.status(201).json({
@@ -71,6 +97,63 @@ exports.signup = catchAsync(async (req, res, next) => {
         console.error(`[AUTH] ❌ Email sending failed:`, err.message);
         return next(new AppError('Email configuration error. Please contact support. Error: ' + err.message, 500));
     }
+});
+
+exports.forgotPassword = catchAsync(async (req, res, next) => {
+    const email = String(req.body.email || '').trim().toLowerCase();
+    if (!email) {
+        return next(new AppError('Please provide your email address', 400));
+    }
+
+    const reset = await User.createPasswordResetToken(email);
+
+    if (reset) {
+        const resetURL = `${getPublicBaseUrl(req)}/resetpassword.html?token=${encodeURIComponent(reset.resetToken)}`;
+        const html = `
+            <h1>Reset your ProQ Pilot password</h1>
+            <p>We received a request to reset the password for your account.</p>
+            <p><a href="${resetURL}" target="_blank">Choose a new password</a></p>
+            <p>This link expires in one hour. If you did not request it, you can ignore this email.</p>
+        `;
+
+        try {
+            await sendNoReplyEmail({
+                to: reset.user.email,
+                subject: 'Reset your ProQ Pilot password',
+                html,
+                text: `Reset your ProQ Pilot password within one hour: ${resetURL}`
+            });
+        } catch (error) {
+            console.error('[AUTH] Password reset email failed:', error.message);
+            return next(new AppError('We could not send the reset email. Please try again later.', 500));
+        }
+    }
+
+    res.status(200).json({
+        status: 'success',
+        message: 'If an account exists for that email, a password reset link has been sent.'
+    });
+});
+
+exports.resetPassword = catchAsync(async (req, res, next) => {
+    const { token } = req.params;
+    const passwordError = validatePassword(req.body.password, req.body.passwordConfirm);
+
+    if (passwordError) {
+        return next(new AppError(passwordError, 400));
+    }
+
+    const user = await User.findByPasswordResetToken(token);
+    if (!user) {
+        return next(new AppError('This password reset link is invalid or has expired', 400));
+    }
+
+    await User.resetPassword(user.userID, req.body.password);
+
+    res.status(200).json({
+        status: 'success',
+        message: 'Your password has been reset. You can now sign in.'
+    });
 });
 
 exports.verifyEmail = catchAsync(async (req, res, next) => {

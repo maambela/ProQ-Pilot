@@ -1,8 +1,9 @@
 const axios = require('axios');
 
 const EMAIL_SENDERS = {
-    sales: 'sales@stackopsit.co.za',
-    support: 'support@stackopsit.co.za'
+    sales: process.env.EMAIL_SALES_FROM || 'sales@stackopsit.co.za',
+    support: process.env.EMAIL_SUPPORT_FROM || 'support@stackopsit.co.za',
+    noreply: process.env.EMAIL_NOREPLY_FROM || 'noreply@stackopsit.co.za'
 };
 
 const ORDER_NOTIFICATION_RECIPIENTS = [
@@ -174,6 +175,10 @@ async function sendSupportEmail(options = {}) {
     return sendEmail({ ...options, from: EMAIL_SENDERS.support });
 }
 
+async function sendNoReplyEmail(options = {}) {
+    return sendEmail({ ...options, from: EMAIL_SENDERS.noreply });
+}
+
 async function sendOrderNotificationEmail(options = {}) {
     return sendSalesEmail({
         ...options,
@@ -193,5 +198,6 @@ module.exports.sendGraphEmail = sendGraphEmail;
 module.exports.sendMailOptions = sendMailOptions;
 module.exports.sendSalesEmail = sendSalesEmail;
 module.exports.sendSupportEmail = sendSupportEmail;
+module.exports.sendNoReplyEmail = sendNoReplyEmail;
 module.exports.sendOrderNotificationEmail = sendOrderNotificationEmail;
 module.exports.verifyGraphEmailConfig = verifyGraphEmailConfig;

@@ -13,6 +13,8 @@ const Order = require('../models/orderModel'); // Importing the Order model
 // when a POST request is made to /signup it calls the signup function from authController
 router.post('/signup', authController.signup);
 router.post('/login', authController.login);
+router.post('/forgot-password', authController.forgotPassword);
+router.patch('/reset-password/:token', authController.resetPassword);
 
 // Route for email verification
 router.get('/verify-email/:token', authController.verifyEmail);

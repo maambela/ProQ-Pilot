@@ -8,7 +8,7 @@
                 <a href="index.html" class="footer-logo">
                     <img src="Images/Logos/Proq2.png" alt="ProQ Pilot logo">
                 </a>
-                <p>Business devices, Microsoft licensing, Duo MFA, and procurement kits for modern teams.</p>
+                <p>Employee onboarding procurement with business devices, Microsoft licensing, Duo MFA, and role-ready team kits.</p>
                 <div class="footer-socials" aria-label="ProQ Pilot contact links">
                     <a href="mailto:sales@stackopsit.co.za" aria-label="Email ProQ Pilot sales"><i class='bx bx-envelope'></i></a>
                     <a href="tel:0115689337" aria-label="Call ProQ Pilot"><i class='bx bx-phone'></i></a>
@@ -17,7 +17,7 @@
             </div>
 
             <div class="footer-links">
-                <h4>Procurement</h4>
+                <h4>Onboarding Procurement</h4>
                 <a href="store.html?category=laptops">Business Laptops</a>
                 <a href="kit.html?type=new-starter">New Employee Kit</a>
                 <a href="kit.html?type=hybrid">Remote Team Kit</a>

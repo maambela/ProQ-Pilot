@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ProQ Pilot | Next-Gen Laptop Store</title>
+    <title>ProQ Pilot | Onboarding Procurement Catalog</title>
     <script src="js/dev-access.js"></script>
-    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/style.css?v=onboarding-20260615">
     <link rel="stylesheet" href="css/duo-store.css">
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
 </head>
@@ -19,6 +19,7 @@
             </div>
             <nav class="nav-links" id="nav-links">
                 <a href="index.html">Home</a>
+                <a href="index.html#onboarding-procurement">Onboarding Kits</a>
                 <a href="store.html" class="active">Store</a>
                 <a href="user-orders.html">Orders</a>
                 <a href="my-account.html">My Account</a>
@@ -59,7 +60,31 @@
                 <div class="filter-groups" id="storeFilterGroups">
                     <!-- Modern Category Navigation System -->
                     <div class="filter-group">
-                        <p class="filter-label">Categories</p>
+                        <p class="filter-label">Procure by outcome</p>
+
+                        <div class="category-tree onboarding-category-tree">
+                            <button class="category-main-btn onboarding-category-btn expanded" data-toggle="onboarding-submenu">
+                                <i class='bx bx-user-check'></i>
+                                <span>Onboarding Procurement</span>
+                                <i class='bx bx-chevron-down'></i>
+                            </button>
+                            <div class="category-submenu onboarding-submenu" id="onboarding-submenu" aria-hidden="false">
+                                <a class="subcategory-item onboarding-kit-link" href="kit.html?type=new-starter">
+                                    <i class='bx bx-user-plus'></i>
+                                    <span><strong>New Employee Kit</strong><small>One day-one setup</small></span>
+                                </a>
+                                <a class="subcategory-item onboarding-kit-link" href="kit.html?type=hybrid">
+                                    <i class='bx bx-wifi'></i>
+                                    <span><strong>Remote Team Kit</strong><small>Hybrid employee rollout</small></span>
+                                </a>
+                                <a class="subcategory-item onboarding-kit-link" href="kit.html?type=secure">
+                                    <i class='bx bx-shield-plus'></i>
+                                    <span><strong>Secure Business Kit</strong><small>Identity-led onboarding</small></span>
+                                </a>
+                            </div>
+                        </div>
+
+                        <p class="filter-label component-filter-label">Shop individual components</p>
                         
                         <!-- All Products Button -->
                         <button class="category-main-btn active" id="allProductsPill" data-category="all">
@@ -176,6 +201,19 @@
             </aside>
 
             <div class="main-content">
+                <section class="store-onboarding-banner" aria-labelledby="storeOnboardingTitle">
+                    <div class="store-onboarding-copy">
+                        <span>Employee onboarding procurement</span>
+                        <h1 id="storeOnboardingTitle">Start with a complete employee setup</h1>
+                        <p>Bundle devices, Microsoft 365, Duo MFA, and practical accessories by employee outcome. Use the catalog below for substitutions and add-ons.</p>
+                    </div>
+                    <div class="store-onboarding-actions">
+                        <a href="kit.html?type=new-starter"><i class='bx bx-user-plus'></i><span>New starter</span></a>
+                        <a href="kit.html?type=hybrid"><i class='bx bx-wifi'></i><span>Remote team</span></a>
+                        <a href="kit.html?type=secure"><i class='bx bx-shield-plus'></i><span>Secure growth</span></a>
+                    </div>
+                </section>
+
                 <section class="store-header">
                     <div class="search-sort-bar">
                         <div class="search-box">
@@ -669,13 +707,13 @@
                     <div class="logo-circle"></div>
                     <span>ProQ Pilot</span>
                 </div>
-                <p>Next-gen laptop shopping designed for the modern user.</p>
+                <p>Employee onboarding procurement for devices, licensing, identity, and role-ready equipment.</p>
             </div>
             <div class="footer-links">
-                <h4>Shop</h4>
-                <a href="store.html">Gaming Laptops</a>
-                <a href="store.html">Business Laptops</a>
-                <a href="brands.html">Brands</a>
+                <h4>Onboarding Procurement</h4>
+                <a href="kit.html?type=new-starter">New Employee Kit</a>
+                <a href="kit.html?type=hybrid">Remote Team Kit</a>
+                <a href="kit.html?type=secure">Secure Business Kit</a>
             </div>
             <div class="footer-links">
                 <h4>Support</h4>
@@ -705,7 +743,7 @@
         </div>
     </footer>
 
-    <script src="js/site-footer.js"></script>
+    <script src="js/site-footer.js?v=onboarding-20260615"></script>
     <script src="js/category-nav.js"></script>
     <script src="js/script.js?v=dev-gate-logo-fix-1"></script>
     <script src="js/auth-ui.js"></script>

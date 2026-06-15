@@ -1628,48 +1628,9 @@ function initHeroAnimations() {
     const heroContent = document.querySelector('.hero-content');
     if (!heroContent) return;
 
-    const badge = heroContent.querySelector('.badge-pill');
-    const title = heroContent.querySelector('h1');
-    const description = heroContent.querySelector('p');
-    const buttons = heroContent.querySelector('.hero-btns');
-    const stats = heroContent.querySelector('.hero-stats');
-
-    function startHeroAnimation() {
-        // Reset all elements
-        [badge, title, description, buttons, stats].forEach(el => {
-            if (el) {
-                el.style.opacity = '0';
-                el.classList.remove('hero-animate-1', 'hero-animate-2', 'hero-animate-3', 'hero-animate-4', 'hero-animate-5');
-            }
-        });
-
-        // Trigger animations with delays
-        setTimeout(() => {
-            if (badge) badge.classList.add('hero-animate-1');
-        }, 100);
-
-        setTimeout(() => {
-            if (title) title.classList.add('hero-animate-2');
-        }, 300);
-
-        setTimeout(() => {
-            if (description) description.classList.add('hero-animate-3');
-        }, 500);
-
-        setTimeout(() => {
-            if (buttons) buttons.classList.add('hero-animate-4');
-        }, 700);
-
-        setTimeout(() => {
-            if (stats) stats.classList.add('hero-animate-5');
-        }, 900);
-    }
-
-    // Start initial animation
-    startHeroAnimation();
-
-    // Repeat every 12 seconds
-    setInterval(startHeroAnimation, 20000);
+    heroContent.querySelectorAll('.badge-pill, h1, p, .hero-btns, .hero-stats').forEach(el => {
+        el.style.removeProperty('opacity');
+    });
 }
 
 // Initialize Brands Grid

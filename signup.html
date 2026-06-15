@@ -147,7 +147,7 @@
             const result = await response.json();
 
             if (response.ok) {
-                showStatus('Account Created', 'Deployment successful! Redirecting to login...');
+                showStatus('Check Your Email', result.message || 'We sent a verification link from noreply@stackopsit.co.za.');
                 
                 setTimeout(() => {
                     window.location.href = 'signin.html';

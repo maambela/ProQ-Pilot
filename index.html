@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ProQ Pilot | Next-Gen Laptop Store</title>
+    <title>ProQ Pilot | Employee Onboarding Procurement</title>
     <script>
         (function () {
             try {
@@ -17,7 +17,7 @@
             }
         })();
     </script>
-    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/style.css?v=onboarding-20260615">
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
 </head>
 <body>
@@ -30,6 +30,7 @@
             </div>
             <nav class="nav-links" id="nav-links">
                 <a href="index.html" class="active">Home</a>
+                <a href="#onboarding-procurement">Onboarding Kits</a>
                 <a href="store.html">Store</a>
                 <a href="user-orders.html">Orders</a>
                 <a href="my-account.html">My Account</a>
@@ -58,17 +59,17 @@
     <main>
         <section class="hero">
             <div class="hero-content">
-                <span class="badge-pill">Next-Gen IT Procurement</span>
-                <h1>Precision IT procurement <span class="accent-text"> for modern businesses</span></h1>
-                <p>Premium devices from leading brands — intelligently merged to your needs, performance goals, and budget..</p>
+                <span class="badge-pill">Employee Onboarding Procurement</span>
+                <h1>Equip every new starter <span class="accent-text">from one procurement flow</span></h1>
+                <p>Build role-ready employee setups with a business laptop, Microsoft 365, Duo MFA, and the accessories each person needs from day one.</p>
                 <div class="hero-btns">
-                    <a href="store.html" class="btn btn-primary">Explore Store →</a>
-                    <a href="brands.html" class="btn btn-primary">View Brands</a>
+                    <a href="#onboarding-procurement" class="btn btn-primary">Build an Onboarding Kit</a>
+                    <a href="store.html" class="btn btn-primary">Browse Components</a>
                 </div>
                 <div class="hero-stats">
-                    <div class="stat-item">4+ <span>Premium Brands</span></div>
-                    <div class="stat-item">50+ <span>Laptop Models</span></div>
-                    <div class="stat-item">24/7 <span>Support</span></div>
+                    <div class="stat-item">1 <span>Combined Cart</span></div>
+                    <div class="stat-item">3 <span>Onboarding Paths</span></div>
+                    <div class="stat-item">Day 1 <span>Ready</span></div>
                 </div>
             </div>
             <div class="hero-visual animate-on-scroll slide-in-right">
@@ -107,10 +108,47 @@
             </div>
         </section>
 
-            <section class="featured-products animate-on-scroll">
+        <section class="procurement-bundles onboarding-procurement animate-on-scroll" id="onboarding-procurement">
+            <div class="onboarding-section-head">
+                <div class="section-title">
+                    <span class="badge-pill">Start with the employee outcome</span>
+                    <h2>Onboarding procurement built around real teams</h2>
+                    <p>Choose a rollout, set the employee count, then adjust the devices, licenses, security, and accessories before adding everything to one cart.</p>
+                </div>
+                <a href="store.html" class="onboarding-components-link">Need individual components? Browse the catalog <i class='bx bx-right-arrow-alt'></i></a>
+            </div>
+            <div class="bundle-grid">
+                <article class="bundle-card animate-on-scroll slide-in-left">
+                    <div class="bundle-icon"><i class='bx bx-user-plus'></i></div>
+                    <p class="bundle-label">New Starter</p>
+                    <h3>New Employee Kit</h3>
+                    <p>Laptop, Microsoft 365, Duo MFA, and essential accessories for day-one readiness.</p>
+                    <div class="bundle-includes"><span>Device</span><span>Productivity</span><span>Security</span></div>
+                    <a href="kit.html?type=new-starter" class="bundle-link">Build New Starter Kit</a>
+                </article>
+                <article class="bundle-card animate-on-scroll slide-in-bottom">
+                    <div class="bundle-icon"><i class='bx bx-wifi'></i></div>
+                    <p class="bundle-label">Hybrid Work</p>
+                    <h3>Remote Team Kit</h3>
+                    <p>Business laptops, Teams-ready licensing, secure access, and collaboration gear.</p>
+                    <div class="bundle-includes"><span>Portable setup</span><span>Teams</span><span>MFA</span></div>
+                    <a href="kit.html?type=hybrid" class="bundle-link">Configure Remote Team</a>
+                </article>
+                <article class="bundle-card animate-on-scroll slide-in-right">
+                    <div class="bundle-icon"><i class='bx bx-shield-plus'></i></div>
+                    <p class="bundle-label">Secure Growth</p>
+                    <h3>Secure Business Kit</h3>
+                    <p>Procure endpoint devices with identity, MFA, and cloud productivity in one cart.</p>
+                    <div class="bundle-includes"><span>Endpoint</span><span>Identity</span><span>Cloud</span></div>
+                    <a href="kit.html?type=secure" class="bundle-link">Build Secure Rollout</a>
+                </article>
+            </div>
+        </section>
+
+        <section class="featured-products animate-on-scroll">
             <div class="section-title">
-                <h2>Featured Procurement Picks</h2>
-                <p>A focused set of in-stock devices to start your next purchase order.</p>
+                <h2>Popular onboarding components</h2>
+                <p>Use these as substitutions, upgrades, or additions to a complete employee kit.</p>
             </div>
             <div class="featured-product-carousel" id="featured-products-grid">
                 <!-- Products will be loaded dynamically -->
@@ -123,19 +161,21 @@
         <section class="procurement-scroll-stage animate-on-scroll">
             <aside class="preferred-category-panel">
                 <div class="section-title">
-                    <span class="badge-pill">Shop by need</span>
-                    <h2>Select your preferred category</h2>
+                    <span class="badge-pill">Supporting catalog</span>
+                    <h2>Shop individual onboarding components</h2>
+                    <p>Start with a complete kit above when possible, or source a specific component here.</p>
                 </div>
                 <div class="category-grid">
                 <!-- Row 1 -->
-                <div class="category-card animate-on-scroll slide-in-left">
+                <div class="category-card category-card-onboarding animate-on-scroll slide-in-left">
                     <div class="category-image-wrapper">
-                        <img src="https://images.unsplash.com/photo-1517336714731-489689fd1ca8?q=80&w=600&auto=format&fit=crop" alt="Laptops for home">
+                        <img src="Images/ProcumentImage.png" alt="Employee onboarding procurement">
                     </div>
                     <div class="category-content liquid-glass-card">
-                        <h3>Laptops for home</h3>
-                        <p>Find the laptop that suits your home needs</p>
-                        <a href="store.html?category=laptops" class="category-btn">View Home Laptops</a>
+                        <span class="category-kicker">Recommended</span>
+                        <h3>Onboarding Procurement</h3>
+                        <p>Configure a complete employee setup instead of sourcing each line item separately.</p>
+                        <a href="#onboarding-procurement" class="category-btn">Choose an Onboarding Kit</a>
                     </div>
                 </div>
 
@@ -144,32 +184,32 @@
                         <img src="Images/Laptopsforbusiness.avif" alt="Laptops for business">
                     </div>
                     <div class="category-content liquid-glass-card">
-                        <h3>Laptops for business</h3>
-                        <p>Find the laptop that suits your business needs</p>
-                        <a href="store.html?category=laptops" class="category-btn">View Business Laptops</a>
+                        <h3>Business Devices</h3>
+                        <p>Choose role-appropriate laptops for new starters and team refreshes.</p>
+                        <a href="store.html?category=laptops" class="category-btn">Browse Business Devices</a>
                     </div>
                 </div>
 
                 <div class="category-card animate-on-scroll slide-in-right">
                     <div class="category-image-wrapper">
-                        <img src="Images/monitors.jpg" alt="Monitors">
+                        <img src="Images/Microsoft.png" alt="Microsoft licensing and identity security">
                     </div>
                     <div class="category-content liquid-glass-card">
-                        <h3>Monitors</h3>
-                        <p>Shop the best monitors</p>
-                        <a href="store.html?category=monitors" class="category-btn">View Monitors</a>
+                        <h3>Licensing & Identity</h3>
+                        <p>Add Microsoft productivity and Cisco Duo protection for each employee.</p>
+                        <a href="store.html?category=licenses" class="category-btn">Browse Licenses</a>
                     </div>
                 </div>
 
                 <!-- Row 2 -->
                 <div class="category-card animate-on-scroll slide-in-left">
                     <div class="category-image-wrapper">
-                        <img src="Images/PremiumDesktops_small.avif" alt="Desktops">
+                        <img src="Images/monitors.jpg" alt="Employee desk setup">
                     </div>
                     <div class="category-content liquid-glass-card">
-                        <h3>Desktops</h3>
-                        <p>Shop our Desktop & All in One's</p>
-                        <a href="store.html?category=desktops" class="category-btn">View Desktops</a>
+                        <h3>Desk Setup</h3>
+                        <p>Complete employee workspaces with displays and desk-ready equipment.</p>
+                        <a href="store.html?category=monitors" class="category-btn">Browse Desk Equipment</a>
                     </div>
                 </div>
 
@@ -178,20 +218,20 @@
                         <img src="Images/workstation0.png" alt="Workstations">
                     </div>
                     <div class="category-content liquid-glass-card">
-                        <h3>Workstations</h3>
-                        <p>Build the next big thing with workstations</p>
-                        <a href="store.html?category=workstations" class="category-btn">View Workstations</a>
+                        <h3>Specialist Workstations</h3>
+                        <p>Equip technical and creative roles with higher-performance systems.</p>
+                        <a href="store.html?category=workstations" class="category-btn">Browse Workstations</a>
                     </div>
                 </div>
 
                 <div class="category-card animate-on-scroll slide-in-right">
                     <div class="category-image-wrapper">
-                        <img src="Images/gaming.avif" alt="Gaming">
+                        <img src="Images/BusinessLaptop.jpg" alt="Employee onboarding accessories">
                     </div>
                     <div class="category-content liquid-glass-card">
-                        <h3>Gaming</h3>
-                        <p>Shop Alienware</p>
-                        <a href="store.html?category=gaming" class="category-btn">View Gaming</a>
+                        <h3>Employee Accessories</h3>
+                        <p>Add bags, mice, keyboards, docks, and other day-one essentials.</p>
+                        <a href="store.html?category=accessories" class="category-btn">Browse Accessories</a>
                     </div>
                 </div>
             </div>
@@ -251,68 +291,38 @@
             </div>
         </section>
 
-        <section class="procurement-bundles animate-on-scroll" id="procurement-bundles">
+        <section class="promo-grid-section animate-on-scroll">
             <div class="section-title">
-                <h2>Procurement bundles built around real teams</h2>
-                <p>Shop by business outcome instead of chasing every line item separately.</p>
-            </div>
-            <div class="bundle-grid">
-                <article class="bundle-card animate-on-scroll slide-in-left">
-                    <div class="bundle-icon"><i class='bx bx-user-plus'></i></div>
-                    <p class="bundle-label">New Starter</p>
-                    <h3>New Employee Kit</h3>
-                    <p>Laptop, Microsoft 365, Duo MFA, and essential accessories for day-one readiness.</p>
-                    <a href="kit.html?type=new-starter" class="bundle-link">Build Kit</a>
-                </article>
-                <article class="bundle-card animate-on-scroll slide-in-bottom">
-                    <div class="bundle-icon"><i class='bx bx-wifi'></i></div>
-                    <p class="bundle-label">Hybrid Work</p>
-                    <h3>Remote Team Kit</h3>
-                    <p>Business laptops, Teams-ready licensing, secure access, and collaboration gear.</p>
-                    <a href="kit.html?type=hybrid" class="bundle-link">Shop Team Setup</a>
-                </article>
-                <article class="bundle-card animate-on-scroll slide-in-right">
-                    <div class="bundle-icon"><i class='bx bx-shield-plus'></i></div>
-                    <p class="bundle-label">Secure Growth</p>
-                    <h3>Secure Business Kit</h3>
-                    <p>Procure endpoint devices with identity, MFA, and cloud productivity in one cart.</p>
-                    <a href="kit.html?type=secure" class="bundle-link">Secure Users</a>
-                </article>
-            </div>
-        </section>
-
-                <section class="promo-grid-section animate-on-scroll">
-            <div class="section-title">
-                <h2>Built for Your Lifestyle</h2>
-                <p>From production to performance and everything in between.</p>
+                <h2>Equip every role with the right setup</h2>
+                <p>Use onboarding kits as the baseline, then tailor components to how each employee works.</p>
             </div>
             <div class="promo-container">
                 <div class="promo-box animate-on-scroll slide-in-left" style="background-image: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url('https://images.unsplash.com/photo-1496181133206-80ce9b88a853?q=80&w=1000')">
                     <div class="promo-text">
-                        <h3>Ready to Work</h3>
-                        <p>Enterprise-grade security and all-day battery life for the modern professional.</p>
-                        <a href="store.html" class="btn-link">Shop Business →</a>
+                        <h3>Office New Starter</h3>
+                        <p>A reliable business device, productivity licensing, MFA, and practical desk accessories.</p>
+                        <a href="kit.html?type=new-starter" class="btn-link">Build Starter Kit →</a>
                     </div>
                 </div>
                 <div class="promo-box animate-on-scroll slide-in-top" style="background-image: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url('https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=1000')">
                     <div class="promo-text">
-                        <h3>Elite Performance</h3>
-                        <p>Push the limits with RTX 40-series graphics and liquid-metal cooling.</p>
-                        <a href="store.html" class="btn-link">Explore Gaming →</a>
+                        <h3>Technical & Power Roles</h3>
+                        <p>Higher-performance devices and secure access for engineers, analysts, and technical teams.</p>
+                        <a href="store.html?category=workstations" class="btn-link">Browse Workstations →</a>
                     </div>
                 </div>
                 <div class="promo-box animate-on-scroll slide-in-bottom" style="background-image: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url('https://images.unsplash.com/photo-1558655146-d09347e92766?q=80&w=1000')">
                     <div class="promo-text">
-                        <h3>Creative Studio</h3>
-                        <p>Color-accurate OLED displays designed for designers and editors.</p>
-                        <a href="store.html" class="btn-link">View Studio Laptops →</a>
+                        <h3>Hybrid Employee</h3>
+                        <p>Portable hardware, Teams-ready licensing, secure login, and collaboration essentials.</p>
+                        <a href="kit.html?type=hybrid" class="btn-link">Configure Hybrid Kit →</a>
                     </div>
                 </div>
                 <div class="promo-box animate-on-scroll slide-in-right" style="background-image: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url('https://images.unsplash.com/photo-1531297484001-80022131f5a1?q=80&w=1000')">
                     <div class="promo-text">
-                        <h3>Student Deals</h3>
-                        <p>Back-to-school offers on lightweight devices that last through every lecture.</p>
-                        <a href="store.html" class="btn-link">Claim Discount →</a>
+                        <h3>Security-First Onboarding</h3>
+                        <p>Combine managed endpoints, cloud productivity, and identity protection as teams grow.</p>
+                        <a href="kit.html?type=secure" class="btn-link">Build Secure Kit →</a>
                     </div>
                 </div>
             </div>
@@ -321,8 +331,8 @@
         
         <section class="features animate-on-scroll">
             <div class="section-title">
-                <h2>Why Choose ProQ Pilot</h2>
-                <p>We bring you the best laptops with an unmatched shopping experience</p>
+                <h2>Why teams onboard through ProQ Pilot</h2>
+                <p>One place to align hardware, licensing, security, and role-specific equipment.</p>
             </div>
             <div class="feature-grid">
                 <div class="feature-card animate-on-scroll slide-in-left">
@@ -384,13 +394,13 @@
                         <div class="logo-circle"></div>
                         <span>ProQ Pilot</span>
                     </div>
-                    <p>Next-gen laptop shopping designed for the modern user.</p>
+                    <p>Employee onboarding procurement for devices, licensing, identity, and role-ready equipment.</p>
                 </div>
                 <div class="footer-links animate-on-scroll slide-in-bottom">
-                    <h4>Shop</h4>
-                    <a href="store.html">Gaming Laptops</a>
-                    <a href="store.html">Business Laptops</a>
-                    <a href="brands.html">Brands</a>
+                    <h4>Onboarding Procurement</h4>
+                    <a href="kit.html?type=new-starter">New Employee Kit</a>
+                    <a href="kit.html?type=hybrid">Remote Team Kit</a>
+                    <a href="kit.html?type=secure">Secure Business Kit</a>
                 </div>
                 <div class="footer-links animate-on-scroll slide-in-top">
                     <h4>Support</h4>
@@ -406,8 +416,8 @@
         </footer>
     </main>
 
-    <script src="js/site-footer.js"></script>
-    <script src="js/script.js?v=dev-gate-logo-fix-1"></script>
+    <script src="js/site-footer.js?v=onboarding-20260615"></script>
+    <script src="js/script.js?v=onboarding-20260615"></script>
     <script src="js/auth-ui.js"></script>
 </body>
 </html>

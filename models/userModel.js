@@ -56,6 +56,55 @@ const User = {
         );
     },
 
+    async refreshVerificationToken(userID) {
+        const verificationToken = crypto.randomBytes(32).toString('hex');
+        const verificationTokenExpires = new Date(Date.now() + 24 * 60 * 60 * 1000);
+
+        await db.query(
+            `UPDATE users
+             SET verificationToken = ?, verificationTokenExpires = ?
+             WHERE userID = ? AND isActive = 0`,
+            [verificationToken, verificationTokenExpires, userID]
+        );
+
+        return verificationToken;
+    },
+
+    async createPasswordResetToken(email) {
+        const user = await this.findByEmail(email);
+        if (!user) return null;
+
+        const resetToken = crypto.randomBytes(32).toString('hex');
+        const resetTokenHash = crypto.createHash('sha256').update(resetToken).digest('hex');
+        const resetTokenExpires = new Date(Date.now() + 60 * 60 * 1000);
+
+        await db.query(
+            'UPDATE users SET resetToken = ?, resetTokenExpires = ? WHERE userID = ?',
+            [resetTokenHash, resetTokenExpires, user.userID]
+        );
+
+        return { user, resetToken };
+    },
+
+    async findByPasswordResetToken(token) {
+        const resetTokenHash = crypto.createHash('sha256').update(token).digest('hex');
+        const [rows] = await db.query(
+            'SELECT * FROM users WHERE resetToken = ? AND resetTokenExpires > NOW()',
+            [resetTokenHash]
+        );
+        return rows[0];
+    },
+
+    async resetPassword(userID, password) {
+        const password_hash = await bcrypt.hash(password, 12);
+        await db.query(
+            `UPDATE users
+             SET password_hash = ?, resetToken = NULL, resetTokenExpires = NULL
+             WHERE userID = ?`,
+            [password_hash, userID]
+        );
+    },
+
     validate(data) {
         const errors = [];
         if (!data.firstName) errors.push('Please provide your first name');
