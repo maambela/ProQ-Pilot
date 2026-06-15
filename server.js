@@ -2832,11 +2832,11 @@ app.get('/api/v1/cart/:userID', async (req, res, next) => {
         // Get regular products from Cart table
         const [cartItems] = await connection.query(`
             SELECT
-                c.cartID,
+                c.id,
                 c.quantity,
                 p.product_name,
                 p.price,
-                p.id,
+                p.id as product_id,
                 p.description,
                 (SELECT image_url FROM product_images WHERE product_id = p.id LIMIT 1) as image_url,
                 NULL as cart_type,
@@ -2852,11 +2852,11 @@ app.get('/api/v1/cart/:userID', async (req, res, next) => {
         // Get digital license items from duo_cart_items table
         const [duoItems] = await connection.query(`
             SELECT
-                NULL as cartID,
+                id,
                 1 as quantity,
                 NULL as product_name,
                 CAST(JSON_EXTRACT(duo_config_json, '$.product_price') AS DECIMAL(10,2)) as price,
-                cart_product_id as id,
+                cart_product_id as product_id,
                 NULL as description,
                 NULL as image_url,
                 cart_type,
@@ -2871,7 +2871,7 @@ app.get('/api/v1/cart/:userID', async (req, res, next) => {
         const deduplicatedDuoItems = [];
         const seenLicenses = new Set();
         for (const item of duoItems) {
-            let licenseKey = `${item.cart_type}:${item.id}`;
+            let licenseKey = `${item.cart_type}:${item.product_id}`;
             try {
                 if (item.duo_config_json && typeof item.duo_config_json === 'string') {
                     const config = JSON.parse(item.duo_config_json);
