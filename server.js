@@ -202,6 +202,61 @@ function safeJsonParse(value, fallback = {}) {
   }
 }
 
+let supplierTrackingSchemaPromise = null;
+
+async function ensureSupplierTrackingSchema(connection) {
+    if (!supplierTrackingSchemaPromise) {
+        supplierTrackingSchemaPromise = (async () => {
+            const [sourceColumns] = await connection.query(
+                "SHOW COLUMNS FROM products LIKE 'supplier_source'"
+            );
+
+            if (sourceColumns.length === 0) {
+                try {
+                    await connection.query(
+                        "ALTER TABLE products ADD COLUMN supplier_source VARCHAR(50) NULL AFTER processor"
+                    );
+                } catch (error) {
+                    if (error.code !== 'ER_DUP_FIELDNAME') throw error;
+                }
+            }
+
+            const [sourceIndexes] = await connection.query(
+                "SHOW INDEX FROM products WHERE Key_name = 'idx_products_supplier_source'"
+            );
+
+            if (sourceIndexes.length === 0) {
+                try {
+                    await connection.query(
+                        "ALTER TABLE products ADD INDEX idx_products_supplier_source (supplier_source)"
+                    );
+                } catch (error) {
+                    if (error.code !== 'ER_DUP_KEYNAME') throw error;
+                }
+            }
+
+            await connection.query(`
+                CREATE TABLE IF NOT EXISTS supplier_sync_status (
+                    supplier VARCHAR(50) PRIMARY KEY,
+                    last_success_at DATETIME NULL,
+                    fetched_count INT NOT NULL DEFAULT 0,
+                    in_stock_count INT NOT NULL DEFAULT 0,
+                    added_count INT NOT NULL DEFAULT 0,
+                    updated_count INT NOT NULL DEFAULT 0,
+                    skipped_count INT NOT NULL DEFAULT 0,
+                    last_error TEXT NULL,
+                    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+                ) ENGINE=InnoDB
+            `);
+        })().catch(error => {
+            supplierTrackingSchemaPromise = null;
+            throw error;
+        });
+    }
+
+    return supplierTrackingSchemaPromise;
+}
+
 function isDigitalLicenseType(type) {
   return type === 'duo-security' ||
     type === 'duo-security-upgrade' ||
@@ -761,6 +816,7 @@ async function syncAxizProducts() {
         console.log("Starting Scheduled Sync Quest... 🛡️");
         const token = await getAxizToken();
         connection = await db.getConnection();
+        await ensureSupplierTrackingSchema(connection);
 
         // We only want hardware, no accessories
         const searchTerms = ["Notebook", "Desktop"];
@@ -799,8 +855,8 @@ async function syncAxizProducts() {
 
             // DEDUPLICATION: Use INSERT...ON DUPLICATE KEY UPDATE for clean handling
             const [result] = await connection.query(
-                `INSERT INTO products (product_number, product_name, description, price, warehouse_price, quantity, brand, processor, updated_at)
-                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())
+                `INSERT INTO products (product_number, product_name, description, price, warehouse_price, quantity, brand, processor, supplier_source, updated_at)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
                  ON DUPLICATE KEY UPDATE
                  product_name = VALUES(product_name),
                  description = VALUES(description),
@@ -808,8 +864,9 @@ async function syncAxizProducts() {
                  warehouse_price = VALUES(warehouse_price),
                  quantity = VALUES(quantity),
                  processor = VALUES(processor),
+                 supplier_source = VALUES(supplier_source),
                  updated_at = NOW()`,
-                [item.productIdentifier, cleanedTitle, description, retailPrice, item.price, item.availableToSell, brandName, processor]
+                [item.productIdentifier, cleanedTitle, description, retailPrice, item.price, item.availableToSell, brandName, processor, 'Axiz']
             );
             
             const productId = result.insertId > 0 ? result.insertId : (await connection.query("SELECT id FROM products WHERE product_number = ?", [item.productIdentifier]))[0][0]?.id;
@@ -963,15 +1020,15 @@ async function getCoreGroupProducts() {
     return items;
 }
 
-// ============ TARSON ONLINE API INTEGRATION ============
-// Cache for Tarson products when API is rate-limited
+// ============ TARSUS ONLINE API INTEGRATION ============
+// Cache for Tarsus products when API is rate-limited
 let tarsonProductsCache = {
     data: [],
     lastFetch: 0,
     cacheExpiry: 2 * 60 * 60 * 1000  // 2 hour cache
 };
 
-// Fetch products from Tarson Online API with smart retry logic
+// Fetch products from Tarsus Online API with smart retry logic
 async function getTarsonProducts() {
     const MAX_RETRIES = 3;
     const BASE_DELAY = 30000; // 30 seconds between retries (respects API rate limiting)
@@ -985,7 +1042,7 @@ async function getTarsonProducts() {
                 throw new Error('TARSON_API_URL or TARSON_API_TOKEN not configured in .env');
             }
             
-            console.log(`[TARSON API] Attempt ${attempt}/${MAX_RETRIES}: Fetching products...`);
+            console.log(`[TARSUS API] Attempt ${attempt}/${MAX_RETRIES}: Fetching products...`);
             
             const response = await axios.get(tarsonUrl, {
                 headers: {
@@ -1003,13 +1060,13 @@ async function getTarsonProducts() {
             if (response.status === 403) {
                 const delayMs = BASE_DELAY * Math.pow(2, attempt - 1);  // Exponential backoff
                 if (attempt < MAX_RETRIES) {
-                    console.warn(`[TARSON API] Rate limited (403). Waiting ${delayMs}ms before retry...`);
+                    console.warn(`[TARSUS API] Rate limited (403). Waiting ${delayMs}ms before retry...`);
                     await new Promise(resolve => setTimeout(resolve, delayMs));
                     continue;
                 } else {
-                    console.error("[TARSON API] Rate limited after 3 attempts. Using cached data if available.");
+                    console.error("[TARSUS API] Rate limited after 3 attempts. Using cached data if available.");
                     if (tarsonProductsCache.data.length > 0) {
-                        console.log(`[TARSON API] Using cached data: ${tarsonProductsCache.data.length} products`);
+                        console.log(`[TARSUS API] Using cached data: ${tarsonProductsCache.data.length} products`);
                         return tarsonProductsCache.data;
                     }
                     return [];
@@ -1022,33 +1079,33 @@ async function getTarsonProducts() {
             
             // Parse response - it's already a JSON object from axios
             const data = response.data;
-            console.log(`[TARSON API] Got response, parsing for products...`);
+            console.log(`[TARSUS API] Got response, parsing for products...`);
             
             // Try multiple paths for finding products
             let items = [];
             
             if (Array.isArray(data)) {
                 items = data;
-                console.log(`[TARSON API] Found products at root level: ${items.length} items`);
+                console.log(`[TARSUS API] Found products at root level: ${items.length} items`);
             } else if (data.products && Array.isArray(data.products)) {
                 items = data.products;
-                console.log(`[TARSON API] Found products at .products: ${items.length} items`);
+                console.log(`[TARSUS API] Found products at .products: ${items.length} items`);
             } else if (data.data && Array.isArray(data.data)) {
                 items = data.data;
-                console.log(`[TARSON API] Found products at .data: ${items.length} items`);
+                console.log(`[TARSUS API] Found products at .data: ${items.length} items`);
             } else if (data.result && Array.isArray(data.result)) {
                 items = data.result;
-                console.log(`[TARSON API] Found products at .result: ${items.length} items`);
+                console.log(`[TARSUS API] Found products at .result: ${items.length} items`);
             } else if (data.ProductCatalogue && Array.isArray(data.ProductCatalogue)) {
                 items = data.ProductCatalogue;
-                console.log(`[TARSON API] Found products at .ProductCatalogue: ${items.length} items`);
+                console.log(`[TARSUS API] Found products at .ProductCatalogue: ${items.length} items`);
             } else if (data.items && Array.isArray(data.items)) {
                 items = data.items;
-                console.log(`[TARSON API] Found products at .items: ${items.length} items`);
+                console.log(`[TARSUS API] Found products at .items: ${items.length} items`);
             } else if (data.Products && Array.isArray(data.Products)) {
                 // Capital P - common in some APIs
                 items = data.Products;
-                console.log(`[TARSON API] Found products at .Products: ${items.length} items`);
+                console.log(`[TARSUS API] Found products at .Products: ${items.length} items`);
             } else if (typeof data === 'object') {
                 // Search in nested objects for product arrays
                 for (const [key, value] of Object.entries(data)) {
@@ -1060,7 +1117,7 @@ async function getTarsonProducts() {
                             firstItem.price || firstItem.sku || firstItem.category
                         )) {
                             items = value;
-                            console.log(`[TARSON API] Found products at .${key}: ${items.length} items`);
+                            console.log(`[TARSUS API] Found products at .${key}: ${items.length} items`);
                             break;
                         }
                     }
@@ -1068,46 +1125,46 @@ async function getTarsonProducts() {
             }
             
             if (items.length === 0) {
-                console.warn(`[TARSON API] No product arrays found in response. Response keys: ${Object.keys(data).slice(0, 10).join(', ')}`);
+                console.warn(`[TARSUS API] No product arrays found in response. Response keys: ${Object.keys(data).slice(0, 10).join(', ')}`);
             }
             
-            console.log(`[TARSON API] Extracted ${items.length} total products`);
+            console.log(`[TARSUS API] Extracted ${items.length} total products`);
             
             // Cache successful fetch
             if (items.length > 0) {
                 tarsonProductsCache.data = items;
                 tarsonProductsCache.lastFetch = Date.now();
-                console.log(`[TARSON API] Cached ${items.length} products`);
+                console.log(`[TARSUS API] Cached ${items.length} products`);
             }
             
             return items || [];
             
         } catch (error) {
-            console.error(`[TARSON API] Attempt ${attempt} failed: ${error.message}`);
+            console.error(`[TARSUS API] Attempt ${attempt} failed: ${error.message}`);
             
             if (attempt === MAX_RETRIES) {
                 // Final attempt failed - use cache if available
                 if (error.response?.status === 403) {
-                    console.error("[TARSON API] Rate limit persists after retries.");
+                    console.error("[TARSUS API] Rate limit persists after retries.");
                     if (tarsonProductsCache.data.length > 0) {
-                        console.log(`[TARSON API] Using cached data: ${tarsonProductsCache.data.length} products (cached ${Math.round((Date.now() - tarsonProductsCache.lastFetch) / 60000)} minutes ago)`);
+                        console.log(`[TARSUS API] Using cached data: ${tarsonProductsCache.data.length} products (cached ${Math.round((Date.now() - tarsonProductsCache.lastFetch) / 60000)} minutes ago)`);
                         return tarsonProductsCache.data;
                     }
                 } else if (error.code === 'ENOTFOUND') {
-                    console.error("[TARSON API] DNS resolution failed - check URL and network connectivity");
+                    console.error("[TARSUS API] DNS resolution failed - check URL and network connectivity");
                     if (tarsonProductsCache.data.length > 0) {
-                        console.log(`[TARSON API] Using cached data: ${tarsonProductsCache.data.length} products`);
+                        console.log(`[TARSUS API] Using cached data: ${tarsonProductsCache.data.length} products`);
                         return tarsonProductsCache.data;
                     }
                 } else {
-                    console.error("[TARSON API] Final error:", error.message);
+                    console.error("[TARSUS API] Final error:", error.message);
                 }
                 return [];
             }
             
             // Wait before retry
             const delayMs = BASE_DELAY * Math.pow(2, attempt - 1);
-            console.log(`[TARSON API] Retrying in ${delayMs}ms...`);
+            console.log(`[TARSUS API] Retrying in ${delayMs}ms...`);
             await new Promise(resolve => setTimeout(resolve, delayMs));
         }
     }
@@ -1170,13 +1227,14 @@ function extractLaptopSpecs(product) {
     return specs;
 }
 
-// Sync Tarson Online products to database
+// Sync Tarsus Online products to database
 async function syncTarsonProducts() {
     let connection;
     const newProducts = [];
     try {
-        console.log("[TARSON] Starting sync with full catalogue filter...");
+        console.log("[TARSUS] Starting sync with full catalogue filter...");
         connection = await db.getConnection();
+        await ensureSupplierTrackingSchema(connection);
         const allItems = await getTarsonProducts();
         
         const storeItems = allItems.filter(item => !shouldSkipStoreSyncItem(
@@ -1189,20 +1247,20 @@ async function syncTarsonProducts() {
             item.Product_Type,
             item.product_type
         ));
-        console.log(`[TARSON] Syncing ${storeItems.length} products from ${allItems.length} total products`);
+        console.log(`[TARSUS] Syncing ${storeItems.length} products from ${allItems.length} total products`);
         
         await connection.beginTransaction();
         
         for (const item of storeItems) {
-            // Extract fields using Tarson's actual field names
+            // Extract fields using the supplier's actual field names.
             const sku = item.Product_Number || item.product_number || item.sku || item.code || item.product_code || 
-                       item.SKU || item.Code || item.ProductCode || item.ProductId || item.product_id || `TARSON-${Date.now()}`;
+                       item.SKU || item.Code || item.ProductCode || item.ProductId || item.product_id || `TARSUS-${Date.now()}`;
             
             const productName = item.Product_Description || item.product_description || item.name || item.product_name || 
                                item.title || item.Name || item.ProductName || item.Title || item.product_title || item.ProductTitle;
             
             if (!sku || !productName) {
-                console.log("[TARSON] Skipping item with missing SKU or name");
+                console.log("[TARSUS] Skipping item with missing SKU or name");
                 continue;
             }
             
@@ -1220,7 +1278,7 @@ async function syncTarsonProducts() {
             
             // Skip if price is 0 or invalid
             if (price <= 0) {
-                console.log(`[TARSON] Skipping ${productName} - invalid price`);
+                console.log(`[TARSUS] Skipping ${productName} - invalid price`);
                 continue;
             }
             
@@ -1237,20 +1295,20 @@ async function syncTarsonProducts() {
             if (existing.length > 0) {
                 // Update existing
                 await connection.query(
-                    "UPDATE products SET quantity = ?, warehouse_price = ?, price = ?, description = ?, updated_at = NOW() WHERE product_number = ?",
+                    "UPDATE products SET quantity = ?, warehouse_price = ?, price = ?, description = ?, supplier_source = 'Tarsus', updated_at = NOW() WHERE product_number = ?",
                     [quantity, price, price, description, sku]
                 );
             } else {
-                // Insert new product (for Tarson, set as approved directly since we trust this source)
+                // Insert new product as approved because this supplier feed is trusted.
                 const [result] = await connection.query(
-                    `INSERT INTO products (product_number, product_name, description, price, warehouse_price, quantity, brand, status, is_active)
-                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-                    [sku, cleanName, description, price, price, quantity, brand, 'approved', 1]
+                    `INSERT INTO products (product_number, product_name, description, price, warehouse_price, quantity, brand, supplier_source, status, is_active)
+                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                    [sku, cleanName, description, price, price, quantity, brand, 'Tarsus', 'approved', 1]
                 );
                 
                 const productId = result.insertId;
                 
-                // Save product images if available - use Tarson's Image_URL field
+                // Save product images if available.
                 const imageUrl = item.Image_URL || item.image_url || item.ImageUrl || item.ImageURL ||
                                 item.image || item.Image || item.img || item.Img || item.picture || item.Picture || 
                                 item.photo || item.Photo || item.thumbnail || item.Thumbnail || item.image_link || item.ImageLink;
@@ -1260,9 +1318,9 @@ async function syncTarsonProducts() {
                             "INSERT INTO product_images (product_id, image_url, is_primary, sort_order) VALUES (?, ?, ?, ?)",
                             [productId, imageUrl, true, 0]
                         );
-                        console.log(`[TARSON] Image saved for ${cleanName}`);
+                        console.log(`[TARSUS] Image saved for ${cleanName}`);
                     } catch (imgErr) {
-                        console.warn(`[TARSON] Failed to save image for ${cleanName}: ${imgErr.message}`);
+                        console.warn(`[TARSUS] Failed to save image for ${cleanName}: ${imgErr.message}`);
                     }
                 }
 
@@ -1281,26 +1339,26 @@ async function syncTarsonProducts() {
         }
         
         await connection.commit();
-        console.log(`[TARSON] Sync completed - ${newProducts.length} new laptops added`);
+        console.log(`[TARSUS] Sync completed - ${newProducts.length} new laptops added`);
         
         // Send notification if new products
         if (newProducts.length > 0) {
             try {
                 await sendNewTarsonProductsEmail(newProducts);
             } catch (emailErr) {
-                console.error("[TARSON] Email notification failed:", emailErr.message);
+                console.error("[TARSUS] Email notification failed:", emailErr.message);
             }
         }
         
     } catch (error) {
         if (connection) await connection.rollback();
-        console.error("[TARSON] Sync failed:", error.message);
+        console.error("[TARSUS] Sync failed:", error.message);
     } finally {
         if (connection) connection.release();
     }
 }
 
-// Email notification for new Tarson products
+// Email notification for new Tarsus products
 async function sendNewTarsonProductsEmail(products) {
     const productsHTML = products.map((product, index) => `
         <tr style="border-bottom: 1px solid #ddd;">
@@ -1315,16 +1373,16 @@ async function sendNewTarsonProductsEmail(products) {
     const mailOptions = {
         from: `"${STORE_DETAILS.name}" <${EMAIL_SENDERS.support}>`,
         to: EMAIL_SENDERS.support,
-        subject: `🆕 ${products.length} New Laptop(s) from Tarson Online`,
+        subject: `🆕 ${products.length} New Laptop(s) from Tarsus Online`,
         html: `
             <div style="font-family: Arial, sans-serif; max-width: 900px; margin: 0 auto;">
                 <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 24px; text-align: center; border-radius: 8px 8px 0 0;">
-                    <h1 style="margin: 0; font-size: 28px;">💻 New Laptops from Tarson Online</h1>
+                    <h1 style="margin: 0; font-size: 28px;">💻 New Laptops from Tarsus Online</h1>
                     <p style="margin: 8px 0 0 0; font-size: 16px;">${products.length} laptop(s) added and live on store</p>
                 </div>
                 <div style="padding: 24px; background: white; border: 1px solid #ddd;">
                     <p style="color: #666; margin: 0 0 20px 0; font-size: 15px;">
-                        New laptops have been automatically synced from Tarson Online and are <strong>already live on your store</strong>.
+                        New laptops have been automatically synced from Tarsus Online and are <strong>already live on your store</strong>.
                     </p>
                     <h2 style="margin: 20px 0 16px 0; color: #1a202c; border-bottom: 2px solid #667eea; padding-bottom: 12px;">New Laptop Summary</h2>
                     <table style="width: 100%; border-collapse: collapse; margin-bottom: 24px;">
@@ -1353,9 +1411,9 @@ async function sendNewTarsonProductsEmail(products) {
     
     try {
         const info = await transporter.sendMail(mailOptions);
-        console.log(`[TARSON EMAIL] Sent: ${info.messageId}`);
+        console.log(`[TARSUS EMAIL] Sent: ${info.messageId}`);
     } catch (err) {
-        console.error(`[TARSON EMAIL] Failed:`, err);
+        console.error(`[TARSUS EMAIL] Failed:`, err);
     }
 }
 
@@ -1369,6 +1427,7 @@ async function syncCoreGroupProducts() {
         console.log("[CORE API] Starting sync with enhanced product extraction...");
         const items = await getCoreGroupProducts();
         connection = await db.getConnection();
+        await ensureSupplierTrackingSchema(connection);
 
         await connection.beginTransaction();
 
@@ -1402,8 +1461,8 @@ async function syncCoreGroupProducts() {
             // Check if product already exists
             // Use INSERT...ON DUPLICATE KEY UPDATE to handle duplicates and ensure clean sync
             const [result] = await connection.query(
-                `INSERT INTO products (product_number, product_name, description, price, warehouse_price, quantity, brand, status, is_active, updated_at) 
-                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
+                `INSERT INTO products (product_number, product_name, description, price, warehouse_price, quantity, brand, supplier_source, status, is_active, updated_at)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
                  ON DUPLICATE KEY UPDATE
                  product_name = VALUES(product_name),
                  description = VALUES(description),
@@ -1411,8 +1470,9 @@ async function syncCoreGroupProducts() {
                  warehouse_price = VALUES(warehouse_price),
                  quantity = VALUES(quantity),
                  brand = VALUES(brand),
+                 supplier_source = VALUES(supplier_source),
                  updated_at = NOW()`,
-                [item.StockCode, cleanProductName, descriptionStr, price, price, Math.floor(item.StockOnHand || 0), brandName, 'pending', 0]
+                [item.StockCode, cleanProductName, descriptionStr, price, price, Math.floor(item.StockOnHand || 0), brandName, 'Core', 'pending', 0]
             );
 
             // Only count as new if insert was successful (not updated)
@@ -1431,7 +1491,6 @@ async function syncCoreGroupProducts() {
             }
         }
 
-        await connection.commit();
         const summary = {
             fetched: items.length,
             added: newProducts.length,
@@ -1439,6 +1498,23 @@ async function syncCoreGroupProducts() {
             skipped: skippedProducts,
             inStock: items.filter(item => Number(item.StockOnHand) > 0).length
         };
+
+        await connection.query(
+            `INSERT INTO supplier_sync_status
+                (supplier, last_success_at, fetched_count, in_stock_count, added_count, updated_count, skipped_count, last_error)
+             VALUES ('Core', NOW(), ?, ?, ?, ?, ?, NULL)
+             ON DUPLICATE KEY UPDATE
+                last_success_at = VALUES(last_success_at),
+                fetched_count = VALUES(fetched_count),
+                in_stock_count = VALUES(in_stock_count),
+                added_count = VALUES(added_count),
+                updated_count = VALUES(updated_count),
+                skipped_count = VALUES(skipped_count),
+                last_error = NULL`,
+            [summary.fetched, summary.inStock, summary.added, summary.updated, summary.skipped]
+        );
+
+        await connection.commit();
         console.log(`[CORE API] Sync completed successfully: ${JSON.stringify(summary)}`);
 
         // Send email notification if new products were added
@@ -1549,13 +1625,13 @@ setInterval(() => {
 // Initial sync on startup
 syncCoreGroupProducts().catch(err => console.error("[CORE API] Initial sync failed:", err));
 
-// Set up sync for Tarson Online (every 2 hours = 7200000ms - respecting aggressive API rate limits)
-console.log("[TARSON] Sync scheduled every 2 hours (API is rate-limited, cache enabled)");
+// Set up sync for Tarsus Online (every 2 hours = 7200000ms - respecting aggressive API rate limits)
+console.log("[TARSUS] Sync scheduled every 2 hours (API is rate-limited, cache enabled)");
 setInterval(syncTarsonProducts, 7200000);
 
-// Initial Tarson sync on startup (with 60s delay to let other APIs go first, then retry every 30 minutes if needed)
+// Initial Tarsus sync on startup (with 60s delay to let other APIs go first).
 setTimeout(() => {
-    syncTarsonProducts().catch(err => console.error("[TARSON] Initial sync failed:", err));
+    syncTarsonProducts().catch(err => console.error("[TARSUS] Initial sync failed:", err));
 }, 60000);
 
 // Route: Manual sync Core products
@@ -1572,19 +1648,20 @@ app.post('/api/v1/sync-core', async (req, res, next) => {
     }
 });
 
-// Route: Manual sync Tarson products
+// Route: Manual sync Tarsus products. The legacy URL remains for compatibility.
 app.post('/api/v1/sync-tarson', async (req, res) => {
     await syncTarsonProducts();
-    res.status(200).json({ status: 'success', message: 'Tarson products synced' });
+    res.status(200).json({ status: 'success', message: 'Tarsus products synced' });
 });
 
-// Route: Get Tarson sync status and stats
+// Route: Get Tarsus sync status and stats. The legacy URL remains for compatibility.
 app.get('/api/v1/tarson-status', async (req, res, next) => {
     let connection;
     try {
         connection = await db.getConnection();
         
-        // Count Tarson products (identified by SKU pattern or brand that comes from Tarson)
+        await ensureSupplierTrackingSchema(connection);
+
         const [tarsonStats] = await connection.query(`
             SELECT 
                 COUNT(*) as total_products,
@@ -1594,9 +1671,8 @@ app.get('/api/v1/tarson-status', async (req, res, next) => {
                 MAX(price) as highest_price,
                 AVG(price) as avg_price
             FROM products p
-            WHERE p.brand IN ('LENOVO', 'DELL', 'HP', 'ASUS', 'ACER', 'MSI', 'UNKNOWN')
+            WHERE p.supplier_source = 'Tarsus'
             AND p.status = 'approved'
-            AND p.product_name LIKE '%laptop%'
         `);
         
         connection.release();
@@ -1604,7 +1680,7 @@ app.get('/api/v1/tarson-status', async (req, res, next) => {
         res.status(200).json({
             status: 'success',
             data: {
-                source: 'Tarson Online',
+                source: 'Tarsus Online',
                 stats: tarsonStats[0] || {
                     total_products: 0,
                     active_products: 0,
@@ -1623,12 +1699,18 @@ app.get('/api/v1/core-products/pending', async (req, res, next) => {
     let connection;
     try {
         connection = await db.getConnection();
+        await ensureSupplierTrackingSchema(connection);
         const [products] = await connection.query(
-            `SELECT p.id, p.product_number, p.product_name, p.description, p.price, p.quantity, p.brand, p.status,
+            `SELECT p.id, p.product_number, p.product_name, p.description, p.price, p.quantity, p.brand,
+                    p.supplier_source, p.status, p.updated_at,
                     COUNT(pi.id) as image_count
              FROM products p 
              LEFT JOIN product_images pi ON p.id = pi.product_id
-             WHERE p.status = 'pending' AND p.brand IN ('APPLE', 'IPHONE', 'IPAD', 'MACBOOK', 'AIRPODS', 'IMAC', 'MAC', 'IWATCH')
+             WHERE p.status = 'pending'
+               AND p.quantity > 0
+               AND p.price > 0
+               AND (p.supplier_source = 'Core'
+                    OR (p.supplier_source IS NULL AND p.brand IN ('APPLE', 'IPHONE', 'IPAD', 'MACBOOK', 'AIRPODS', 'IMAC', 'MAC', 'IWATCH')))
              GROUP BY p.id
              ORDER BY p.created_at DESC`
         );
@@ -1646,12 +1728,18 @@ app.get('/api/v1/core-products/approved/list', async (req, res, next) => {
     let connection;
     try {
         connection = await db.getConnection();
+        await ensureSupplierTrackingSchema(connection);
         const [products] = await connection.query(
-            `SELECT p.id, p.product_number, p.product_name, p.description, p.price, p.quantity, p.brand, p.status, p.is_active,
+            `SELECT p.id, p.product_number, p.product_name, p.description, p.price, p.quantity, p.brand,
+                    p.supplier_source, p.status, p.is_active, p.updated_at,
                     COUNT(pi.id) as image_count
              FROM products p 
              LEFT JOIN product_images pi ON p.id = pi.product_id
-             WHERE p.status = 'approved' AND p.brand IN ('APPLE', 'IPHONE', 'IPAD', 'MACBOOK', 'AIRPODS', 'IMAC', 'MAC', 'IWATCH')
+             WHERE p.status = 'approved'
+               AND p.quantity > 0
+               AND p.price > 0
+               AND (p.supplier_source = 'Core'
+                    OR (p.supplier_source IS NULL AND p.brand IN ('APPLE', 'IPHONE', 'IPAD', 'MACBOOK', 'AIRPODS', 'IMAC', 'MAC', 'IWATCH')))
              GROUP BY p.id
              ORDER BY p.created_at DESC`
         );
@@ -2902,6 +2990,50 @@ app.post('/api/v1/cart/sync', async (req, res, next) => {
     }
 });
 
+// Route: Get the latest Core inventory sync and usable product counts.
+app.get('/api/v1/core-status', async (req, res, next) => {
+    let connection;
+    try {
+        connection = await db.getConnection();
+        await ensureSupplierTrackingSchema(connection);
+
+        const [[syncStatus]] = await connection.query(
+            `SELECT last_success_at, fetched_count, in_stock_count, added_count, updated_count, skipped_count
+             FROM supplier_sync_status
+             WHERE supplier = 'Core'
+             LIMIT 1`
+        );
+
+        const [[inventory]] = await connection.query(`
+            SELECT
+                SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) AS pending_count,
+                SUM(CASE WHEN status = 'approved' THEN 1 ELSE 0 END) AS approved_count,
+                COUNT(*) AS usable_count
+            FROM products
+            WHERE quantity > 0
+              AND price > 0
+              AND (supplier_source = 'Core'
+                   OR (supplier_source IS NULL AND brand IN ('APPLE', 'IPHONE', 'IPAD', 'MACBOOK', 'AIRPODS', 'IMAC', 'MAC', 'IWATCH')))
+        `);
+
+        res.status(200).json({
+            status: 'success',
+            data: {
+                sync: syncStatus || null,
+                inventory: inventory || {
+                    pending_count: 0,
+                    approved_count: 0,
+                    usable_count: 0
+                }
+            }
+        });
+    } catch (err) {
+        next(err);
+    } finally {
+        if (connection) connection.release();
+    }
+});
+
 // --- FETCH CART FOR LOGGED IN USER ---
 /// --- FETCH CART FOR LOGGED IN USER ---
 app.get('/api/v1/cart/:userID', async (req, res, next) => {
@@ -3466,11 +3598,24 @@ async function sendCustomerEmail(order, customer, items, address) {
 
 async function sendAdminEmail(order, customer, items, address) {
     console.log(`[EMAIL] Starting to send admin email for order #${order.id}`);
+
+    const getVendorName = item => {
+        const source = String(item.supplier_source || '').trim();
+        if (/tarsus|tarson/i.test(source)) return 'Tarsus';
+        if (/core/i.test(source)) return 'Core';
+        if (source) return source;
+
+        const brand = String(item.brand || '').toUpperCase();
+        return ['APPLE', 'IPHONE', 'IPAD', 'MACBOOK', 'AIRPODS', 'IMAC', 'MAC', 'IWATCH'].includes(brand)
+            ? 'Core'
+            : 'Tarsus';
+    };
     
     const productsHTML = items.map(item => `
         <tr style="border-bottom: 1px solid #ddd;">
             <td style="padding: 12px; text-align: left;">${item.product_name}</td>
             <td style="padding: 12px; text-align: center;">${item.product_number || 'N/A'}</td>
+            <td style="padding: 12px; text-align: center; font-weight: bold;">${getVendorName(item)}</td>
             <td style="padding: 12px; text-align: center;">${item.quantity}</td>
             <td style="padding: 12px; text-align: right;">R${parseFloat(item.warehouse_price).toLocaleString()}</td>
             <td style="padding: 12px; text-align: right;">R${parseFloat(item.price).toLocaleString()}</td>
@@ -3518,6 +3663,7 @@ async function sendAdminEmail(order, customer, items, address) {
                             <tr style="background: #f0f0f0; font-weight: bold;">
                                 <th style="padding: 12px; text-align: left; border-bottom: 2px solid #ddd;">Product</th>
                                 <th style="padding: 12px; text-align: center; border-bottom: 2px solid #ddd;">Product #</th>
+                                <th style="padding: 12px; text-align: center; border-bottom: 2px solid #ddd;">Vendor</th>
                                 <th style="padding: 12px; text-align: center; border-bottom: 2px solid #ddd;">Qty</th>
                                 <th style="padding: 12px; text-align: right; border-bottom: 2px solid #ddd;">Warehouse Price</th>
                                 <th style="padding: 12px; text-align: right; border-bottom: 2px solid #ddd;">Retail Price</th>
@@ -3848,7 +3994,7 @@ app.post('/webhook/yoco-order', async (req, res) => {
             // 5. Fetch items for email
             console.log('[YOCO WEBHOOK] Step 6: Fetching order items...');
             const [items] = await connection.query(
-                `SELECT oi.*, p.product_name, p.product_number, p.warehouse_price,
+                `SELECT oi.*, p.product_name, p.product_number, p.warehouse_price, p.supplier_source, p.brand,
                  (SELECT image_url FROM product_images WHERE product_id = p.id LIMIT 1) as image_url
                  FROM OrderItems oi JOIN products p ON oi.product_id = p.id WHERE oi.order_id = ?`,
                 [orderId]
@@ -3956,8 +4102,8 @@ app.post('/webhook/yoco-order-test/:orderId', async (req, res) => {
 
         // Fetch order items with product details
         const [items] = await connection.query(
-            `SELECT oi.quantity, oi.price, p.id as product_id, p.product_name, p.product_number, 
-                    p.warehouse_price, pi.image_url
+            `SELECT oi.quantity, oi.price, p.id as product_id, p.product_name, p.product_number,
+                    p.warehouse_price, p.supplier_source, p.brand, pi.image_url
             FROM OrderItems oi
             JOIN products p ON oi.product_id = p.id
             LEFT JOIN product_images pi ON p.id = pi.product_id AND pi.is_primary = true

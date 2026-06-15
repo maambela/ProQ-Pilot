@@ -57,14 +57,28 @@ CREATE TABLE IF NOT EXISTS products (
   quantity INT NOT NULL DEFAULT 0,
   brand VARCHAR(150) NULL,
   processor VARCHAR(150) NULL,
+  supplier_source VARCHAR(50) NULL,
   status VARCHAR(50) NOT NULL DEFAULT 'approved',
   is_active TINYINT(1) NOT NULL DEFAULT 1,
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   INDEX idx_products_status_active (status, is_active),
   INDEX idx_products_brand (brand),
+  INDEX idx_products_supplier_source (supplier_source),
   INDEX idx_products_number (product_number),
   FULLTEXT INDEX ft_products_search (product_name, description, brand, processor)
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS supplier_sync_status (
+  supplier VARCHAR(50) PRIMARY KEY,
+  last_success_at DATETIME NULL,
+  fetched_count INT NOT NULL DEFAULT 0,
+  in_stock_count INT NOT NULL DEFAULT 0,
+  added_count INT NOT NULL DEFAULT 0,
+  updated_count INT NOT NULL DEFAULT 0,
+  skipped_count INT NOT NULL DEFAULT 0,
+  last_error TEXT NULL,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB;
 
 CREATE TABLE IF NOT EXISTS product_images (

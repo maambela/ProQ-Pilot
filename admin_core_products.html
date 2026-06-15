@@ -216,6 +216,90 @@
             box-shadow: 0 12px 35px rgba(0, 188, 212, 0.4);
         }
 
+        .core-sync-status {
+            display: grid;
+            grid-template-columns: minmax(220px, 1fr) repeat(3, auto);
+            align-items: center;
+            gap: 1rem;
+            padding: 0.9rem 1rem;
+            margin-bottom: 1rem;
+            border: 1px solid rgba(255, 255, 255, 0.35);
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.16);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+        }
+
+        .sync-status-heading {
+            display: flex;
+            align-items: center;
+            gap: 0.65rem;
+            min-width: 0;
+        }
+
+        .sync-status-dot {
+            width: 10px;
+            height: 10px;
+            flex: 0 0 10px;
+            border-radius: 50%;
+            background: #f59e0b;
+            box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.15);
+        }
+
+        .sync-status-dot.ready {
+            background: #10b981;
+            box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.15);
+        }
+
+        .sync-status-title,
+        .sync-status-time {
+            display: block;
+        }
+
+        .sync-status-title {
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .sync-status-time {
+            color: #64748b;
+            font-size: 0.75rem;
+        }
+
+        .sync-stat {
+            min-width: 80px;
+            text-align: right;
+        }
+
+        .sync-stat strong,
+        .sync-stat span {
+            display: block;
+        }
+
+        .sync-stat strong {
+            font-size: 1rem;
+            font-weight: 600;
+        }
+
+        .sync-stat span {
+            color: #64748b;
+            font-size: 0.68rem;
+            text-transform: uppercase;
+        }
+
+        .tab-count {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 22px;
+            height: 22px;
+            margin-left: 0.35rem;
+            padding: 0 0.35rem;
+            border-radius: 11px;
+            background: rgba(100, 116, 139, 0.15);
+            font-size: 0.7rem;
+        }
+
         /* Tabs */
         .tabs {
             display: flex;
@@ -878,6 +962,19 @@
                 padding: 0 3%;
             }
 
+            .core-sync-status {
+                grid-template-columns: repeat(3, 1fr);
+            }
+
+            .sync-status-heading {
+                grid-column: 1 / -1;
+            }
+
+            .sync-stat {
+                min-width: 0;
+                text-align: left;
+            }
+
             .header-container {
                 width: 95%;
                 padding: 10px 20px;
@@ -978,9 +1075,10 @@
                     <div class="controls-bar">
                         <div class="filter-group">
                             <button class="filter-btn active" onclick="filterByCategory('all', this)"><i class='bx bx-grid-alt'></i><span>All</span></button>
+                            <button class="filter-btn" onclick="filterByCategory('macbook', this)"><i class='bx bx-laptop'></i><span>MacBooks</span></button>
                             <button class="filter-btn" onclick="filterByCategory('watch', this)"><i class='bx bx-watch'></i><span>Watches</span></button>
-                            <button class="filter-btn" onclick="filterByCategory('laptop', this)"><i class='bx bx-laptop'></i><span>Laptops / MacBooks</span></button>
-                            <button class="filter-btn" onclick="filterByCategory('phone', this)"><i class='bx bx-mobile-alt'></i><span>Phones</span></button>
+                            <button class="filter-btn" onclick="filterByCategory('iphone', this)"><i class='bx bx-mobile-alt'></i><span>iPhones</span></button>
+                            <button class="filter-btn" onclick="filterByCategory('ipad', this)"><i class='bx bx-tab'></i><span>iPads</span></button>
                             <button class="filter-btn" onclick="filterByCategory('other', this)"><i class='bx bx-package'></i><span>Other</span></button>
                         </div>
                         <button class="sync-btn" onclick="syncCoreProducts(this)">
@@ -991,20 +1089,42 @@
             </aside>
 
             <div class="core-products-workspace">
+                <div class="core-sync-status" aria-live="polite">
+                    <div class="sync-status-heading">
+                        <span class="sync-status-dot" id="core-sync-dot"></span>
+                        <div>
+                            <span class="sync-status-title">Core inventory feed</span>
+                            <span class="sync-status-time" id="core-last-sync">Checking last sync...</span>
+                        </div>
+                    </div>
+                    <div class="sync-stat">
+                        <strong id="core-usable-count">--</strong>
+                        <span>Usable</span>
+                    </div>
+                    <div class="sync-stat">
+                        <strong id="core-approved-count">--</strong>
+                        <span>Approved</span>
+                    </div>
+                    <div class="sync-stat">
+                        <strong id="core-pending-count">--</strong>
+                        <span>Pending</span>
+                    </div>
+                </div>
+
                 <!-- Tabs -->
                 <div class="tabs">
-                    <button class="tab-btn active" onclick="switchTab('pending')">Pending</button>
-                    <button class="tab-btn" onclick="switchTab('approved')">Approved</button>
-                    <button class="tab-btn" onclick="switchTab('rejected')">Rejected</button>
+                    <button class="tab-btn" onclick="switchTab('pending', this)">Pending <span class="tab-count" id="pending-tab-count">0</span></button>
+                    <button class="tab-btn active" onclick="switchTab('approved', this)">Approved <span class="tab-count" id="approved-tab-count">0</span></button>
+                    <button class="tab-btn" onclick="switchTab('rejected', this)">Rejected</button>
                 </div>
 
                 <!-- Pending Tab -->
-                <div id="pending" class="tab-content active">
+                <div id="pending" class="tab-content">
                     <div id="pending-products-list" class="products-list"></div>
                 </div>
 
                 <!-- Approved Tab -->
-                <div id="approved" class="tab-content">
+                <div id="approved" class="tab-content active">
                     <div id="approved-products-list" class="products-list admin-grid"></div>
                 </div>
 
@@ -1037,16 +1157,17 @@
         let currentCategory = 'all';
 
         document.addEventListener('DOMContentLoaded', () => {
+            loadCoreStatus();
             loadPendingProducts();
             loadApprovedProducts();
             loadRejectedProducts();
         });
 
-        function switchTab(tabName) {
+        function switchTab(tabName, trigger) {
             document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
             document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
             document.getElementById(tabName).classList.add('active');
-            event.target.classList.add('active');
+            if (trigger) trigger.classList.add('active');
         }
 
         function filterByCategory(category, trigger) {
@@ -1058,34 +1179,67 @@
         }
 
         function getCategoryFromName(name) {
-            const nameLower = name.toLowerCase();
+            const nameLower = String(name || '').toLowerCase();
 
-            // Watches
-            if (nameLower.includes('watch') || nameLower.includes('band') || (nameLower.includes('ultra') && nameLower.includes('apple'))) {
+            if (nameLower.includes('macbook') || /\b(mba|mbp)\b/.test(nameLower)) {
+                return 'macbook';
+            }
+
+            if (nameLower.includes('watch') || nameLower.includes('band') || nameLower.includes('sport loop') || nameLower.includes('solo loop')) {
                 return 'watch';
             }
-            
-            // Phones & Tablets (iPad)
-            // Explicitly match iphone, ipad, tablet
-            if (nameLower.includes('iphone') || nameLower.includes('ipad') || nameLower.includes('tablet')) {
-                return 'phone';
+
+            if (nameLower.includes('iphone')) {
+                return 'iphone';
             }
-            
-            // For generic "phone" matches, exclude audio/accessory items
+
+            if (nameLower.includes('ipad') || nameLower.includes('tablet')) {
+                return 'ipad';
+            }
+
             if (nameLower.includes('phone')) {
-                // Excluded keywords that shouldn't match as phones
                 const excluded = ['earphone', 'airphone', 'headphone', 'airpod', 'buds', 'speaker', 'microphone', 'charger', 'cable', 'adapter', 'case', 'screen', 'protector'];
                 if (!excluded.some(word => nameLower.includes(word))) {
-                    return 'phone';
+                    return 'iphone';
                 }
             }
-            
-            // Laptops
-            if (nameLower.includes('macbook') || nameLower.includes('laptop') || nameLower.includes('mba') || nameLower.includes('mbp')) {
-                return 'laptop';
-            }
-            
+
             return 'other';
+        }
+
+        async function loadCoreStatus() {
+            try {
+                const response = await fetch('/api/v1/core-status');
+                const data = await response.json();
+                if (!response.ok || data.status !== 'success') throw new Error(data.message || 'Status unavailable');
+
+                const sync = data.data.sync;
+                const inventory = data.data.inventory || {};
+                const lastSync = document.getElementById('core-last-sync');
+
+                if (sync && sync.last_success_at) {
+                    const syncedAt = new Date(sync.last_success_at);
+                    lastSync.textContent = `Last synced ${syncedAt.toLocaleString('en-ZA', {
+                        dateStyle: 'medium',
+                        timeStyle: 'short'
+                    })}`;
+                    document.getElementById('core-sync-dot').classList.add('ready');
+                } else {
+                    lastSync.textContent = 'No successful sync recorded yet';
+                }
+
+                const usable = Number(inventory.usable_count || 0);
+                const approved = Number(inventory.approved_count || 0);
+                const pending = Number(inventory.pending_count || 0);
+                document.getElementById('core-usable-count').textContent = usable.toLocaleString();
+                document.getElementById('core-approved-count').textContent = approved.toLocaleString();
+                document.getElementById('core-pending-count').textContent = pending.toLocaleString();
+                document.getElementById('approved-tab-count').textContent = approved.toLocaleString();
+                document.getElementById('pending-tab-count').textContent = pending.toLocaleString();
+            } catch (error) {
+                document.getElementById('core-last-sync').textContent = 'Sync status unavailable';
+                console.error('Error loading Core status:', error);
+            }
         }
 
         async function syncCoreProducts(button) {
@@ -1095,21 +1249,29 @@
                 const data = await response.json();
                 if (response.ok && data.status === 'success') {
                     alert(data.message || 'Core products synced successfully.');
-                    location.reload();
+                    await Promise.all([
+                        loadCoreStatus(),
+                        loadPendingProducts(),
+                        loadApprovedProducts()
+                    ]);
                 } else {
                     alert('Sync failed: ' + (data.message || `Server responded with ${response.status}`));
                 }
             } catch (error) {
                 alert('Sync failed: ' + error.message);
             }
-            if (button) button.disabled = false;
+            finally {
+                if (button) button.disabled = false;
+            }
         }
 
         async function loadPendingProducts() {
             try {
                 const response = await fetch('/api/v1/core-products/pending');
                 const data = await response.json();
-                allProducts = data.data.products || [];
+                allProducts = (data.data.products || []).filter(product =>
+                    Number(product.quantity || 0) > 0 && Number(product.price || 0) > 0
+                );
 
                 let filtered = currentCategory === 'all' 
                     ? allProducts 
@@ -1120,7 +1282,7 @@
 
                 const container = document.getElementById('pending-products-list');
                 if (limited.length === 0) {
-                    container.innerHTML = '<div class="empty-state"><div class="empty-icon">📦</div><p>No products</p></div>';
+                    container.innerHTML = '<div class="empty-state"><i class="bx bx-check-circle empty-icon"></i><p>No in-stock products are awaiting approval.</p></div>';
                     return;
                 }
 
@@ -1447,7 +1609,9 @@
                 }
 
                 // Filter by current category
-                let filtered = (data.data.products || []).filter(product => Number(product.quantity || 0) > 0);
+                let filtered = (data.data.products || []).filter(product =>
+                    Number(product.quantity || 0) > 0 && Number(product.price || 0) > 0
+                );
                 if (currentCategory !== 'all') {
                     filtered = filtered.filter(product => getCategoryFromName(product.product_name) === currentCategory);
                 }
