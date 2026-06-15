@@ -2757,6 +2757,23 @@ app.get('/api/v1/products/:id/axiz-details', async (req, res, next) => {
 // ==========================================================================================================//
 //                                              cart handling                                                //
 // ==========================================================================================================//
+async function resolveCartProductID(connection, userID, identifier) {
+    const parsedIdentifier = parseInt(identifier);
+    if (!userID || !parsedIdentifier || isNaN(parsedIdentifier)) return null;
+
+    const [byProductID] = await connection.query(
+        'SELECT productID FROM Cart WHERE userID = ? AND productID = ? LIMIT 1',
+        [userID, parsedIdentifier]
+    );
+    if (byProductID.length) return byProductID[0].productID;
+
+    const [byCartRowID] = await connection.query(
+        'SELECT productID FROM Cart WHERE userID = ? AND id = ? LIMIT 1',
+        [userID, parsedIdentifier]
+    );
+    return byCartRowID.length ? byCartRowID[0].productID : null;
+}
+
 // --- SYNC LOCAL STORAGE TO DATABASE ---
 app.post('/api/v1/cart/sync', async (req, res, next) => {
     const { userID, items } = req.body;
@@ -2778,9 +2795,10 @@ app.post('/api/v1/cart/sync', async (req, res, next) => {
                         console.log(`[Cart API] Digital license synced: ${item.id}`);
                         syncCount++;
                     } else {
-                        const productID = parseInt(item.id);
+                        const productID = parseInt(item.product_id || item.productID || item.id);
+                        const quantity = Math.max(1, parseInt(item.quantity) || 1);
                         if (isNaN(productID)) {
-                            console.warn(`[Cart API] Invalid productID: ${item.id}`);
+                            console.warn(`[Cart API] Invalid productID: ${item.product_id || item.productID || item.id}`);
                             continue;
                         }
                         const [productCheck] = await connection.query('SELECT id FROM products WHERE id = ? LIMIT 1', [productID]);
@@ -2790,7 +2808,7 @@ app.post('/api/v1/cart/sync', async (req, res, next) => {
                         }
                         await connection.query(
                             'INSERT INTO Cart (userID, productID, quantity) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE quantity = quantity + VALUES(quantity)',
-                            [userID, productID, item.quantity || 1]
+                            [userID, productID, quantity]
                         );
                         console.log(`[Cart API] Product synced: ${productID}`);
                         syncCount++;
@@ -2908,10 +2926,16 @@ app.patch('/api/v1/cart/:userID/:productID', async (req, res, next) => {
     let connection;
     try {
         const userID = parseInt(req.params.userID);
-        const productID = parseInt(req.params.productID);
+        const requestedID = parseInt(req.params.productID);
         
-        console.log(`[Cart PATCH] userID: ${userID}, productID: ${productID}, action: ${action}`);
+        console.log(`[Cart PATCH] userID: ${userID}, requestedID: ${requestedID}, action: ${action}`);
         connection = await db.getConnection();
+
+        const productID = await resolveCartProductID(connection, userID, requestedID);
+        if (!productID) {
+            console.warn(`[Cart PATCH] Cart item not found for user ${userID}, identifier ${requestedID}`);
+            return res.status(404).json({ status: 'error', message: 'Cart item not found' });
+        }
         
         if (action === 'increment') {
             const [result] = await connection.query('UPDATE Cart SET quantity = quantity + 1 WHERE userID = ? AND productID = ?', 

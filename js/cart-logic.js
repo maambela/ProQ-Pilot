@@ -226,7 +226,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                     console.log(`[Cart Logic] Item ${index} regular product: ${item.product_name}`);
                     
                     return {
-                        id: item.id,
+                        id: item.product_id || item.productID || item.id,
+                        cart_id: item.id,
+                        product_id: item.product_id || item.productID || item.id,
                         name: item.product_name,
                         price: parseFloat(item.price),
                         quantity: item.quantity,
@@ -251,7 +253,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                         }
                     }
                     return {
-                        id: item.id,
+                        id: item.product_id || item.productID || item.id,
+                        cart_id: item.id,
+                        product_id: item.product_id || item.productID || item.id,
                         name: item.product_name,
                         price: parseFloat(item.price),
                         quantity: item.quantity,
@@ -274,10 +278,12 @@ document.addEventListener('DOMContentLoaded', async () => {
                         imagePath = `/product_images/${imagePath}`;
                     }
                 }
-                return {
-                    id: item.id,
-                    name: item.product_name,
-                    price: parseFloat(item.price),
+                    return {
+                        id: item.product_id || item.productID || item.id,
+                        cart_id: item.id,
+                        product_id: item.product_id || item.productID || item.id,
+                        name: item.product_name,
+                        price: parseFloat(item.price),
                     quantity: item.quantity,
                     description: item.description,
                     image: imagePath,
@@ -454,7 +460,12 @@ document.addEventListener('DOMContentLoaded', async () => {
                 let cart = JSON.parse(localStorage.getItem('cart')) || [];
                 const idx = cart.findIndex(i => i.id == productId);
                 if(idx > -1) {
-                    cart[idx].quantity = Math.max(1, cart[idx].quantity + delta);
+                    const nextQuantity = (Number(cart[idx].quantity) || 1) + delta;
+                    if (nextQuantity <= 0) {
+                        cart.splice(idx, 1);
+                    } else {
+                        cart[idx].quantity = nextQuantity;
+                    }
                     localStorage.setItem('cart', JSON.stringify(cart));
                     console.log('[Cart] Local storage quantity updated');
                 }
