@@ -944,14 +944,23 @@ function extractBrand(description) {
 
 // Fetch products from Core Group API
 async function getCoreGroupProducts() {
-    try {
-        const response = await axios.get(process.env.CORE_API_URL);
-        const items = response.data.Root.DataFeed;
-        return items || [];
-    } catch (error) {
-        console.error("[CORE API] Error fetching products:", error.message);
-        return [];
+    const coreApiUrl = process.env.CORE_API_URL;
+    if (!coreApiUrl) {
+        throw new Error('CORE_API_URL is not configured');
     }
+
+    const response = await axios.get(coreApiUrl, {
+        timeout: 30000,
+        headers: { Accept: 'application/json' }
+    });
+    const items = response.data?.Root?.DataFeed;
+
+    if (!Array.isArray(items)) {
+        throw new Error('Core API returned an unexpected response format');
+    }
+
+    console.log(`[CORE API] Received ${items.length} products`);
+    return items;
 }
 
 // ============ TARSON ONLINE API INTEGRATION ============
@@ -1354,10 +1363,12 @@ async function sendNewTarsonProductsEmail(products) {
 async function syncCoreGroupProducts() {
     let connection;
     const newProducts = []; // Track newly added products for email
+    let updatedProducts = 0;
+    let skippedProducts = 0;
     try {
         console.log("[CORE API] Starting sync with enhanced product extraction...");
-        connection = await db.getConnection();
         const items = await getCoreGroupProducts();
+        connection = await db.getConnection();
 
         await connection.beginTransaction();
 
@@ -1365,6 +1376,7 @@ async function syncCoreGroupProducts() {
             // Validate required fields
             if (!item.StockCode || !item.Description) {
                 console.log("[CORE API] Skipping item with missing StockCode or Description");
+                skippedProducts += 1;
                 continue;
             }
 
@@ -1372,7 +1384,10 @@ async function syncCoreGroupProducts() {
             const descriptionStr = String(item.Description || '');
             
             const description = descriptionStr.toLowerCase();
-            if (shouldSkipStoreSyncItem(descriptionStr, item.StockCode)) continue;
+            if (shouldSkipStoreSyncItem(descriptionStr, item.StockCode)) {
+                skippedProducts += 1;
+                continue;
+            }
 
             // ===== ENHANCED EXTRACTION =====
             const cleanProductName = extractCleanProductName(descriptionStr);
@@ -1411,11 +1426,20 @@ async function syncCoreGroupProducts() {
                     price: price,
                     quantity: Math.floor(item.StockOnHand || 0)
                 });
+            } else {
+                updatedProducts += 1;
             }
         }
 
         await connection.commit();
-        console.log(`[CORE API] Sync completed successfully - ${newProducts.length} new products added`);
+        const summary = {
+            fetched: items.length,
+            added: newProducts.length,
+            updated: updatedProducts,
+            skipped: skippedProducts,
+            inStock: items.filter(item => Number(item.StockOnHand) > 0).length
+        };
+        console.log(`[CORE API] Sync completed successfully: ${JSON.stringify(summary)}`);
 
         // Send email notification if new products were added
         if (newProducts.length > 0) {
@@ -1427,9 +1451,13 @@ async function syncCoreGroupProducts() {
             }
         }
 
+        return summary;
     } catch (error) {
         if (connection) await connection.rollback();
-        console.error("[CORE API] Sync failed:", error.message);
+        const status = error.response?.status;
+        const detail = status ? `HTTP ${status}: ${error.message}` : error.message;
+        console.error("[CORE API] Sync failed:", detail);
+        throw new Error(detail);
     } finally {
         if (connection) connection.release();
     }
@@ -1514,7 +1542,9 @@ async function sendNewCoreProductsEmail(products) {
 }
 
 // Set up hourly sync for Core API (1 hour = 3600000ms)
-setInterval(syncCoreGroupProducts, 3600000);
+setInterval(() => {
+    syncCoreGroupProducts().catch(err => console.error("[CORE API] Scheduled sync failed:", err.message));
+}, 3600000);
 
 // Initial sync on startup
 syncCoreGroupProducts().catch(err => console.error("[CORE API] Initial sync failed:", err));
@@ -1529,9 +1559,17 @@ setTimeout(() => {
 }, 60000);
 
 // Route: Manual sync Core products
-app.post('/api/v1/sync-core', async (req, res) => {
-    await syncCoreGroupProducts();
-    res.status(200).json({ status: 'success', message: 'Core products synced' });
+app.post('/api/v1/sync-core', async (req, res, next) => {
+    try {
+        const summary = await syncCoreGroupProducts();
+        res.status(200).json({
+            status: 'success',
+            message: `Core sync complete: ${summary.fetched} fetched, ${summary.inStock} in stock, ${summary.added} added, ${summary.updated} updated.`,
+            data: { summary }
+        });
+    } catch (error) {
+        next(new AppError(`Core sync failed: ${error.message}`, 502));
+    }
 });
 
 // Route: Manual sync Tarson products

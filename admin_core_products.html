@@ -1093,14 +1093,14 @@
             try {
                 const response = await fetch('/api/v1/sync-core', { method: 'POST' });
                 const data = await response.json();
-                if (data.status === 'success') {
-                    alert('✓ Synced successfully!');
+                if (response.ok && data.status === 'success') {
+                    alert(data.message || 'Core products synced successfully.');
                     location.reload();
                 } else {
-                    alert('✗ Sync failed: ' + data.message);
+                    alert('Sync failed: ' + (data.message || `Server responded with ${response.status}`));
                 }
             } catch (error) {
-                alert('✗ Error: ' + error.message);
+                alert('Sync failed: ' + error.message);
             }
             if (button) button.disabled = false;
         }
@@ -1109,7 +1109,7 @@
             try {
                 const response = await fetch('/api/v1/core-products/pending');
                 const data = await response.json();
-                allProducts = (data.data.products || []).filter(product => Number(product.quantity || 0) > 0);
+                allProducts = data.data.products || [];
 
                 let filtered = currentCategory === 'all' 
                     ? allProducts 
@@ -1593,6 +1593,6 @@
             }
         }
     </script>
-    <script src="js/auth-ui.js"></script>
+    <script src="js/auth-ui.js?v=admin-role-20260615"></script>
 </body>
 </html>

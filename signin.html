@@ -10,7 +10,7 @@
 
     <!-- Main Styles -->
     <link rel="stylesheet" href="css/style.css">
-    <script src="js/auth-ui.js"></script>
+    <script src="js/auth-ui.js?v=admin-role-20260615"></script>
 </head>
 <body>
 
@@ -69,14 +69,24 @@
                 const result = await response.json();
 
                 if (response.ok) {
-                    showStatus('Access Granted', 'Welcome to ProQ Pilot!');
+                    const user = result.data.user;
+                    const isAdmin = String(user.role || '').trim().toLowerCase() === 'admin';
+                    showStatus(
+                        isAdmin ? 'Admin Access Granted' : 'Access Granted',
+                        isAdmin ? 'Opening your admin dashboard...' : 'Welcome to ProQ Pilot!'
+                    );
                     
                     // Store token and user data
                     localStorage.setItem('token', result.token);
-                    localStorage.setItem('user', JSON.stringify(result.data.user));
+                    localStorage.setItem('user', JSON.stringify(user));
 
                     // Short delay for the user to see the success message
                     setTimeout(() => {
+                        if (isAdmin) {
+                            window.location.href = 'admin_dashboard.html';
+                            return;
+                        }
+
                         const params = new URLSearchParams(window.location.search);
                         const redirectTo = params.get('redirect') || 'index.html';
                         window.location.href = redirectTo;

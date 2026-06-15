@@ -196,6 +196,7 @@ exports.login = catchAsync(async (req, res, next) => {
 
     // Hide password from output
     user.password_hash = undefined;
+    user.role = String(user.role || 'client').trim().toLowerCase();
 
     res.status(200).json({
         status: 'success',

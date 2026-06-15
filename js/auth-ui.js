@@ -130,7 +130,8 @@ document.addEventListener('DOMContentLoaded', () => {
             navLinks.appendChild(mobileSignOut);
         }
 
-        if (isAdminPage && user.role !== 'admin') {
+        const isAdmin = String(user.role || '').trim().toLowerCase() === 'admin';
+        if (isAdminPage && !isAdmin) {
             window.location.href = 'index.html';
             return;
         }
