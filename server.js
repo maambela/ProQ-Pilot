@@ -1417,12 +1417,13 @@ async function sendNewTarsonProductsEmail(products) {
     }
 }
 
-// Sync Core API products to database (pending status)
-async function syncCoreGroupProducts() {
+// Sync Core API products to database. Manual resets can return the catalogue to review.
+async function syncCoreGroupProducts({ resetToPending = false } = {}) {
     let connection;
     const newProducts = []; // Track newly added products for email
     let updatedProducts = 0;
     let skippedProducts = 0;
+    let resetProducts = 0;
     try {
         console.log("[CORE API] Starting sync with enhanced product extraction...");
         const items = await getCoreGroupProducts();
@@ -1430,6 +1431,20 @@ async function syncCoreGroupProducts() {
         await ensureSupplierTrackingSchema(connection);
 
         await connection.beginTransaction();
+
+        if (resetToPending) {
+            const [resetResult] = await connection.query(`
+                UPDATE products
+                SET status = 'pending',
+                    is_active = 0,
+                    updated_at = NOW()
+                WHERE supplier_source = 'Core'
+                   OR (supplier_source IS NULL
+                       AND brand IN ('APPLE', 'IPHONE', 'IPAD', 'MACBOOK', 'AIRPODS', 'IMAC', 'MAC', 'IWATCH'))
+            `);
+            resetProducts = resetResult.affectedRows || 0;
+            console.log(`[CORE API] Reset ${resetProducts} Core products to pending review`);
+        }
 
         for (const item of items) {
             // Validate required fields
@@ -1496,7 +1511,8 @@ async function syncCoreGroupProducts() {
             added: newProducts.length,
             updated: updatedProducts,
             skipped: skippedProducts,
-            inStock: items.filter(item => Number(item.StockOnHand) > 0).length
+            inStock: items.filter(item => Number(item.StockOnHand) > 0).length,
+            reset: resetProducts
         };
 
         await connection.query(
@@ -1637,10 +1653,10 @@ setTimeout(() => {
 // Route: Manual sync Core products
 app.post('/api/v1/sync-core', async (req, res, next) => {
     try {
-        const summary = await syncCoreGroupProducts();
+        const summary = await syncCoreGroupProducts({ resetToPending: true });
         res.status(200).json({
             status: 'success',
-            message: `Core sync complete: ${summary.fetched} fetched, ${summary.inStock} in stock, ${summary.added} added, ${summary.updated} updated.`,
+            message: `Core sync complete: ${summary.reset} products reset to pending, ${summary.fetched} fetched, ${summary.inStock} in stock.`,
             data: { summary }
         });
     } catch (error) {
@@ -1741,6 +1757,7 @@ app.get('/api/v1/core-products/approved/list', async (req, res, next) => {
                AND (p.supplier_source = 'Core'
                     OR (p.supplier_source IS NULL AND p.brand IN ('APPLE', 'IPHONE', 'IPAD', 'MACBOOK', 'AIRPODS', 'IMAC', 'MAC', 'IWATCH')))
              GROUP BY p.id
+             HAVING COUNT(pi.id) > 0
              ORDER BY p.created_at DESC`
         );
         
@@ -3007,7 +3024,15 @@ app.get('/api/v1/core-status', async (req, res, next) => {
         const [[inventory]] = await connection.query(`
             SELECT
                 SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) AS pending_count,
-                SUM(CASE WHEN status = 'approved' THEN 1 ELSE 0 END) AS approved_count,
+                SUM(CASE
+                    WHEN status = 'approved'
+                     AND EXISTS (
+                         SELECT 1
+                         FROM product_images pi
+                         WHERE pi.product_id = products.id
+                     )
+                    THEN 1 ELSE 0
+                END) AS approved_count,
                 COUNT(*) AS usable_count
             FROM products
             WHERE quantity > 0

@@ -585,6 +585,13 @@
             box-shadow: 0 12px 30px rgba(239, 68, 68, 0.3);
         }
 
+        .btn:disabled {
+            cursor: not-allowed;
+            opacity: 0.45;
+            transform: none;
+            box-shadow: none;
+        }
+
         .btn-deactivate {
             background: linear-gradient(to right, #f59e0b, #d97706);
             color: white;
@@ -864,7 +871,7 @@
 
         .spec-label {
             font-size: 0.75rem;
-            color: #a0aec0;
+            color: #ffffff !important;
             text-transform: uppercase;
             letter-spacing: 0.5px;
             font-weight: 200;
@@ -872,8 +879,13 @@
 
         .spec-value {
             font-size: 0.9rem;
-            color: var(--text-main);
+            color: #ffffff !important;
             font-weight: 200;
+        }
+
+        .detail-label,
+        .detail-value {
+            color: #ffffff !important;
         }
 
         .image-badge {
@@ -1113,18 +1125,18 @@
 
                 <!-- Tabs -->
                 <div class="tabs">
-                    <button class="tab-btn" onclick="switchTab('pending', this)">Pending <span class="tab-count" id="pending-tab-count">0</span></button>
-                    <button class="tab-btn active" onclick="switchTab('approved', this)">Approved <span class="tab-count" id="approved-tab-count">0</span></button>
+                    <button class="tab-btn active" id="pending-tab-button" onclick="switchTab('pending', this)">Pending <span class="tab-count" id="pending-tab-count">0</span></button>
+                    <button class="tab-btn" onclick="switchTab('approved', this)">Approved <span class="tab-count" id="approved-tab-count">0</span></button>
                     <button class="tab-btn" onclick="switchTab('rejected', this)">Rejected</button>
                 </div>
 
                 <!-- Pending Tab -->
-                <div id="pending" class="tab-content">
+                <div id="pending" class="tab-content active">
                     <div id="pending-products-list" class="products-list"></div>
                 </div>
 
                 <!-- Approved Tab -->
-                <div id="approved" class="tab-content active">
+                <div id="approved" class="tab-content">
                     <div id="approved-products-list" class="products-list admin-grid"></div>
                 </div>
 
@@ -1254,6 +1266,7 @@
                         loadPendingProducts(),
                         loadApprovedProducts()
                     ]);
+                    switchTab('pending', document.getElementById('pending-tab-button'));
                 } else {
                     alert('Sync failed: ' + (data.message || `Server responded with ${response.status}`));
                 }
@@ -1277,8 +1290,7 @@
                     ? allProducts 
                     : allProducts.filter(p => getCategoryFromName(p.product_name) === currentCategory);
 
-                // Limit to first 50 products to prevent browser resource exhaustion
-                const limited = filtered.slice(0, 50);
+                const limited = filtered;
 
                 const container = document.getElementById('pending-products-list');
                 if (limited.length === 0) {
@@ -1328,14 +1340,17 @@
                         </div>
 
                         <div class="action-buttons">
-                            <button class="btn btn-success" onclick="approveProduct(${product.id})">✓ Approve</button>
+                            <button
+                                class="btn btn-success"
+                                id="approve-${product.id}"
+                                onclick="approveProduct(${product.id})"
+                                ${Number(product.image_count || 0) === 0 ? 'disabled title="Upload at least one image before approval"' : ''}
+                            >✓ Approve</button>
                             <button class="btn btn-danger" onclick="openRejectionModal(${product.id})">✗ Reject</button>
                         </div>
                     </div>
                 `).join('');
 
-                // Load images for all rendered pending products
-                limited.forEach(product => loadProductImages(product.id));
             } catch (error) {
                 console.error('Error:', error);
             }
@@ -1385,6 +1400,14 @@
                 grid.querySelectorAll('.image-thumbnail').forEach(el => el.remove());
                 const imageCountLabel = document.getElementById(`image-count-${productId}`);
                 if (imageCountLabel) imageCountLabel.textContent = `${images.length} image(s)`;
+
+                const approveButton = document.getElementById(`approve-${productId}`);
+                if (approveButton) {
+                    approveButton.disabled = images.length === 0;
+                    approveButton.title = images.length === 0
+                        ? 'Upload at least one image before approval'
+                        : 'Approve product';
+                }
 
                 // Update the image count display in the detail items
                 const productItem = document.querySelector(`[data-product-id="${productId}"]`);
@@ -1496,6 +1519,12 @@
         }
 
         async function approveProduct(productId) {
+            const approveButton = document.getElementById(`approve-${productId}`);
+            if (approveButton && approveButton.disabled) {
+                alert('Upload at least one image before approving this product.');
+                return;
+            }
+
             try {
                 const response = await fetch(`/api/v1/core-products/${productId}/approve`, { method: 'PATCH' });
                 const data = await response.json();
