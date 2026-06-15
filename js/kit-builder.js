@@ -459,13 +459,23 @@ async function addKitToCart() {
 
     if (user?.userID) {
         try {
-            await fetch('/api/v1/cart/sync', {
+            const response = await fetch('/api/v1/cart/sync', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ userID: user.userID, items: cartItems })
             });
+            const result = await response.json().catch(() => ({}));
+            if (!response.ok || Number(result.synced) !== cartItems.length) {
+                throw new Error(result.message || `Only ${Number(result.synced) || 0} of ${cartItems.length} kit items synced`);
+            }
         } catch (error) {
             console.error('[Kit Builder] Cart sync failed:', error);
+            if (addButton) {
+                addButton.disabled = false;
+                addButton.innerHTML = "<i class='bx bx-cart-add'></i> Add Kit to Cart";
+            }
+            alert('The kit is saved locally, but it could not be synced to your account. Please try adding it again.');
+            return;
         }
     }
 
@@ -486,8 +496,7 @@ function buildCartItems() {
         kitState.enabled.laptop ? laptop : null,
         ...kitState.selectedAccessories
             .filter(item => kitState.enabled.accessories[item.key] !== false)
-            .map(item => item.product),
-        kitState.enabled.duo ? kitState.selectedDuo : null
+            .map(item => item.product)
     ].filter(Boolean);
 
     const items = regularProducts.map(product => ({
@@ -501,8 +510,54 @@ function buildCartItems() {
 
     const microsoftItem = buildMicrosoftCartItem();
     if (kitState.enabled.microsoft && microsoftItem) items.push(microsoftItem);
+    const duoItem = buildDuoCartItem();
+    if (kitState.enabled.duo && duoItem) items.push(duoItem);
 
     return items;
+}
+
+function buildDuoCartItem() {
+    const product = kitState.selectedDuo;
+    const user = safeJsonParse(localStorage.getItem('user'));
+    const unitPrice = getProductPrice(product);
+    if (!product || unitPrice <= 0 || !user?.email) return null;
+
+    const productText = normalizeProductText(product);
+    const edition = productText.includes('premier') || productText.includes('beyond')
+        ? 'BEYOND'
+        : productText.includes('advantage') || productText.includes('platform')
+            ? 'PLATFORM'
+            : 'ENTERPRISE';
+    const personName = [user.firstName, user.lastName].filter(Boolean).join(' ').trim();
+    const emailName = String(user.email).split('@')[0].replace(/[._-]+/g, ' ').trim();
+    const organizationName = user.company_name || user.companyName || personName || `${emailName} Team`;
+    const totalPrice = unitPrice * kitState.seats;
+    const duoConfig = {
+        organization_name: organizationName,
+        user_limit: kitState.seats,
+        admin_emails: [user.email],
+        edition,
+        customer_email: user.email,
+        userId: user.userID || null,
+        product_name: product.product_name || 'Cisco Duo Security',
+        product_description: `${organizationName} | ${kitState.seats} User License(s)`,
+        unit_price: unitPrice,
+        product_price: totalPrice,
+        kit_type: kitState.type
+    };
+
+    const organizationKey = normalizeText(organizationName).trim().replace(/\s+/g, '-').slice(0, 70);
+
+    return {
+        id: `duo-kit-${kitState.type}-${organizationKey}`,
+        type: 'duo-security',
+        product_name: duoConfig.product_name,
+        description: duoConfig.product_description,
+        quantity: 1,
+        price: totalPrice,
+        image_url: 'Images/cisco-duo.png',
+        duo_config: duoConfig
+    };
 }
 
 function buildMicrosoftCartItem() {
@@ -547,11 +602,15 @@ function upsertCartItem(cart, item) {
         if (item.type === 'microsoft-license') {
             return existing.type === 'microsoft-license' && existing.microsoft_config?.sku === item.microsoft_config?.sku;
         }
+        if (item.type === 'duo-security' || item.type === 'duo-security-upgrade') {
+            return existing.type === item.type &&
+                existing.duo_config?.organization_name === item.duo_config?.organization_name;
+        }
         return String(existing.id) === String(item.id) && !existing.type;
     });
 
     if (index >= 0) {
-        if (item.type === 'microsoft-license') {
+        if (item.type) {
             cart[index] = item;
         } else {
             cart[index].quantity = (Number(cart[index].quantity) || 0) + (Number(item.quantity) || 1);

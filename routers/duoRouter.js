@@ -584,4 +584,32 @@ router.post('/test-api', catchAsync(async (req, res) => {
     }
 }));
 
+// Backward-compatible lookup for older cached clients that requested /duo/:userId.
+router.get('/:userId', catchAsync(async (req, res) => {
+    const connection = await db.getConnection();
+    try {
+        const [organizations] = await connection.query(
+            `SELECT id, organization_name, duo_account_id, user_limit, admin_emails, api_hostname, status, created_at
+             FROM duo_organizations
+             WHERE customer_id = ? AND status = 'active'
+             ORDER BY created_at DESC
+             LIMIT 1`,
+            [req.params.userId]
+        );
+
+        const organization = organizations[0]
+            ? {
+                ...organizations[0],
+                accountName: organizations[0].organization_name,
+                numLicenses: Number(organizations[0].user_limit) || 0,
+                admin_emails: JSON.parse(organizations[0].admin_emails || '[]')
+            }
+            : null;
+
+        res.status(200).json({ success: true, data: organization });
+    } finally {
+        connection.release();
+    }
+}));
+
 module.exports = router;

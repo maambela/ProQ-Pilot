@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Help & Support | ProQ Pilot</title>
+    <link rel="icon" href="Images/Logos/Proq2.png">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/contact.css?v=support-1">
+    <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
+</head>
+<body>
+    <header class="main-header">
+        <div class="header-container">
+            <a href="index.html" class="logo-area" aria-label="ProQ Pilot home">
+                <span class="logo-icon">P</span>
+                <span class="brand-name">ProQ Pilot</span>
+            </a>
+            <nav class="nav-links" id="nav-links">
+                <a href="index.html">Home</a>
+                <a href="store.html">Store</a>
+                <a href="user-orders.html">Orders</a>
+                <a href="my-account.html">My Account</a>
+                <a href="contact.html" class="active">Support</a>
+            </nav>
+            <div class="header-actions">
+                <a href="wishlist.html" class="wishlist-wrapper" aria-label="Wishlist">
+                    <span class="wishlist-icon"><i class="bx bx-heart"></i></span>
+                    <span class="wishlist-badge">0</span>
+                </a>
+                <a href="signin.html" class="auth-wrapper" aria-label="Account">
+                    <span class="auth-icon"><i class="bx bx-user"></i></span>
+                </a>
+                <a href="cart.html" class="cart-wrapper" aria-label="Cart">
+                    <span class="cart-icon"><i class="bx bx-cart"></i></span>
+                    <span class="cart-badge" id="cart-count">0</span>
+                </a>
+                <button class="hamburger" id="hamburger" type="button" aria-label="Open navigation">
+                    <span></span><span></span><span></span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="support-page">
+        <header class="support-heading">
+            <span>Help & Support</span>
+            <h1>Talk to the ProQ Pilot team</h1>
+            <p>Get help with an order, delivery address, product choice, Microsoft licensing, or Cisco Duo setup.</p>
+        </header>
+
+        <div class="support-layout">
+            <aside class="support-channels" aria-label="Support contact options">
+                <a href="tel:0115689337" class="support-channel">
+                    <i class="bx bx-phone"></i>
+                    <div>
+                        <span>Call</span>
+                        <strong>011 568 9337</strong>
+                    </div>
+                </a>
+                <a href="mailto:support@stackopsit.co.za" class="support-channel">
+                    <i class="bx bx-envelope"></i>
+                    <div>
+                        <span>Support email</span>
+                        <strong>support@stackopsit.co.za</strong>
+                    </div>
+                </a>
+                <div class="support-channel">
+                    <i class="bx bx-map"></i>
+                    <div>
+                        <span>Office</span>
+                        <strong>Mia Drive, Waterfall City, Johannesburg, 1685</strong>
+                    </div>
+                </div>
+                <div class="support-hours">
+                    <h2>Support hours</h2>
+                    <p>Monday to Friday</p>
+                    <strong>08:00 - 17:00 SAST</strong>
+                </div>
+            </aside>
+
+            <section class="support-form-panel" aria-labelledby="supportFormTitle">
+                <div class="support-form-heading">
+                    <span>Send a message</span>
+                    <h2 id="supportFormTitle">How can we help?</h2>
+                </div>
+
+                <form id="contactForm">
+                    <div class="support-field-grid">
+                        <label>
+                            Name
+                            <input type="text" name="name" autocomplete="name" maxlength="120" required>
+                        </label>
+                        <label>
+                            Email
+                            <input type="email" name="email" autocomplete="email" maxlength="180" required>
+                        </label>
+                    </div>
+
+                    <div class="support-field-grid">
+                        <label>
+                            Phone
+                            <input type="tel" name="phone" autocomplete="tel" maxlength="50">
+                        </label>
+                        <label>
+                            Topic
+                            <select name="topic">
+                                <option>Order support</option>
+                                <option>Delivery address</option>
+                                <option>Product advice</option>
+                                <option>Microsoft licensing</option>
+                                <option>Cisco Duo support</option>
+                                <option>Returns and warranty</option>
+                                <option>General support</option>
+                            </select>
+                        </label>
+                    </div>
+
+                    <label>
+                        Order number
+                        <input type="text" name="orderNumber" maxlength="80" placeholder="Optional">
+                    </label>
+
+                    <label>
+                        Message
+                        <textarea name="message" rows="7" maxlength="5000" required></textarea>
+                    </label>
+
+                    <div class="support-form-actions">
+                        <button type="submit" id="contactSubmit" class="btn btn-primary">
+                            <i class="bx bx-send"></i>
+                            <span>Send Message</span>
+                        </button>
+                        <p id="contactStatus" role="status" aria-live="polite"></p>
+                    </div>
+                </form>
+            </section>
+        </div>
+    </main>
+
+    <footer class="site-footer"></footer>
+
+    <script src="js/site-footer.js"></script>
+    <script src="js/contact.js?v=support-1"></script>
+    <script src="js/auth-ui.js"></script>
+</body>
+</html>

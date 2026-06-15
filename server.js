@@ -9,6 +9,7 @@ const {
     EMAIL_SENDERS,
     ORDER_NOTIFICATION_RECIPIENTS,
     sendMailOptions,
+    sendSupportEmail,
     verifyGraphEmailConfig
 } = require('./utils/email');
 const duoApi = require('./utils/duoApi'); // Path to your duoApi.js file
@@ -106,6 +107,22 @@ app.use(express.static('./', {
     maxAge: 0,
     setHeaders: setStaticAssetCache
 }));
+
+app.get('/favicon.ico', (req, res) => {
+    res.redirect(302, '/Images/Logos/Proq2.png');
+});
+
+app.get('/robots.txt', (req, res) => {
+    res.type('text/plain').send([
+        'User-agent: *',
+        'Allow: /',
+        'Disallow: /admin_',
+        'Disallow: /api/'
+    ].join('\n'));
+});
+
+app.get('/brands.html', (req, res) => res.redirect(302, '/store.html'));
+app.get('/about.html', (req, res) => res.redirect(302, '/contact.html'));
 
 
 const axios = require('axios'); // Add this for API calls
@@ -2777,53 +2794,73 @@ async function resolveCartProductID(connection, userID, identifier) {
 // --- SYNC LOCAL STORAGE TO DATABASE ---
 app.post('/api/v1/cart/sync', async (req, res, next) => {
     const { userID, items } = req.body;
+    let connection;
     try {
-        console.log('[Cart API] Sync requested for userID:', userID);
-        const connection = await db.getConnection();
-        try {
-            let syncCount = 0;
-            for (const item of items) {
-                try {
-                    const itemType = item.type || item.cart_type;
-                    if (isDigitalLicenseType(itemType)) {
-                        await connection.query(
-                            `INSERT INTO duo_cart_items (userID, cart_product_id, cart_type, duo_config_json)
-                             VALUES (?, ?, ?, ?)
-                             ON DUPLICATE KEY UPDATE cart_type = VALUES(cart_type), duo_config_json = VALUES(duo_config_json)`,
-                            [userID, String(item.id), itemType, JSON.stringify(getDigitalLicenseConfig(item))]
-                        );
-                        console.log(`[Cart API] Digital license synced: ${item.id}`);
-                        syncCount++;
-                    } else {
-                        const productID = parseInt(item.product_id || item.productID || item.id);
-                        const quantity = Math.max(1, parseInt(item.quantity) || 1);
-                        if (isNaN(productID)) {
-                            console.warn(`[Cart API] Invalid productID: ${item.product_id || item.productID || item.id}`);
-                            continue;
-                        }
-                        const [productCheck] = await connection.query('SELECT id FROM products WHERE id = ? LIMIT 1', [productID]);
-                        if (!productCheck?.length) {
-                            console.warn(`[Cart API] Product not found: ${productID}`);
-                            continue;
-                        }
-                        await connection.query(
-                            'INSERT INTO Cart (userID, productID, quantity) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE quantity = quantity + VALUES(quantity)',
-                            [userID, productID, quantity]
-                        );
-                        console.log(`[Cart API] Product synced: ${productID}`);
-                        syncCount++;
-                    }
-                } catch (itemErr) {
-                    console.error(`[Cart API] Item error for ${item.id}:`, itemErr.message);
-                }
-            }
-            res.status(200).json({ status: 'success', synced: syncCount });
-        } finally {
-            connection.release();
+        if (!userID || !Array.isArray(items) || !items.length) {
+            return res.status(400).json({
+                status: 'error',
+                message: 'userID and at least one cart item are required'
+            });
         }
+
+        console.log('[Cart API] Sync requested for userID:', userID);
+        connection = await db.getConnection();
+        await connection.beginTransaction();
+
+        let syncCount = 0;
+        for (const item of items) {
+            const itemType = item.type || item.cart_type;
+            if (isDigitalLicenseType(itemType)) {
+                const config = getDigitalLicenseConfig(item);
+                if (!item.id || !Object.keys(config).length) {
+                    throw new AppError('Digital license cart configuration is incomplete', 400);
+                }
+
+                await connection.query(
+                    `INSERT INTO duo_cart_items (userID, cart_product_id, cart_type, duo_config_json)
+                     VALUES (?, ?, ?, ?)
+                     ON DUPLICATE KEY UPDATE cart_type = VALUES(cart_type), duo_config_json = VALUES(duo_config_json)`,
+                    [userID, String(item.id).slice(0, 120), itemType, JSON.stringify(config)]
+                );
+                console.log(`[Cart API] Digital license synced: ${item.id}`);
+                syncCount++;
+                continue;
+            }
+
+            const productID = parseInt(item.product_id || item.productID || item.id);
+            const quantity = Math.max(1, parseInt(item.quantity) || 1);
+            if (isNaN(productID)) {
+                throw new AppError(`Invalid product ID: ${item.product_id || item.productID || item.id}`, 400);
+            }
+
+            const [productCheck] = await connection.query(
+                'SELECT id FROM products WHERE id = ? LIMIT 1',
+                [productID]
+            );
+            if (!productCheck?.length) {
+                throw new AppError(`Product not found: ${productID}`, 404);
+            }
+
+            await connection.query(
+                'INSERT INTO Cart (userID, productID, quantity) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE quantity = quantity + VALUES(quantity)',
+                [userID, productID, quantity]
+            );
+            console.log(`[Cart API] Product synced: ${productID}`);
+            syncCount++;
+        }
+
+        await connection.commit();
+        res.status(200).json({ status: 'success', synced: syncCount });
     } catch (err) {
         console.error('[Cart API] Sync error:', err);
-        res.status(500).json({ status: 'error', message: err.message });
+        if (connection) {
+            try { await connection.rollback(); } catch (rollbackError) {
+                console.error('[Cart API] Sync rollback error:', rollbackError.message);
+            }
+        }
+        next(err);
+    } finally {
+        if (connection) connection.release();
     }
 });
 
@@ -2930,10 +2967,12 @@ app.patch('/api/v1/cart/:userID/:productID', async (req, res, next) => {
         
         console.log(`[Cart PATCH] userID: ${userID}, requestedID: ${requestedID}, action: ${action}`);
         connection = await db.getConnection();
+        await connection.beginTransaction();
 
         const productID = await resolveCartProductID(connection, userID, requestedID);
         if (!productID) {
             console.warn(`[Cart PATCH] Cart item not found for user ${userID}, identifier ${requestedID}`);
+            await connection.rollback();
             return res.status(404).json({ status: 'error', message: 'Cart item not found' });
         }
         
@@ -2945,19 +2984,50 @@ app.patch('/api/v1/cart/:userID/:productID', async (req, res, next) => {
                 console.warn(`[Cart PATCH] ⚠️  Product not found for user ${userID}, product ${productID}`);
             }
         } else if (action === 'decrement') {
-            const [result] = await connection.query('UPDATE Cart SET quantity = GREATEST(1, quantity - 1) WHERE userID = ? AND productID = ?', 
-            [userID, productID]);
-            console.log(`[Cart PATCH] ✅ Decremented - affected rows: ${result.affectedRows}`);
-            if (result.affectedRows === 0) {
-                console.warn(`[Cart PATCH] ⚠️  Product not found for user ${userID}, product ${productID}`);
+            const [rows] = await connection.query(
+                'SELECT quantity FROM Cart WHERE userID = ? AND productID = ? FOR UPDATE',
+                [userID, productID]
+            );
+
+            if (!rows.length) {
+                await connection.rollback();
+                return res.status(404).json({ status: 'error', message: 'Cart item not found' });
             }
+
+            if (Number(rows[0].quantity) <= 1) {
+                await connection.query(
+                    'DELETE FROM Cart WHERE userID = ? AND productID = ?',
+                    [userID, productID]
+                );
+                await connection.commit();
+                console.log(`[Cart PATCH] ✅ Removed product ${productID} after quantity reached zero`);
+                return res.status(200).json({ status: 'success', quantity: 0, removed: true });
+            }
+
+            await connection.query(
+                'UPDATE Cart SET quantity = quantity - 1 WHERE userID = ? AND productID = ?',
+                [userID, productID]
+            );
+            console.log(`[Cart PATCH] ✅ Decremented product ${productID}`);
         } else {
             console.error(`[Cart PATCH] Invalid action: ${action}`);
+            await connection.rollback();
             return res.status(400).json({ status: 'error', message: 'Invalid action' });
         }
-        res.status(200).json({ status: 'success' });
+
+        const [[updatedItem]] = await connection.query(
+            'SELECT quantity FROM Cart WHERE userID = ? AND productID = ?',
+            [userID, productID]
+        );
+        await connection.commit();
+        res.status(200).json({ status: 'success', quantity: Number(updatedItem?.quantity || 0), removed: false });
     } catch (err) { 
         console.error('[Cart PATCH] Error:', err.message);
+        if (connection) {
+            try { await connection.rollback(); } catch (rollbackError) {
+                console.error('[Cart PATCH] Rollback error:', rollbackError.message);
+            }
+        }
         next(err); 
     } finally {
         if (connection) connection.release();
@@ -2970,32 +3040,56 @@ app.delete('/api/v1/cart/:userID/:productID', async (req, res, next) => {
     try {
         connection = await db.getConnection();
         const userID = parseInt(req.params.userID);
-        const productID = parseInt(req.params.productID);
+        const requestedID = parseInt(req.params.productID);
         
-        console.log(`[Cart DELETE] userID: ${userID}, productID: ${productID}`);
+        console.log(`[Cart DELETE] userID: ${userID}, requestedID: ${requestedID}`);
         
-        if (!userID || !productID || isNaN(userID) || isNaN(productID)) {
-            console.error(`[Cart DELETE] Invalid parameters - userID: ${userID}, productID: ${productID}`);
+        if (!userID || !requestedID || isNaN(userID) || isNaN(requestedID)) {
+            console.error(`[Cart DELETE] Invalid parameters - userID: ${userID}, requestedID: ${requestedID}`);
             return res.status(400).json({ status: 'error', message: 'Invalid parameters' });
         }
-        
-        // Check if it's a virtual digital license item
-        if (productID === 0) {
-            console.log(`[Cart DELETE] Deleting all Duo items for user ${userID}`);
-            const [result] = await connection.query('DELETE FROM duo_cart_items WHERE userID = ?', [userID]);
-            console.log(`[Cart DELETE] ✅ Duo items deleted - affected rows: ${result.affectedRows}`);
-        } else {
-            // Regular product
-            const [result] = await connection.query('DELETE FROM Cart WHERE userID = ? AND productID = ?', 
-            [userID, productID]);
-            console.log(`[Cart DELETE] ✅ Product deleted - affected rows: ${result.affectedRows}`);
-            if (result.affectedRows === 0) {
-                console.warn(`[Cart DELETE] ⚠️  Product not found - userID: ${userID}, productID: ${productID}`);
-            }
+
+        const productID = await resolveCartProductID(connection, userID, requestedID);
+        if (!productID) {
+            return res.status(404).json({ status: 'error', message: 'Cart item not found' });
         }
-        res.status(200).json({ status: 'success', deleted: true });
+
+        const [result] = await connection.query(
+            'DELETE FROM Cart WHERE userID = ? AND productID = ?',
+            [userID, productID]
+        );
+        console.log(`[Cart DELETE] ✅ Product deleted - affected rows: ${result.affectedRows}`);
+        res.status(200).json({ status: 'success', deleted: result.affectedRows > 0 });
     } catch (err) { 
         console.error('[Cart DELETE] Error:', err.message);
+        next(err);
+    } finally {
+        if (connection) connection.release();
+    }
+});
+
+// Delete one digital license cart row without affecting other Duo or Microsoft items.
+app.delete('/api/v1/cart/:userID/digital/:itemID', async (req, res, next) => {
+    let connection;
+    try {
+        connection = await db.getConnection();
+        const userID = parseInt(req.params.userID);
+        const itemID = parseInt(req.params.itemID);
+
+        if (!userID || !itemID || isNaN(userID) || isNaN(itemID)) {
+            return res.status(400).json({ status: 'error', message: 'Invalid parameters' });
+        }
+
+        const [result] = await connection.query(
+            'DELETE FROM duo_cart_items WHERE userID = ? AND id = ?',
+            [userID, itemID]
+        );
+        res.status(result.affectedRows ? 200 : 404).json({
+            status: result.affectedRows ? 'success' : 'error',
+            deleted: result.affectedRows > 0,
+            message: result.affectedRows ? undefined : 'Digital cart item not found'
+        });
+    } catch (err) {
         next(err);
     } finally {
         if (connection) connection.release();
@@ -3014,7 +3108,7 @@ app.delete('/api/v1/cart/:userID/duo/:orgName', async (req, res, next) => {
         // Delete the specific Duo organization from duo_cart_items
         const [result] = await connection.query(`
             DELETE FROM duo_cart_items
-            WHERE userID = ? AND JSON_EXTRACT(duo_config_json, '$.organization_name') = ?
+            WHERE userID = ? AND JSON_UNQUOTE(JSON_EXTRACT(duo_config_json, '$.organization_name')) = ?
         `, [userID, orgName]);
         
         console.log(`[Cart DUO DELETE] ✅ Deleted - rows affected: ${result.affectedRows}`);
@@ -3065,6 +3159,12 @@ app.get('/api/v1/addresses/:userID', async (req, res, next) => {
 app.post('/api/v1/addresses', async (req, res, next) => {
     try {
         const { userID, line1, line2, city, province, postal_code, country, phone, delivery_instructions, is_default } = req.body;
+        if (!userID || !line1 || !city || !postal_code || !country) {
+            return res.status(400).json({
+                status: 'error',
+                message: 'User, address line 1, city, postal code, and country are required.'
+            });
+        }
         const connection = await db.getConnection();
         try {
             const [result] = await connection.query(
@@ -3082,11 +3182,29 @@ app.post('/api/v1/addresses', async (req, res, next) => {
 
 app.put('/api/v1/addresses/:id', async (req, res, next) => {
     try {
-        const connection = await db.getConnection();
-        const fields = req.body;
+        const allowedFields = [
+            'line1',
+            'line2',
+            'city',
+            'province',
+            'postal_code',
+            'country',
+            'phone',
+            'delivery_instructions',
+            'is_default'
+        ];
         const updates = [];
         const values = [];
-        for (const k of Object.keys(fields)) { updates.push(`${k} = ?`); values.push(fields[k]); }
+        for (const key of allowedFields) {
+            if (Object.prototype.hasOwnProperty.call(req.body, key)) {
+                updates.push(`${key} = ?`);
+                values.push(req.body[key]);
+            }
+        }
+        if (!updates.length) {
+            return res.status(400).json({ status: 'error', message: 'No address fields supplied.' });
+        }
+        const connection = await db.getConnection();
         values.push(req.params.id);
         await connection.query(`UPDATE Addresses SET ${updates.join(', ')} WHERE id = ?`, values);
         connection.release();
@@ -3101,6 +3219,100 @@ app.delete('/api/v1/addresses/:id', async (req, res, next) => {
         connection.release();
         res.status(204).json({ status: 'success' });
     } catch (err) { next(err); }
+});
+
+const contactRequestTimes = new Map();
+
+function escapeSupportText(value) {
+    return String(value || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+}
+
+app.post('/api/v1/contact', async (req, res, next) => {
+    try {
+        const name = String(req.body.name || '').trim();
+        const email = String(req.body.email || '').trim().toLowerCase();
+        const phone = String(req.body.phone || '').trim();
+        const topic = String(req.body.topic || 'General support').trim();
+        const orderNumber = String(req.body.orderNumber || '').trim();
+        const message = String(req.body.message || '').trim();
+
+        if (!name || !email || !message) {
+            return res.status(400).json({
+                status: 'error',
+                message: 'Name, email, and message are required.'
+            });
+        }
+
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+            return res.status(400).json({ status: 'error', message: 'Enter a valid email address.' });
+        }
+
+        if (name.length > 120 || email.length > 180 || phone.length > 50 || topic.length > 100 || orderNumber.length > 80 || message.length > 5000) {
+            return res.status(400).json({ status: 'error', message: 'One or more fields are too long.' });
+        }
+
+        const requester = req.ip || req.get('x-forwarded-for') || 'unknown';
+        const lastRequestAt = contactRequestTimes.get(requester) || 0;
+        if (Date.now() - lastRequestAt < 15000) {
+            return res.status(429).json({
+                status: 'error',
+                message: 'Please wait a moment before sending another message.'
+            });
+        }
+        contactRequestTimes.set(requester, Date.now());
+
+        const safe = {
+            name: escapeSupportText(name),
+            email: escapeSupportText(email),
+            phone: escapeSupportText(phone || 'Not supplied'),
+            topic: escapeSupportText(topic),
+            orderNumber: escapeSupportText(orderNumber || 'Not supplied'),
+            message: escapeSupportText(message).replace(/\r?\n/g, '<br>')
+        };
+
+        await sendSupportEmail({
+            to: EMAIL_SENDERS.support,
+            replyTo: email,
+            subject: `[ProQ Pilot Support] ${topic} - ${name}`,
+            html: `
+                <h2>New ProQ Pilot support message</h2>
+                <p><strong>Name:</strong> ${safe.name}</p>
+                <p><strong>Email:</strong> ${safe.email}</p>
+                <p><strong>Phone:</strong> ${safe.phone}</p>
+                <p><strong>Topic:</strong> ${safe.topic}</p>
+                <p><strong>Order number:</strong> ${safe.orderNumber}</p>
+                <hr>
+                <p>${safe.message}</p>
+            `
+        });
+
+        try {
+            await sendSupportEmail({
+                to: email,
+                subject: 'We received your ProQ Pilot support request',
+                html: `
+                    <h2>Thanks, ${safe.name}</h2>
+                    <p>Your message has reached the ProQ Pilot support team.</p>
+                    <p><strong>Topic:</strong> ${safe.topic}</p>
+                    <p>We will reply to this email address as soon as possible.</p>
+                `
+            });
+        } catch (confirmationError) {
+            console.warn('[CONTACT] Support message sent, but confirmation failed:', confirmationError.message);
+        }
+
+        res.status(200).json({
+            status: 'success',
+            message: 'Your message has been sent to ProQ Pilot support.'
+        });
+    } catch (err) {
+        next(err);
+    }
 });
 
 // ============== MICROSOFT GRAPH EMAIL SETUP ==============

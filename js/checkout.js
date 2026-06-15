@@ -9,13 +9,64 @@ document.addEventListener('DOMContentLoaded', async () => {
     const addressList = document.getElementById('addressList');
     const miniSummary = document.getElementById('miniSummary');
     const continueBtn = document.getElementById('continueToReview');
+    const addressForm = document.getElementById('addressForm');
+    const addressManager = document.getElementById('addressManager');
+    const digitalDeliveryNotice = document.getElementById('digitalDeliveryNotice');
+    const addressStatus = document.getElementById('addressStatus');
 
-    async function loadAddresses() {
-        const res = await fetch(`/api/v1/addresses/${user.userID}`);
-        const data = await res.json();
+    function escapeHtml(value) {
+        return String(value || '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    }
+
+    function showAddressStatus(message, isError = false) {
+        if (!addressStatus) return;
+        addressStatus.textContent = message;
+        addressStatus.style.color = isError ? '#ff8b94' : 'var(--accent-blue)';
+    }
+
+    async function requestJson(url, options = {}) {
+        const response = await fetch(url, options);
+        const payload = response.status === 204
+            ? {}
+            : await response.json().catch(() => ({}));
+
+        if (!response.ok) {
+            throw new Error(payload.message || payload.error || `Request failed (${response.status})`);
+        }
+        return payload;
+    }
+
+    function selectAddress(address, card) {
+        document.querySelectorAll('.deliver-radio').forEach(radio => radio.classList.remove('selected'));
+        const deliverButton = card?.querySelector('.deliver-radio');
+        if (deliverButton) deliverButton.classList.add('selected');
+        sessionStorage.setItem('selectedAddress', JSON.stringify(address));
+
+        const block = card?.querySelector('[data-full]');
+        const icon = card?.querySelector('.view-more i');
+        if (block) block.style.display = 'block';
+        if (icon) icon.classList.add('bx-rotate-180');
+    }
+
+    async function loadAddresses(preferredAddressId = null) {
+        let data;
+        try {
+            data = await requestJson(`/api/v1/addresses/${user.userID}`);
+        } catch (error) {
+            addressList.innerHTML = `<p style="color:#ff8b94;">${escapeHtml(error.message)}</p>`;
+            showAddressStatus(error.message, true);
+            return;
+        }
+
         const addresses = data.data || [];
         if (!addresses.length) {
             addressList.innerHTML = '<p>No saved addresses. Add one below.</p>';
+            sessionStorage.removeItem('selectedAddress');
             return;
         }
         addressList.innerHTML = '';
@@ -29,13 +80,13 @@ document.addEventListener('DOMContentLoaded', async () => {
             div.innerHTML = `
                 <div class="deliver-pin"><button class="deliver-radio" data-action="deliver" data-id="${a.id}" title="Deliver"><span class="dot"></span></button></div>
                 <div style="min-width:0">
-                    <div class="meta"><strong>${a.line1}</strong></div>
-                    <div class="meta small">${a.line2 || ''}</div>
-                    <div class="meta small">${a.city}, ${a.province || ''} ${a.postal_code}</div>
-                    <div class="meta small">${a.country}</div>
+                    <div class="meta"><strong>${escapeHtml(a.line1)}</strong></div>
+                    <div class="meta small">${escapeHtml(a.line2 || '')}</div>
+                    <div class="meta small">${escapeHtml(a.city)}, ${escapeHtml(a.province || '')} ${escapeHtml(a.postal_code)}</div>
+                    <div class="meta small">${escapeHtml(a.country)}</div>
                     <div class="meta small" style="margin-top:6px; display:none;" data-full>
-                        <div>Phone: ${a.phone || '—'}</div>
-                        <div>Instructions: ${a.delivery_instructions || '—'}</div>
+                        <div>Phone: ${escapeHtml(a.phone || 'Not supplied')}</div>
+                        <div>Instructions: ${escapeHtml(a.delivery_instructions || 'None')}</div>
                     </div>
                 </div>
                 <div class="actions-right">
@@ -58,15 +109,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             // deliver pin (left side)
             const deliverBtn = div.querySelector('.deliver-radio');
             deliverBtn.addEventListener('click', ()=>{
-                // clear previous selection
-                document.querySelectorAll('.deliver-radio').forEach(r=> r.classList.remove('selected'));
-                deliverBtn.classList.add('selected');
-                sessionStorage.setItem('selectedAddress', JSON.stringify(a));
-                // show full details when selected and rotate chevron
-                const block = div.querySelector('[data-full]');
-                const icon = div.querySelector('.view-more i');
-                if (block) block.style.display = 'block';
-                if (icon) icon.classList.add('bx-rotate-180');
+                selectAddress(a, div);
+                showAddressStatus('Delivery address selected.');
             });
 
             // edit
@@ -75,33 +119,36 @@ document.addEventListener('DOMContentLoaded', async () => {
             // delete
             div.querySelector('[data-action="delete"]').addEventListener('click', async ()=>{
                 if (!confirm('Delete this address?')) return;
-                await fetch(`/api/v1/addresses/${a.id}`, { method: 'DELETE' });
-                loadAddresses();
+                try {
+                    await requestJson(`/api/v1/addresses/${a.id}`, { method: 'DELETE' });
+                    const selected = JSON.parse(sessionStorage.getItem('selectedAddress') || 'null');
+                    if (Number(selected?.id) === Number(a.id)) {
+                        sessionStorage.removeItem('selectedAddress');
+                    }
+                    showAddressStatus('Address deleted.');
+                    await loadAddresses();
+                } catch (error) {
+                    showAddressStatus(error.message, true);
+                }
             });
         });
 
         // if user had previously selected an address, mark it open
-        if (previouslySelected && previouslySelected.id) {
-            const el = addressList.querySelector(`[data-id="${previouslySelected.id}"]`);
+        const addressToSelect = addresses.find(address =>
+            Number(address.id) === Number(preferredAddressId || previouslySelected?.id)
+        );
+        if (addressToSelect) {
+            const el = addressList.querySelector(`[data-id="${addressToSelect.id}"]`);
             if (el) {
-                // el may be the deliver button or other; find deliver-radio in its parent card
                 const card = el.closest('.address-card');
-                if (card) {
-                    const r = card.querySelector('.deliver-radio');
-                    if (r) r.classList.add('selected');
-                    const block = card.querySelector('[data-full]');
-                    const icon = card.querySelector('.view-more i');
-                    if (block) block.style.display = 'block';
-                    if (icon) icon.classList.add('bx-rotate-180');
-                }
+                if (card) selectAddress(addressToSelect, card);
             }
         }
     }
 
     // show a mini summary
     async function loadSummary(){
-        const res = await fetch(`/api/v1/cart/${user.userID}`);
-        const data = await res.json();
+        const data = await requestJson(`/api/v1/cart/${user.userID}`);
         const items = data.data || [];
         
         // Ensure prices are numeric for calculation
@@ -125,11 +172,15 @@ document.addEventListener('DOMContentLoaded', async () => {
             console.log('[Checkout] Duo-only cart detected. Activating digital delivery flow...');
             handleDigitalOnlyCheckout();
             // Continue rendering the summary instead of returning early
+        } else {
+            handlePhysicalCheckout();
         }
 
         // If mixed cart, show helpful message
+        document.getElementById('mixedOrderMessage')?.remove();
         if (hasDuoItems && hasPhysicalItems) {
             const mixedMessage = document.createElement('div');
+            mixedMessage.id = 'mixedOrderMessage';
             mixedMessage.style.cssText = `
                 background: rgba(0, 188, 212, 0.15);
                 border: 1px solid var(--accent-blue);
@@ -247,25 +298,14 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Handle digital-only checkout flow
     function handleDigitalOnlyCheckout() {
-        const addressSection = document.querySelector('section');
-        const heading = document.querySelector('h2');
-        const subheading = document.querySelector('p');
+        const heading = document.querySelector('main > h2');
+        const subheading = document.querySelector('main > p');
         
         if (heading) heading.textContent = 'Digital Delivery';
         if (subheading) subheading.textContent = 'Your digital licenses will be delivered electronically after payment.';
-        
-        if (addressSection) {
-            addressSection.innerHTML = `
-                <div style="background: rgba(0, 188, 212, 0.15); border: 1px solid var(--accent-blue); padding: 30px; border-radius: 20px; text-align: center; margin-bottom: 30px;">
-                    <i class='bx bx-cloud-download' style="font-size: 4rem; color: var(--accent-blue); margin-bottom: 20px; display: block;"></i>
-                    <h3 style="color: #ffffff; margin-bottom: 10px;">No Delivery Address Required</h3>
-                    <p style="color: rgba(255, 255, 255, 0.8); line-height: 1.6;">
-                        Because your order contains only digital licenses, we don't need a physical shipping address. 
-                        Setup instructions and credentials will be sent to the administrator emails you specified.
-                    </p>
-                </div>
-            `;
-        }
+
+        if (addressManager) addressManager.hidden = true;
+        if (digitalDeliveryNotice) digitalDeliveryNotice.hidden = false;
         
         // Set a virtual "digital" address
         const digitalAddress = {
@@ -278,6 +318,18 @@ document.addEventListener('DOMContentLoaded', async () => {
             isDigital: true
         };
         sessionStorage.setItem('selectedAddress', JSON.stringify(digitalAddress));
+    }
+
+    function handlePhysicalCheckout() {
+        const heading = document.querySelector('main > h2');
+        const subheading = document.querySelector('main > p');
+        if (heading) heading.textContent = 'Choose Delivery Address';
+        if (subheading) subheading.textContent = 'Select an existing address or add a new one for delivery.';
+        if (addressManager) addressManager.hidden = false;
+        if (digitalDeliveryNotice) digitalDeliveryNotice.hidden = true;
+
+        const selected = JSON.parse(sessionStorage.getItem('selectedAddress') || 'null');
+        if (selected?.isDigital) sessionStorage.removeItem('selectedAddress');
     }
 
     const countrySelect = document.getElementById('countrySelect');
@@ -345,7 +397,20 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     countrySelect.addEventListener('change', (e)=> setProvinceFieldForCountry(e.target.value));
 
-    document.getElementById('addressForm').addEventListener('submit', async (e)=>{
+    function resetAddressForm() {
+        addressForm.removeAttribute('data-editing-id');
+        addressForm.reset();
+        countrySelect.value = 'South Africa';
+        setProvinceFieldForCountry('South Africa');
+        document.getElementById('addressSubmit').textContent = 'Add Address';
+        document.getElementById('cancelAdd').style.display = 'inline-flex';
+        document.getElementById('cancelEdit').style.display = 'none';
+    }
+
+    countrySelect.value = 'South Africa';
+    setProvinceFieldForCountry('South Africa');
+
+    addressForm.addEventListener('submit', async (e)=>{
         e.preventDefault();
         const form = e.target;
         // read province from dynamic field
@@ -363,19 +428,42 @@ document.addEventListener('DOMContentLoaded', async () => {
             is_default: 0
         };
         const editingId = form.getAttribute('data-editing-id');
-        if (editingId) {
-            await fetch(`/api/v1/addresses/${editingId}`, { method: 'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload)});
-            form.removeAttribute('data-editing-id');
-            document.getElementById('addressSubmit').textContent = 'Add Address';
-            document.getElementById('cancelEdit').style.display = 'none';
-        } else {
-            await fetch('/api/v1/addresses', { method: 'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload)});
+        const submitButton = document.getElementById('addressSubmit');
+        submitButton.disabled = true;
+        submitButton.textContent = editingId ? 'Saving...' : 'Adding...';
+
+        try {
+            let selectedAddressId = editingId;
+            if (editingId) {
+                await requestJson(`/api/v1/addresses/${editingId}`, {
+                    method: 'PUT',
+                    headers:{'Content-Type':'application/json'},
+                    body: JSON.stringify(payload)
+                });
+            } else {
+                const result = await requestJson('/api/v1/addresses', {
+                    method: 'POST',
+                    headers:{'Content-Type':'application/json'},
+                    body: JSON.stringify(payload)
+                });
+                selectedAddressId = result.data?.id;
+            }
+
+            resetAddressForm();
+            await loadAddresses(selectedAddressId);
+            showAddressStatus(editingId ? 'Address updated and selected.' : 'Address added and selected.');
+        } catch (error) {
+            showAddressStatus(error.message, true);
+        } finally {
+            submitButton.disabled = false;
+            submitButton.textContent = addressForm.hasAttribute('data-editing-id') ? 'Save Changes' : 'Add Address';
         }
-        form.reset();
-        loadAddresses();
     });
 
-    document.getElementById('cancelAdd').addEventListener('click', ()=>{ document.getElementById('addressForm').reset(); });
+    document.getElementById('cancelAdd').addEventListener('click', ()=>{
+        resetAddressForm();
+        showAddressStatus('Address form cleared.');
+    });
 
     continueBtn.addEventListener('click', ()=>{
         // ensure selectedAddress exists
@@ -385,11 +473,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 
     document.getElementById('cancelEdit').addEventListener('click', ()=>{
-        const form = document.getElementById('addressForm');
-        form.removeAttribute('data-editing-id');
-        form.reset();
-        document.getElementById('addressSubmit').textContent = 'Add Address';
-        document.getElementById('cancelEdit').style.display = 'none';
+        resetAddressForm();
+        showAddressStatus('Editing cancelled.');
     });
 
     function startEditAddress(a) {
@@ -400,13 +485,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         form.city.value = a.city || '';
         form.postal_code.value = a.postal_code || '';
         if (a.country) { countrySelect.value = a.country; setProvinceFieldForCountry(a.country); }
-        setTimeout(()=>{
-            const provinceField = form.querySelector('[name="province"]');
-            if (provinceField) provinceField.value = a.province || '';
-        }, 50);
+        const provinceField = form.querySelector('[name="province"]');
+        if (provinceField) provinceField.value = a.province || '';
         form.phone.value = a.phone || '';
         form.delivery_instructions.value = a.delivery_instructions || '';
         document.getElementById('addressSubmit').textContent = 'Save Changes';
+        document.getElementById('cancelAdd').style.display = 'none';
         document.getElementById('cancelEdit').style.display = 'inline-block';
         window.scrollTo({ top: form.offsetTop - 80, behavior: 'smooth' });
     }

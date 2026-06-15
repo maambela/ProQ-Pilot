@@ -4,6 +4,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     const totalEl = document.getElementById('total-price');
     const deliveryEl = document.getElementById('delivery-cost');
     const user = JSON.parse(localStorage.getItem('user'));
+    let renderRequestId = 0;
+    let cartMutationQueue = Promise.resolve();
 
     const DELIVERY_FEE = 75; // 📦 Fixed Delivery Cost
     const isDigitalLicenseType = (type) => (
@@ -203,7 +205,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                         const isMicrosoft = item.cart_type === 'microsoft-license';
                         
                         return {
-                            id: item.id || 0,
+                            id: item.product_id || item.id || 0,
+                            cart_id: item.id,
+                            product_id: item.product_id || item.id || 0,
                             name: config.product_name || (isMicrosoft ? 'Microsoft License' : (item.cart_type === 'duo-security-upgrade' ? 'Cisco Duo Security - Upgrade' : 'Cisco Duo Security')),
                             price: config.product_price || 0,
                             quantity: item.quantity || 1,
@@ -236,7 +240,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                         image: imagePath,
                         type: item.cart_type,
                         duo_config: item.duo_config_json,
-                        microsoft_config: item.cart_type === 'microsoft-license' ? item.duo_config_json : null
+                        microsoft_config: item.cart_type === 'microsoft-license' ? item.duo_config_json : null,
+                        localIndex: null
                     };
                 });
             } catch (error) {
@@ -245,7 +250,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 console.log('[Cart Logic] Fallback - using localStorage with', localCart.length, 'items');
                 console.log('[Cart Logic] Fallback items:', localCart);
                 
-                return localCart.map(item => {
+                return localCart.map((item, index) => {
                     let imagePath = item.image_url || item.image || null;
                     if (imagePath) {
                         if (!/^https?:\/\//i.test(imagePath) && !imagePath.startsWith('/')) {
@@ -263,7 +268,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                         image: imagePath,
                         type: item.cart_type || item.type,
                         duo_config: item.duo_config_json || item.duo_config,
-                        microsoft_config: item.microsoft_config || item.microsoft_config_json
+                        microsoft_config: item.microsoft_config || item.microsoft_config_json,
+                        localIndex: index
                     };
                 });
             }
@@ -271,7 +277,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             // Local storage fallback for guests
             console.log('[Cart Logic] Not logged in - using localStorage only');
             const localCart = JSON.parse(localStorage.getItem('cart')) || [];
-            return localCart.map(item => {
+            return localCart.map((item, index) => {
                 let imagePath = item.image_url || item.image || null;
                 if (imagePath) {
                     if (!/^https?:\/\//i.test(imagePath) && !imagePath.startsWith('/')) {
@@ -289,7 +295,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                     image: imagePath,
                     type: item.cart_type || item.type,
                     duo_config: item.duo_config_json || item.duo_config,
-                    microsoft_config: item.microsoft_config || item.microsoft_config_json
+                    microsoft_config: item.microsoft_config || item.microsoft_config_json,
+                    localIndex: index
                 };
             });
         }
@@ -297,8 +304,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // --- 3. RENDER UI ---
     async function renderCart() {
+        const requestId = ++renderRequestId;
         console.log('[Cart Logic] Starting cart render...');
         const cart = await getActiveCart();
+        if (requestId !== renderRequestId) return;
         
         console.log('[Cart Logic] Cart data retrieved:', {
             total_items: cart.length,
@@ -328,7 +337,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                 recSlot.hidden = true;
                 recSlot.innerHTML = '';
             }
-            updateTotals(0);
+            updateTotals(0, []);
+            updateGlobalBadge([]);
             return;
         }
 
@@ -402,12 +412,12 @@ document.addEventListener('DOMContentLoaded', async () => {
                             Digital
                         </div>` : `
                         <div class="qty-controls" style="display: flex; align-items: center; gap: 8px; background: rgba(255, 255, 255, 0.15); padding: 4px 8px; border-radius: 20px; flex-shrink: 0; backdrop-filter: blur(10px);">
-                            <button onclick="updateQty('${String(item.id).replace(/'/g, "\\'")}', -1)" style="border:none; background:none; cursor:pointer; font-size: 1.1rem; color: var(--accent-blue); padding: 2px 6px; border-radius: 50%;">−</button>
+                            <button onclick="updateQty('${String(item.product_id || item.id).replace(/'/g, "\\'")}', -1)" aria-label="Decrease quantity" style="border:none; background:none; cursor:pointer; font-size: 1.1rem; color: var(--accent-blue); padding: 2px 6px; border-radius: 50%;">−</button>
                             <span style="min-width: 18px; text-align: center; font-weight: 200; font-size: 0.9rem; color: rgba(255, 255, 255, 0.9);">${item.quantity}</span>
-                            <button onclick="updateQty('${String(item.id).replace(/'/g, "\\'")}', 1)" style="border:none; background:none; cursor:pointer; font-size: 1.1rem; color: var(--accent-blue); padding: 2px 6px; border-radius: 50%;">+</button>
+                            <button onclick="updateQty('${String(item.product_id || item.id).replace(/'/g, "\\'")}', 1)" aria-label="Increase quantity" style="border:none; background:none; cursor:pointer; font-size: 1.1rem; color: var(--accent-blue); padding: 2px 6px; border-radius: 50%;">+</button>
                         </div>`}
 
-                        <button class="remove-btn" onclick="handleRemove('${String(item.id).replace(/'/g, "\\'")}'${item.type === 'duo-security' || item.type === 'duo-security-upgrade' ? `, '${(item.duo_config?.organization_name || '').replace(/'/g, "\\'")}'` : ''})" style="background: none; border: none; color: #ff4757; cursor: pointer; font-size: 1.2rem; padding: 8px; border-radius: 6px; transition: all 0.2s ease; flex-shrink: 0;" onmouseover="this.style.background='rgba(255,71,87,0.2)'" onmouseout="this.style.background='none'">
+                        <button class="remove-btn" aria-label="Remove ${cleanName}" onclick="handleRemove('${String(item.cart_id || item.id).replace(/'/g, "\\'")}', '${String(item.product_id || item.id).replace(/'/g, "\\'")}', '${String(item.type || '').replace(/'/g, "\\'")}', ${Number.isInteger(item.localIndex) ? item.localIndex : -1})" style="background: none; border: none; color: #ff4757; cursor: pointer; font-size: 1.2rem; padding: 8px; border-radius: 6px; transition: all 0.2s ease; flex-shrink: 0;" onmouseover="this.style.background='rgba(255,71,87,0.2)'" onmouseout="this.style.background='none'">
                             <i class='bx bx-trash'></i>
                         </button>
                     </div>
@@ -417,7 +427,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         const subtotal = cart.reduce((acc, item) => acc + (item.price * item.quantity), 0);
         console.log('[Cart Logic] Subtotal calculated:', subtotal);
-        updateTotals(subtotal);
+        updateTotals(subtotal, cart);
         updateGlobalBadge(cart);
         if (window.StackRecommendations) {
             window.StackRecommendations.init({
@@ -434,7 +444,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     // --- 4. ACTIONS ---
-    window.updateQty = async (productId, delta) => {
+    function queueCartMutation(task) {
+        cartMutationQueue = cartMutationQueue.then(task, task);
+        return cartMutationQueue;
+    }
+
+    window.updateQty = (productId, delta) => queueCartMutation(async () => {
         try {
             if (user) {
                 const numProductId = parseInt(productId);
@@ -470,30 +485,27 @@ document.addEventListener('DOMContentLoaded', async () => {
                     console.log('[Cart] Local storage quantity updated');
                 }
             }
-            await new Promise(r => setTimeout(r, 300)); // Brief delay for DB update
-            renderCart();
+            await renderCart();
         } catch (err) {
             console.error('[Cart] Error updating quantity:', err);
             alert('Error: ' + err.message);
         }
-    };
+    });
 
-    window.handleRemove = async (productId, duoOrgName = null) => {
+    window.handleRemove = (cartItemId, productId, itemType = '', localIndex = -1) => queueCartMutation(async () => {
         try {
             if (user) {
-                // For Duo items, delete by organization name
-                if (duoOrgName) {
-                    console.log(`[Cart Logic] Deleting Duo item: ${duoOrgName}`);
-                    const encodedOrgName = encodeURIComponent(duoOrgName);
-                    const resp = await fetch(`/api/v1/cart/${user.userID}/duo/${encodedOrgName}`, { method: 'DELETE' });
+                if (isDigitalLicenseType(itemType)) {
+                    const digitalItemId = parseInt(cartItemId);
+                    console.log(`[Cart Logic] Deleting digital cart item ${digitalItemId}`);
+                    const resp = await fetch(`/api/v1/cart/${user.userID}/digital/${digitalItemId}`, { method: 'DELETE' });
                     if (!resp.ok) {
                         const errText = await resp.text().catch(() => '');
-                        console.error('[Cart Logic] Duo delete failed:', resp.status, errText);
-                        throw new Error(`Failed to delete Duo item: ${resp.status}`);
+                        console.error('[Cart Logic] Digital delete failed:', resp.status, errText);
+                        throw new Error(`Failed to delete digital item: ${resp.status}`);
                     }
-                    console.log('[Cart Logic] ✅ Duo item deleted');
+                    console.log('[Cart Logic] ✅ Digital item deleted');
                 } else {
-                    // Regular product - ensure productId is a number
                     const numProductId = parseInt(productId);
                     console.log(`[Cart Logic] Deleting product ${numProductId}`);
                     const resp = await fetch(`/api/v1/cart/${user.userID}/${numProductId}`, { method: 'DELETE' });
@@ -506,20 +518,22 @@ document.addEventListener('DOMContentLoaded', async () => {
                 }
             } else {
                 let cart = JSON.parse(localStorage.getItem('cart')) || [];
-                cart = cart.filter(i => i.id != productId);
+                if (localIndex >= 0 && localIndex < cart.length) {
+                    cart.splice(localIndex, 1);
+                } else {
+                    cart = cart.filter(i => String(i.id) !== String(productId));
+                }
                 localStorage.setItem('cart', JSON.stringify(cart));
                 console.log('[Cart Logic] Product removed from localStorage');
             }
-            await new Promise(r => setTimeout(r, 300)); // Brief delay for DB update
-            renderCart();
+            await renderCart();
         } catch (err) {
             console.error('[Cart Logic] Error removing item:', err);
             alert('Error: ' + err.message);
         }
-    };
+    });
 
-    async function updateTotals(subtotal) {
-        const cart = await getActiveCart();
+    function updateTotals(subtotal, cart) {
         const hasPhysicalProducts = cart.some(item => !isDigitalLicenseType(item.type));
         const hasDuoItems = cart.some(item => isDigitalLicenseType(item.type));
         const deliveryFee = hasPhysicalProducts ? DELIVERY_FEE : 0;

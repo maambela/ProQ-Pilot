@@ -150,30 +150,41 @@
 
         <div class="checkout-grid" style="margin-top:20px;">
             <section>
-                <div class="address-list" id="addressList">
-                    <p style="color: rgba(255, 255, 255, 0.7);">Loading addresses…</p>
+                <div id="digitalDeliveryNotice" hidden style="background: rgba(0, 188, 212, 0.15); border: 1px solid var(--accent-blue); padding: 30px; border-radius: 20px; text-align: center; margin-bottom: 30px;">
+                    <i class='bx bx-cloud-download' style="font-size: 4rem; color: var(--accent-blue); margin-bottom: 20px; display: block;"></i>
+                    <h3 style="color: #ffffff; margin-bottom: 10px;">No Delivery Address Required</h3>
+                    <p style="color: rgba(255, 255, 255, 0.8); line-height: 1.6;">
+                        Your digital licenses will be activated or delivered electronically after payment.
+                    </p>
                 </div>
 
-                <h3 style="margin-top:18px; color: #ffffff;">Add New Address</h3>
-                <form id="addressForm">
-                    <input class="form-input" name="line1" placeholder="Address line 1" required />
-                    <input class="form-input" name="line2" placeholder="Address line 2 (optional)" />
-                    <input class="form-input" name="city" placeholder="City" required />
-                    <input class="form-input" name="postal_code" placeholder="Postal code" required />
-                    <select id="countrySelect" name="country" class="form-select" required>
-                        <option value="">Select country</option>
-                    </select>
-                    <div id="provinceContainer">
-                        <input class="form-input" name="province" placeholder="Province/State" />
+                <div id="addressManager">
+                    <div class="address-list" id="addressList">
+                        <p style="color: rgba(255, 255, 255, 0.7);">Loading addresses...</p>
                     </div>
-                    <input class="form-input" name="phone" placeholder="Phone number (e.g. +27 12 345 6789)" />
-                    <textarea class="form-textarea" name="delivery_instructions" placeholder="Delivery instructions (e.g. gate code, landmarks)"></textarea>
-                    <div style="display:flex; gap:8px;">
-                        <button class="btn btn-primary" type="submit" id="addressSubmit">Add Address</button>
-                        <button type="button" id="cancelAdd" class="btn">Cancel</button>
-                        <button type="button" id="cancelEdit" class="btn" style="display:none;">Cancel Edit</button>
-                    </div>
-                </form>
+
+                    <h3 style="margin-top:18px; color: #ffffff;">Add New Address</h3>
+                    <form id="addressForm">
+                        <input class="form-input" name="line1" placeholder="Address line 1" required />
+                        <input class="form-input" name="line2" placeholder="Address line 2 (optional)" />
+                        <input class="form-input" name="city" placeholder="City" required />
+                        <input class="form-input" name="postal_code" placeholder="Postal code" required />
+                        <select id="countrySelect" name="country" class="form-select" required>
+                            <option value="">Select country</option>
+                        </select>
+                        <div id="provinceContainer">
+                            <input class="form-input" name="province" placeholder="Province/State" />
+                        </div>
+                        <input class="form-input" name="phone" placeholder="Phone number (e.g. +27 12 345 6789)" />
+                        <textarea class="form-textarea" name="delivery_instructions" placeholder="Delivery instructions (e.g. gate code, landmarks)"></textarea>
+                        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                            <button class="btn btn-primary" type="submit" id="addressSubmit">Add Address</button>
+                            <button type="button" id="cancelAdd" class="btn">Cancel</button>
+                            <button type="button" id="cancelEdit" class="btn" style="display:none;">Cancel Edit</button>
+                        </div>
+                        <p id="addressStatus" role="status" aria-live="polite" style="min-height:24px; margin-top:10px; color:rgba(255,255,255,0.8);"></p>
+                    </form>
+                </div>
             </section>
 
             <aside>
@@ -190,7 +201,7 @@
     </main>
 
     <script src="js/recommendations.js"></script>
-    <script src="js/checkout.js"></script>
+    <script src="js/checkout.js?v=checkout-fix-20260615"></script>
     <script src="js/auth-ui.js"></script>
 </body>
 </html>

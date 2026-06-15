@@ -26,12 +26,22 @@ class DuoLicenseManager {
    */
   async checkExistingAccount() {
     try {
-      const response = await fetch(`/api/v1/duo/${this.user.userID}`);
+      const response = await fetch(`/api/v1/duo/organizations/${this.user.userID}`);
       if (response.ok) {
-        this.duoAccount = await response.json();
-        this.duoAccount = this.duoAccount.data;
-        this.isUpgradeMode = true;
+        const result = await response.json();
+        const organization = result.organizations?.[0] || null;
+        if (organization) {
+          this.duoAccount = {
+            ...organization,
+            accountName: organization.organization_name,
+            numLicenses: Number(organization.user_limit) || 0
+          };
+          this.isUpgradeMode = true;
+          return;
+        }
       }
+      this.duoAccount = null;
+      this.isUpgradeMode = false;
     } catch (error) {
       console.log('No existing Duo account found');
       this.isUpgradeMode = false;
@@ -303,10 +313,10 @@ class DuoLicenseManager {
    */
   static async getUserDuoInfo(userID) {
     try {
-      const response = await fetch(`/api/v1/duo/${userID}`);
+      const response = await fetch(`/api/v1/duo/organizations/${userID}`);
       if (response.ok) {
         const result = await response.json();
-        return result.data;
+        return result.organizations?.[0] || null;
       }
       return null;
     } catch (error) {
