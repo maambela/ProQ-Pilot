@@ -2760,64 +2760,52 @@ app.get('/api/v1/products/:id/axiz-details', async (req, res, next) => {
 // --- SYNC LOCAL STORAGE TO DATABASE ---
 app.post('/api/v1/cart/sync', async (req, res, next) => {
     const { userID, items } = req.body;
-
     try {
-        console.log('[Cart API] /cart/sync POST received');
-        console.log('[Cart API] userID:', userID);
-        console.log('[Cart API] items to sync:', JSON.stringify(items, null, 2));
-        
+        console.log('[Cart API] Sync requested for userID:', userID);
         const connection = await db.getConnection();
         try {
-            await connection.beginTransaction();
-
+            let syncCount = 0;
             for (const item of items) {
-                console.log(`[Cart API] Processing item - ID: ${item.id}, type: ${item.type}, quantity: ${item.quantity}`);
-                
-                const itemType = item.type || item.cart_type;
-
-                // Handle digital license items separately (they don't have real product IDs)
-                if (isDigitalLicenseType(itemType)) {
-                    console.log(`[Cart API] 🔵 Digital license item detected - storing in duo_cart_items table (skipping Cart table)`);
-                    console.log(`[Cart API] Digital license config details:`, getDigitalLicenseConfig(item));
-                    
-                    await connection.query(
-                        `INSERT INTO duo_cart_items (userID, cart_product_id, cart_type, duo_config_json)
-                         VALUES (?, ?, ?, ?)
-                         ON DUPLICATE KEY UPDATE
-                            cart_type = VALUES(cart_type),
-                            duo_config_json = VALUES(duo_config_json)`,
-                        [
-                            userID,
-                            String(item.id),
-                            itemType,
-                            JSON.stringify(getDigitalLicenseConfig(item))
-                        ]
-                    );
-                    console.log(`[Cart API] ✅ Digital license item saved to duo_cart_items successfully`);
-                } else {
-                    // Regular product: insert into Cart table
-                    // UPSERT Logic: Insert item or update quantity if bridge link exists
-                    await connection.query(`
-                        INSERT INTO Cart (userID, productID, quantity)
-                        VALUES (?, ?, ?)
-                        ON DUPLICATE KEY UPDATE quantity = quantity + VALUES(quantity)`,
-                        [userID, item.id, item.quantity]
-                    );
-                    console.log(`[Cart API] ✅ Cart item inserted/updated for productID ${item.id}`);
+                try {
+                    const itemType = item.type || item.cart_type;
+                    if (isDigitalLicenseType(itemType)) {
+                        await connection.query(
+                            `INSERT INTO duo_cart_items (userID, cart_product_id, cart_type, duo_config_json)
+                             VALUES (?, ?, ?, ?)
+                             ON DUPLICATE KEY UPDATE cart_type = VALUES(cart_type), duo_config_json = VALUES(duo_config_json)`,
+                            [userID, String(item.id), itemType, JSON.stringify(getDigitalLicenseConfig(item))]
+                        );
+                        console.log(`[Cart API] Digital license synced: ${item.id}`);
+                        syncCount++;
+                    } else {
+                        const productID = parseInt(item.id);
+                        if (isNaN(productID)) {
+                            console.warn(`[Cart API] Invalid productID: ${item.id}`);
+                            continue;
+                        }
+                        const [productCheck] = await connection.query('SELECT id FROM products WHERE id = ? LIMIT 1', [productID]);
+                        if (!productCheck?.length) {
+                            console.warn(`[Cart API] Product not found: ${productID}`);
+                            continue;
+                        }
+                        await connection.query(
+                            'INSERT INTO Cart (userID, productID, quantity) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE quantity = quantity + VALUES(quantity)',
+                            [userID, productID, item.quantity || 1]
+                        );
+                        console.log(`[Cart API] Product synced: ${productID}`);
+                        syncCount++;
+                    }
+                } catch (itemErr) {
+                    console.error(`[Cart API] Item error for ${item.id}:`, itemErr.message);
                 }
             }
-
-            await connection.commit();
-            res.status(200).json({ status: 'success', message: 'Deployment Data Synced ðŸ›°ï¸' });
-        } catch (err) {
-            await connection.rollback();
-            throw err;
+            res.status(200).json({ status: 'success', synced: syncCount });
         } finally {
             connection.release();
         }
     } catch (err) {
         console.error('[Cart API] Sync error:', err);
-        next(err);
+        res.status(500).json({ status: 'error', message: err.message });
     }
 });
 
