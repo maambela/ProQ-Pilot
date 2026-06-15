@@ -431,41 +431,39 @@ document.addEventListener('DOMContentLoaded', async () => {
     window.updateQty = async (productId, delta) => {
         try {
             if (user) {
-                console.log('[Cart] Updating quantity for product', productId, 'delta:', delta);
-                // Get current cart to find current quantity
-                const cartResp = await fetch(`/api/v1/cart/${user.userID}`);
-                if (!cartResp.ok) throw new Error('Failed to fetch cart');
-                const cartData = await cartResp.json();
-                const cartItems = cartData.data || [];
+                const numProductId = parseInt(productId);
+                const action = delta > 0 ? 'increment' : 'decrement';
                 
-                // Find the item in cart
-                const item = cartItems.find(i => i.product_id == productId);
-                const currentQty = item ? item.quantity : 1;
-                const newQty = Math.max(1, currentQty + delta);
+                console.log(`[Cart] ${action === 'increment' ? 'Incrementing' : 'Decrementing'} product ${numProductId}`);
                 
-                console.log('[Cart] Current qty:', currentQty, 'New qty:', newQty);
-                
-                // Send sync with new absolute quantity (not delta)
-                const resp = await fetch('/api/v1/cart/sync', {
-                    method: 'POST',
+                // Use PATCH endpoint which increments/decrements
+                const resp = await fetch(`/api/v1/cart/${user.userID}/${numProductId}`, {
+                    method: 'PATCH',
                     headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ userID: user.userID, items: [{id: productId, quantity: newQty}] })
+                    body: JSON.stringify({ action })
                 });
-                const text = await resp.text().catch(() => '');
-                console.log('[Cart] Sync response status=', resp.status, 'body=', text);
-                if (!resp.ok) throw new Error('Cart sync failed: ' + text);
+                
+                if (!resp.ok) {
+                    const errText = await resp.text().catch(() => '');
+                    console.error('[Cart] PATCH failed:', resp.status, errText);
+                    throw new Error(`Failed to update quantity: ${resp.status}`);
+                }
+                
+                console.log(`[Cart] ✅ ${action} successful`);
             } else {
                 let cart = JSON.parse(localStorage.getItem('cart')) || [];
                 const idx = cart.findIndex(i => i.id == productId);
                 if(idx > -1) {
                     cart[idx].quantity = Math.max(1, cart[idx].quantity + delta);
                     localStorage.setItem('cart', JSON.stringify(cart));
+                    console.log('[Cart] Local storage quantity updated');
                 }
             }
+            await new Promise(r => setTimeout(r, 300)); // Brief delay for DB update
             renderCart();
         } catch (err) {
             console.error('[Cart] Error updating quantity:', err);
-            alert('Error updating cart quantity');
+            alert('Error: ' + err.message);
         }
     };
 
@@ -477,25 +475,35 @@ document.addEventListener('DOMContentLoaded', async () => {
                     console.log(`[Cart Logic] Deleting Duo item: ${duoOrgName}`);
                     const encodedOrgName = encodeURIComponent(duoOrgName);
                     const resp = await fetch(`/api/v1/cart/${user.userID}/duo/${encodedOrgName}`, { method: 'DELETE' });
-                    if (!resp.ok) throw new Error('Failed to delete Duo item');
-                    console.log('[Cart Logic] Duo item deleted successfully');
+                    if (!resp.ok) {
+                        const errText = await resp.text().catch(() => '');
+                        console.error('[Cart Logic] Duo delete failed:', resp.status, errText);
+                        throw new Error(`Failed to delete Duo item: ${resp.status}`);
+                    }
+                    console.log('[Cart Logic] ✅ Duo item deleted');
                 } else {
                     // Regular product - ensure productId is a number
                     const numProductId = parseInt(productId);
-                    console.log(`[Cart Logic] Deleting product: ${numProductId}`);
+                    console.log(`[Cart Logic] Deleting product ${numProductId}`);
                     const resp = await fetch(`/api/v1/cart/${user.userID}/${numProductId}`, { method: 'DELETE' });
-                    if (!resp.ok) throw new Error('Failed to delete item');
-                    console.log('[Cart Logic] Item deleted successfully');
+                    if (!resp.ok) {
+                        const errText = await resp.text().catch(() => '');
+                        console.error('[Cart Logic] Product delete failed:', resp.status, errText);
+                        throw new Error(`Failed to delete product: ${resp.status}`);
+                    }
+                    console.log('[Cart Logic] ✅ Product deleted');
                 }
             } else {
                 let cart = JSON.parse(localStorage.getItem('cart')) || [];
                 cart = cart.filter(i => i.id != productId);
                 localStorage.setItem('cart', JSON.stringify(cart));
+                console.log('[Cart Logic] Product removed from localStorage');
             }
+            await new Promise(r => setTimeout(r, 300)); // Brief delay for DB update
             renderCart();
         } catch (err) {
             console.error('[Cart Logic] Error removing item:', err);
-            alert('Error removing item from cart');
+            alert('Error: ' + err.message);
         }
     };
 

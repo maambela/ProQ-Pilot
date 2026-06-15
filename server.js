@@ -2917,53 +2917,77 @@ app.get('/api/v1/cart/:userID', async (req, res, next) => {
 //=================================================================================================//
 app.patch('/api/v1/cart/:userID/:productID', async (req, res, next) => {
     const { action } = req.body; // expecting { action: 'increment' } or { action: 'decrement' }
+    let connection;
     try {
         const userID = parseInt(req.params.userID);
         const productID = parseInt(req.params.productID);
         
         console.log(`[Cart PATCH] userID: ${userID}, productID: ${productID}, action: ${action}`);
-        const connection = await db.getConnection();
+        connection = await db.getConnection();
         
         if (action === 'increment') {
-            await connection.query('UPDATE Cart SET quantity = quantity + 1 WHERE userID = ? AND productID = ?', 
+            const [result] = await connection.query('UPDATE Cart SET quantity = quantity + 1 WHERE userID = ? AND productID = ?', 
             [userID, productID]);
-            console.log('[Cart PATCH] ✅ Incremented');
+            console.log(`[Cart PATCH] ✅ Incremented - affected rows: ${result.affectedRows}`);
+            if (result.affectedRows === 0) {
+                console.warn(`[Cart PATCH] ⚠️  Product not found for user ${userID}, product ${productID}`);
+            }
         } else if (action === 'decrement') {
-            await connection.query('UPDATE Cart SET quantity = GREATEST(1, quantity - 1) WHERE userID = ? AND productID = ?', 
+            const [result] = await connection.query('UPDATE Cart SET quantity = GREATEST(1, quantity - 1) WHERE userID = ? AND productID = ?', 
             [userID, productID]);
-            console.log('[Cart PATCH] ✅ Decremented');
+            console.log(`[Cart PATCH] ✅ Decremented - affected rows: ${result.affectedRows}`);
+            if (result.affectedRows === 0) {
+                console.warn(`[Cart PATCH] ⚠️  Product not found for user ${userID}, product ${productID}`);
+            }
+        } else {
+            console.error(`[Cart PATCH] Invalid action: ${action}`);
+            return res.status(400).json({ status: 'error', message: 'Invalid action' });
         }
-        connection.release();
         res.status(200).json({ status: 'success' });
     } catch (err) { 
-        console.error('[Cart PATCH] Error:', err);
+        console.error('[Cart PATCH] Error:', err.message);
         next(err); 
+    } finally {
+        if (connection) connection.release();
     }
 });
 
 // REMOVE FROM DATABASE
 app.delete('/api/v1/cart/:userID/:productID', async (req, res, next) => {
+    let connection;
     try {
-        const connection = await db.getConnection();
+        connection = await db.getConnection();
         const userID = parseInt(req.params.userID);
         const productID = parseInt(req.params.productID);
         
         console.log(`[Cart DELETE] userID: ${userID}, productID: ${productID}`);
         
+        if (!userID || !productID || isNaN(userID) || isNaN(productID)) {
+            console.error(`[Cart DELETE] Invalid parameters - userID: ${userID}, productID: ${productID}`);
+            return res.status(400).json({ status: 'error', message: 'Invalid parameters' });
+        }
+        
         // Check if it's a virtual digital license item
         if (productID === 0) {
             console.log(`[Cart DELETE] Deleting all Duo items for user ${userID}`);
-            await connection.query('DELETE FROM duo_cart_items WHERE userID = ?', [userID]);
-            console.log('[Cart DELETE] ✅ Duo items deleted');
+            const [result] = await connection.query('DELETE FROM duo_cart_items WHERE userID = ?', [userID]);
+            console.log(`[Cart DELETE] ✅ Duo items deleted - affected rows: ${result.affectedRows}`);
         } else {
             // Regular product
             const [result] = await connection.query('DELETE FROM Cart WHERE userID = ? AND productID = ?', 
             [userID, productID]);
-            console.log(`[Cart DELETE] ✅ Deleted - affected rows: ${result.affectedRows}`);
+            console.log(`[Cart DELETE] ✅ Product deleted - affected rows: ${result.affectedRows}`);
+            if (result.affectedRows === 0) {
+                console.warn(`[Cart DELETE] ⚠️  Product not found - userID: ${userID}, productID: ${productID}`);
+            }
         }
-        connection.release();
         res.status(200).json({ status: 'success', deleted: true });
-    } catch (err) { next(err); }
+    } catch (err) { 
+        console.error('[Cart DELETE] Error:', err.message);
+        next(err);
+    } finally {
+        if (connection) connection.release();
+    }
 });
 
 // Delete specific Duo item by organization name
