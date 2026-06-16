@@ -1775,6 +1775,16 @@ color: #d8d8d8;
     background: transparent;
 }
 
+.footer-logo-link {
+    display: inline-block;
+    text-decoration: none;
+    transition: transform 0.2s ease;
+}
+
+.footer-logo-link:hover {
+    transform: scale(1.05);
+}
+
 .footer-brand p {
     max-width: 330px;
     margin: 16px 0 18px;
@@ -6311,6 +6321,7 @@ color: #d8d8d8;
     color: #00a99d;
     font-size: 0.72rem;
     text-transform: uppercase;
+    font-weight: 100;
 }
 
 .kit-mini-item h3 {
@@ -6319,6 +6330,7 @@ color: #d8d8d8;
     font-size: 0.92rem;
     line-height: 1.35;
     overflow-wrap: anywhere;
+    font-weight: 100;
 }
 
 .kit-mini-item > div {
@@ -6329,6 +6341,7 @@ color: #d8d8d8;
     margin: 0;
     color: rgba(255, 255, 255, 0.68);
     font-size: 0.85rem;
+    font-weight: 100;
 }
 
 .kit-mini-item .kit-mini-detail {
@@ -6336,6 +6349,7 @@ color: #d8d8d8;
     color: rgba(255, 255, 255, 0.58);
     font-size: 0.74rem;
     line-height: 1.35;
+    font-weight: 100;
 }
 
 .kit-remove-btn {
@@ -6380,6 +6394,7 @@ color: #d8d8d8;
     color: #00a99d;
     font-size: 0.72rem;
     text-transform: uppercase;
+    font-weight: 100;
 }
 
 .kit-summary-line p {
@@ -6387,11 +6402,13 @@ color: #d8d8d8;
     color: rgba(255, 255, 255, 0.84);
     font-size: 0.9rem;
     line-height: 1.35;
+    font-weight: 100;
 }
 
 .kit-summary-line strong {
     color: #fff;
     white-space: nowrap;
+    font-weight: 100;
 }
 
 .kit-summary-total {
@@ -6405,6 +6422,7 @@ color: #d8d8d8;
 
 .kit-summary-total strong {
     font-size: 1.45rem;
+    font-weight: 100;
 }
 
 .kit-note {
