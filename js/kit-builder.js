@@ -1,8 +1,8 @@
 const KIT_BRANDS = [
-    { name: 'HP', logo: 'Images/HP.PNG' },
+    { name: 'HP', logo: 'Images/HP.png' },
     { name: 'Dell', logo: 'Images/DellLaptops.PNG' },
-    { name: 'Apple', logo: 'Images/Apple.PNG' },
-    { name: 'Microsoft', logo: 'Images/Microsoft.PNG' },
+    { name: 'Apple', logo: 'Images/Apple.png' },
+    { name: 'Microsoft', logo: 'Images/Microsoft.png' },
     { name: 'Acer', logo: 'Images/AcerStick.png' },
     { name: 'Lenovo', logo: 'Images/lenovo.PNG' }
 ];
