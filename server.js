@@ -1769,6 +1769,35 @@ app.get('/api/v1/core-products/approved/list', async (req, res, next) => {
     }
 });
 
+// Route: Get rejected Core products
+app.get('/api/v1/core-products/rejected/list', async (req, res, next) => {
+    let connection;
+    try {
+        connection = await db.getConnection();
+        await ensureSupplierTrackingSchema(connection);
+        const [products] = await connection.query(
+            `SELECT p.id, p.product_number, p.product_name, p.description, p.price, p.quantity, p.brand,
+                    p.supplier_source, p.status, p.is_active, p.updated_at,
+                    COUNT(pi.id) as image_count
+             FROM products p
+             LEFT JOIN product_images pi ON p.id = pi.product_id
+             WHERE p.status = 'rejected'
+               AND p.quantity > 0
+               AND p.price > 0
+               AND (p.supplier_source = 'Core'
+                    OR (p.supplier_source IS NULL AND p.brand IN ('APPLE', 'IPHONE', 'IPAD', 'MACBOOK', 'AIRPODS', 'IMAC', 'MAC', 'IWATCH')))
+             GROUP BY p.id
+             ORDER BY p.updated_at DESC`
+        );
+
+        connection.release();
+        res.status(200).json({ status: 'success', data: { products } });
+    } catch (err) {
+        if (connection) connection.release();
+        next(err);
+    }
+});
+
 // Route: Get images for a Core product
 app.get('/api/v1/core-products/:productId/images', async (req, res, next) => {
     let connection;

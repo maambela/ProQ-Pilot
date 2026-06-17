@@ -472,6 +472,17 @@
             flex-wrap: wrap;
         }
 
+        .image-summary {
+            align-items: center;
+        }
+
+        .image-count {
+            min-width: 84px;
+            color: #ffffff;
+            font-size: 0.8rem;
+            font-weight: 200;
+        }
+
         .image-thumbnail {
             position: relative;
             width: 60px;
@@ -903,6 +914,64 @@
             color: #7f1d1d;
         }
 
+        .spec-row-images {
+            align-items: flex-start;
+            gap: 1rem;
+        }
+
+        .spec-image-value {
+            display: grid;
+            justify-items: end;
+            gap: 0.55rem;
+            flex: 1;
+            min-width: 0;
+        }
+
+        .admin-image-strip {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(46px, 54px));
+            gap: 0.45rem;
+            justify-content: end;
+            width: 100%;
+        }
+
+        .admin-image-thumb {
+            width: 54px;
+            height: 54px;
+            border-radius: 10px;
+            object-fit: cover;
+            background: rgba(255, 255, 255, 0.18);
+            border: 1px solid rgba(255, 255, 255, 0.35);
+        }
+
+        .admin-image-more,
+        .admin-image-empty {
+            min-height: 54px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.35rem;
+            text-align: center;
+            color: #ffffff;
+            font-size: 0.72rem;
+            font-weight: 200;
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .admin-image-empty {
+            grid-column: 1 / -1;
+            color: rgba(255, 255, 255, 0.74);
+        }
+
+        .image-preview-more,
+        .image-empty-preview {
+            width: 60px;
+            height: 60px;
+            flex: 0 0 auto;
+        }
+
         /* Admin Product Grid Layout */
         .products-grid {
             display: grid;
@@ -1142,7 +1211,7 @@
 
                 <!-- Rejected Tab -->
                 <div id="rejected" class="tab-content">
-                    <div id="rejected-products-list" class="products-list"></div>
+                    <div id="rejected-products-list" class="products-list admin-grid"></div>
                 </div>
             </div>
         </div>
@@ -1188,6 +1257,50 @@
             if (trigger) trigger.classList.add('active');
             loadPendingProducts();
             loadApprovedProducts();
+            loadRejectedProducts();
+        }
+
+        function getCoreProductImageUrl(image) {
+            const imageUrl = String(image?.image_url || '').trim();
+            if (!imageUrl) return '';
+            if (/^(https?:|data:|\/)/i.test(imageUrl)) return imageUrl;
+            if (imageUrl.startsWith('product_images/')) return `/${imageUrl}`;
+            return `/product_images/${imageUrl}`;
+        }
+
+        function renderImageCountBadge(count) {
+            const imageCount = Number(count || 0);
+            return imageCount > 0
+                ? `<span class="image-badge">📷 ${imageCount}</span>`
+                : '<span class="image-badge no-image">No images</span>';
+        }
+
+        function renderProductImagePreview(images, fallbackCount = 0, limit = 8) {
+            const imageList = Array.isArray(images) ? images : [];
+            const imageCount = imageList.length || Number(fallbackCount || 0);
+            const visibleImages = imageList.slice(0, limit);
+            const thumbnails = visibleImages
+                .map((image, index) => {
+                    const src = getCoreProductImageUrl(image);
+                    if (!src) return '';
+                    return `<img class="admin-image-thumb" src="${src}" alt="Product image ${index + 1}" loading="lazy">`;
+                })
+                .join('');
+            const moreTile = imageList.length > limit
+                ? `<span class="admin-image-more">+${imageList.length - limit}</span>`
+                : '';
+            const emptyTile = imageList.length === 0
+                ? `<span class="admin-image-empty">${imageCount > 0 ? 'Loading images...' : 'No uploaded images'}</span>`
+                : '';
+
+            return `
+                ${renderImageCountBadge(imageCount)}
+                <div class="admin-image-strip">
+                    ${thumbnails}
+                    ${moreTile}
+                    ${emptyTile}
+                </div>
+            `;
         }
 
         function getCategoryFromName(name) {
@@ -1323,7 +1436,9 @@
                             </div>
                             <div class="detail-item">
                                 <span class="detail-label">Images</span>
-                                <span class="detail-value">${product.image_count} img(s)</span>
+                                <span class="detail-value image-detail-preview" id="detail-images-${product.id}">
+                                    ${renderImageCountBadge(product.image_count || 0)}
+                                </span>
                             </div>
                         </div>
 
@@ -1351,6 +1466,8 @@
                     </div>
                 `).join('');
 
+                limited.forEach(product => loadProductImages(product.id));
+
             } catch (error) {
                 console.error('Error:', error);
             }
@@ -1366,7 +1483,7 @@
                     if (imageContainer) {
                         const firstImage = data.data.images[0];
                         const img = imageContainer.querySelector('img');
-                        img.src = `/product_images/${firstImage.image_url}`;
+                        img.src = getCoreProductImageUrl(firstImage);
                         img.style.objectFit = 'cover';
                     }
                 }
@@ -1397,9 +1514,40 @@
                 }
 
                 const images = data.data.images || [];
-                grid.querySelectorAll('.image-thumbnail').forEach(el => el.remove());
+                grid.querySelectorAll('.image-thumbnail, .image-preview-more, .image-empty-preview').forEach(el => el.remove());
                 const imageCountLabel = document.getElementById(`image-count-${productId}`);
                 if (imageCountLabel) imageCountLabel.textContent = `${images.length} image(s)`;
+
+                const uploadButton = grid.querySelector('.add-image-box');
+                const visibleImages = images.slice(0, 10);
+                visibleImages.forEach((image, index) => {
+                    const imageUrl = getCoreProductImageUrl(image);
+                    if (!imageUrl) return;
+
+                    const thumb = document.createElement('div');
+                    thumb.className = 'image-thumbnail';
+                    thumb.innerHTML = `
+                        <img src="${imageUrl}" alt="Product image ${index + 1}" loading="lazy">
+                        <div class="image-delete-btn" onclick="deleteProductImage(${productId}, ${image.id})">
+                            <i class='bx bx-trash'></i>
+                        </div>
+                    `;
+                    grid.insertBefore(thumb, uploadButton);
+                });
+
+                if (images.length > visibleImages.length) {
+                    const moreTile = document.createElement('span');
+                    moreTile.className = 'admin-image-more image-preview-more';
+                    moreTile.textContent = `+${images.length - visibleImages.length}`;
+                    grid.insertBefore(moreTile, uploadButton);
+                }
+
+                if (images.length === 0) {
+                    const emptyTile = document.createElement('span');
+                    emptyTile.className = 'admin-image-empty image-empty-preview';
+                    emptyTile.textContent = 'No photos';
+                    grid.insertBefore(emptyTile, uploadButton);
+                }
 
                 const approveButton = document.getElementById(`approve-${productId}`);
                 if (approveButton) {
@@ -1417,7 +1565,7 @@
                         const label = item.querySelector('.detail-label');
                         if (label && label.textContent.includes('Images')) {
                             const imageCount = images.length;
-                            item.querySelector('.detail-value').textContent = `${imageCount} img(s)`;
+                            item.querySelector('.detail-value').innerHTML = renderProductImagePreview(images, imageCount, 6);
                             console.log(`[Admin] Updated image count display to ${imageCount}`);
                         }
                     });
@@ -1657,7 +1805,6 @@
                     card.className = 'admin-product-card';
                     
                     const imageCount = product.image_count || 0;
-                    const imageStatus = imageCount > 0 ? `<span class="image-badge">📸 ${imageCount}</span>` : '<span class="image-badge no-image">⚠ No images</span>';
                     const cleanName = product.product_name.split(/\s+/).slice(0, 4).join(' ');
                     
                     card.innerHTML = `
@@ -1686,9 +1833,11 @@
                                     <span class="spec-label">Stock:</span>
                                     <span class="spec-value">${product.quantity} units</span>
                                 </div>
-                                <div class="spec-row">
+                                <div class="spec-row spec-row-images">
                                     <span class="spec-label">Images:</span>
-                                    <span>${imageStatus}</span>
+                                    <div class="spec-image-value" id="approved-images-${product.id}">
+                                        ${renderProductImagePreview([], imageCount)}
+                                    </div>
                                 </div>
                             </div>
                             <div class="approval-action" style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid rgba(255, 255, 255, 0.35);">
@@ -1726,18 +1875,27 @@
         }
 
         async function loadApprovedProductImage(productId) {
+            return loadReadOnlyProductImages(productId, 'approved');
+        }
+
+        async function loadReadOnlyProductImages(productId, scope) {
             try {
                 const response = await fetch(`/api/v1/core-products/${productId}/images`);
                 const data = await response.json();
                 
                 if (data.data.images && data.data.images.length > 0) {
-                    const imageContainer = document.getElementById(`approved-image-${productId}`);
+                    const imageContainer = document.getElementById(`${scope}-image-${productId}`);
                     if (imageContainer) {
                         const firstImage = data.data.images[0];
                         const img = imageContainer.querySelector('img');
-                        img.src = `/product_images/${firstImage.image_url}`;
+                        img.src = getCoreProductImageUrl(firstImage);
                         img.style.objectFit = 'cover';
                     }
+                }
+
+                const previewContainer = document.getElementById(`${scope}-images-${productId}`);
+                if (previewContainer) {
+                    previewContainer.innerHTML = renderProductImagePreview(data.data.images || [], 0);
                 }
             } catch (error) {
                 console.error('Error loading image for product', productId, error);
@@ -1746,7 +1904,74 @@
 
         async function loadRejectedProducts() {
             const container = document.getElementById('rejected-products-list');
-            container.innerHTML = '<div class="empty-state"><div class="empty-icon">✗</div><p>Rejected products appear here</p></div>';
+            
+            try {
+                const response = await fetch('/api/v1/core-products/rejected/list');
+                const data = await response.json();
+                let products = (data.data.products || []).filter(product =>
+                    Number(product.quantity || 0) > 0 && Number(product.price || 0) > 0
+                );
+
+                if (currentCategory !== 'all') {
+                    products = products.filter(product => getCategoryFromName(product.product_name) === currentCategory);
+                }
+
+                if (products.length === 0) {
+                    container.innerHTML = '<div class="empty-state"><div class="empty-icon">✗</div><p>No rejected products in this category</p></div>';
+                    return;
+                }
+
+                container.innerHTML = '';
+                products.forEach(product => {
+                    const card = document.createElement('div');
+                    card.className = 'admin-product-card';
+
+                    const imageCount = product.image_count || 0;
+                    const cleanName = product.product_name.split(/\s+/).slice(0, 4).join(' ');
+
+                    card.innerHTML = `
+                        <div class="card-image-section">
+                            <div class="card-image-placeholder" id="rejected-image-${product.id}">
+                                <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjMwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMzAwIiBoZWlnaHQ9IjMwMCIgZmlsbD0iI2Y0ZjRmNCI+PC9yZWN0Pjwvc3ZnPg==" alt="Loading" class="product-image">
+                            </div>
+                        </div>
+                        <div class="card-body-admin">
+                            <div class="card-header-admin">
+                                <span class="brand-badge">${product.brand}</span>
+                                <span class="brand-badge" style="background: linear-gradient(to right, #8b5cf6, #7c3aed); color: white; padding: 0.35rem 0.8rem;">${product.product_type || 'Product'}</span>
+                                <span class="status-badge status-rejected">Rejected</span>
+                            </div>
+                            <h3 class="product-title-admin">${cleanName}</h3>
+                            <div class="admin-specs">
+                                <div class="spec-row">
+                                    <span class="spec-label">SKU:</span>
+                                    <span class="spec-value">${product.product_number}</span>
+                                </div>
+                                <div class="spec-row">
+                                    <span class="spec-label">Price:</span>
+                                    <span class="spec-value">R${parseFloat(product.price).toLocaleString()}</span>
+                                </div>
+                                <div class="spec-row">
+                                    <span class="spec-label">Stock:</span>
+                                    <span class="spec-value">${product.quantity} units</span>
+                                </div>
+                                <div class="spec-row spec-row-images">
+                                    <span class="spec-label">Images:</span>
+                                    <div class="spec-image-value" id="rejected-images-${product.id}">
+                                        ${renderProductImagePreview([], imageCount)}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+
+                    container.appendChild(card);
+                    loadReadOnlyProductImages(product.id, 'rejected');
+                });
+            } catch (error) {
+                console.error('Error loading rejected products:', error);
+                container.innerHTML = '<div class="empty-state"><p>Error loading rejected products</p></div>';
+            }
         }
 
         async function activateProduct(productId) {
