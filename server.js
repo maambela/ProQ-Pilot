@@ -2209,8 +2209,8 @@ function isStoreLaptopProduct(product) {
     const accessoryTerms = /\b(powerbank|power bank|backpack|bag|case|sleeve|headset|webcam|hub|screw|rolling|notepac|clamshell|stand|dock|lock|mah)\b/;
     if (accessoryTerms.test(name)) return false;
 
-    const laptopBrand = /\b(dell|hp|lenovo|acer|microsoft|apple|macbook)\b/.test(`${brand} ${name}`);
-    const laptopFamily = /\b(laptop|notebook|macbook|mba|mbp|2in1|chromebook|v15|v14|latitude|xps|inspiron|thinkpad|ideapad|probook|elitebook|expertbook|zenbook|vivobook|alienware|swift|aspire|surface laptop|surface pro|thinkbook|exo\d*|tmp\d*|tmx\d*|travelmate|dell pro 13|dell pro 14|dell pro 15|dell pro 16|dell 14|dell 15|dell 16|e14|e16|t14|t14s|x13|tb\s?(14|16))\b/.test(name);
+    const laptopBrand = /\b(dell|hp|lenovo|acer|microsoft|apple|macbook|mac)\b/.test(`${brand} ${name}`);
+    const laptopFamily = /\b(laptop|notebook|macbook|mba|mbp|mac\s?book|2in1|chromebook|v15|v14|latitude|xps|inspiron|thinkpad|ideapad|probook|elitebook|expertbook|zenbook|vivobook|alienware|swift|aspire|surface laptop|surface pro|thinkbook|exo\d*|tmp\d*|tmx\d*|travelmate|dell pro 13|dell pro 14|dell pro 15|dell pro 16|dell 14|dell 15|dell 16|e14|e16|t14|t14s|x13|tb\s?(14|16))\b/.test(`${brand} ${name}`);
     const hasProcessor = /\b(i[3579]|core|intel|ryzen|amd|celeron|pentium|snapdragon|ultra\s?[3579]|u[3579][-\s]?\d*|m[1-5]|n100|n200)\b/.test(text) || /\b(mba|mbp|macbook)\b/.test(name);
     const hasRam = /\b(4|8|12|16|18|24|32|36|48|64|96|128)\s?gb\b.*\b(ram|memory|ddr|lpddr|unified)\b|\b(ram|memory|ddr|lpddr|unified)\b.*\b(4|8|12|16|18|24|32|36|48|64|96|128)\s?gb\b|\b(4|8|12|16|18|24|32|36|48|64|96|128)\s?gb\b/.test(text);
     const hasStorage = /\b(128|256|512|1024|2048)\s?gb\b.*\b(ssd|nvme|storage|solid|drive)\b|\b(1|2|4|8)\s?t(b)?\b|\b(ssd|nvme|storage|solid|drive)\b.*\b(128|256|512|1024|2048)\s?gb\b/.test(text) ||
@@ -2227,6 +2227,17 @@ function isStoreLaptopProduct(product) {
     }
 
     return laptopBrand && hasProcessor && hasRam && hasStorage && (laptopFamily || (hasPortableSignals && hasMobileBuild));
+}
+
+function isStoreAppleLaptopProduct(product) {
+    const text = normalizeStoreProductText([
+        product.product_name,
+        product.description,
+        product.brand,
+        product.product_number
+    ].filter(Boolean).join(' '));
+
+    return /\b(apple|macbook|mac\s?book|mba|mbp|mac)\b/.test(text) && isStoreLaptopProduct(product);
 }
 
 function getStoreProductCategory(product) {
@@ -2300,7 +2311,7 @@ function dedupeStoreProducts(products) {
 
     products.forEach(product => {
         if ((Number(product.quantity) || 0) <= 0) return;
-        if (!product.image_url || String(product.image_url).trim() === '') return;
+        if ((!product.image_url || String(product.image_url).trim() === '') && !isStoreAppleLaptopProduct(product)) return;
         if (shouldHideStoreApiProduct(product)) return;
 
         const key = getStoreDedupeKey(product);

@@ -70,6 +70,17 @@ function tryNextBrandLogo(img) {
     img.replaceWith(fallback);
 }
 
+function handleProductImageError(img) {
+    const fallback = img.dataset.fallbackImage;
+    if (fallback && img.src.indexOf(fallback) === -1) {
+        img.src = fallback;
+        return;
+    }
+
+    const card = img.closest('.product-card');
+    if (card) card.remove();
+}
+
 // Custom dropdown functionality
 function initCustomDropdown() {
     const dropdownBtn = document.getElementById('sortDropdown');
@@ -186,7 +197,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (accessoryKeywords.some(k => name.includes(k))) return false;
 
         // --- 2. BRAND DETECTION (CRITICAL) ---
-        const laptopBrands = ['dell', 'hp', 'lenovo', 'acer', 'microsoft', 'apple', 'macbook'];
+        const laptopBrands = ['dell', 'hp', 'lenovo', 'acer', 'microsoft', 'apple', 'macbook', 'mac'];
         const isBigLaptopBrand = laptopBrands.some(b => brandField.includes(b) || name.includes(b));
 
         // --- 3. LAPTOP INDICATORS ---
@@ -195,7 +206,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const isExplicitLaptop = 
             name.includes("laptop") || name.includes("notebook") || 
-            name.includes("macbook") || name.includes("mba") || name.includes("mbp") || 
+            name.includes("macbook") || name.includes("mac book") || name.includes("mba") || name.includes("mbp") || 
             name.includes("2in1") || name.includes("chromebook") || name.includes("v15") ||
             name.includes("v14") || name.includes("latitude") || name.includes("precision") ||
             name.includes("xps") || name.includes("inspiron") || name.includes("thinkpad") ||
@@ -308,6 +319,29 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         if (/^https?:\/\//i.test(url)) return `/image-proxy?url=${encodeURIComponent(url)}`;
         return `/product_images/${url}`;
+    }
+
+    function isAppleLaptopProduct(product) {
+        const text = [
+            product.product_name,
+            product.description,
+            product.brand,
+            product.product_number
+        ].filter(Boolean).join(' ').toLowerCase();
+
+        return /\b(apple|macbook|mac book|mba|mbp|mac)\b/i.test(text) && isLaptop(product);
+    }
+
+    function getStoreProductImageSrc(product) {
+        if (product?.image_url && String(product.image_url).trim() !== '') {
+            return getProductImageSrc(product.image_url);
+        }
+
+        if (isAppleLaptopProduct(product)) {
+            return 'Images/Macbook.webp';
+        }
+
+        return getProductImageSrc(product?.image_url);
     }
 
     const canShowWithoutImage = () => false;
@@ -701,6 +735,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const brand = product.brand || 'APPLE';
             const imageLoading = index < 4 ? 'eager' : 'lazy';
             const imagePriority = index < 4 ? 'high' : 'low';
+            const fallbackImage = isAppleLaptopProduct(product) ? 'Images/Macbook.webp' : '';
 
             card.innerHTML = `
                 <div class="card-head">
@@ -708,7 +743,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         <button class="action-btn wishlist-btn" style="background: black; color: white;"><i class='bx bx-heart'></i></button>
                         <button class="action-btn add-to-cart-btn" style="background: black; color: white;"><i class='bx bx-cart'></i></button>
                     </div>
-                    <img src="${getProductImageSrc(product.image_url)}" alt="${cleanName}" width="320" height="240" sizes="(max-width: 640px) 46vw, (max-width: 1100px) 30vw, 260px" loading="${imageLoading}" decoding="async" fetchpriority="${imagePriority}" onerror="this.closest('.product-card') && this.closest('.product-card').remove()">
+                    <img src="${getStoreProductImageSrc(product)}" data-fallback-image="${fallbackImage}" alt="${cleanName}" width="320" height="240" sizes="(max-width: 640px) 46vw, (max-width: 1100px) 30vw, 260px" loading="${imageLoading}" decoding="async" fetchpriority="${imagePriority}" onerror="handleProductImageError(this)">
                 </div>
                 <div class="card-body">
                     <div class="product-meta" style="display: flex; gap: 8px; margin-bottom: 8px;">
