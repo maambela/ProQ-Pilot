@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ProQ Pilot | Kit Builder</title>
-    <link rel="stylesheet" href="css/style.css?v=onboarding-20260615">
+    <link rel="stylesheet" href="css/style.css?v=kit-packs-20260617">
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
 </head>
 <body>
@@ -53,6 +53,25 @@
                 <p id="kitIntro">Choose the recommended bundle, then swap the laptop brand or model before adding the full kit to cart.</p>
             </div>
 
+            <section class="kit-pack-selector" aria-labelledby="kitPackTitle">
+                <div class="kit-pack-selector-head">
+                    <div>
+                        <p class="kit-section-label">Provisioning pack</p>
+                        <h2 id="kitPackTitle">Choose the employee setup</h2>
+                    </div>
+                    <span class="kit-pack-count" id="kitPackCount">1 employee</span>
+                </div>
+                <div class="kit-pack-grid" id="kitPackGrid"></div>
+            </section>
+
+            <section class="kit-readiness-panel" aria-labelledby="kitReadinessTitle">
+                <div>
+                    <p class="kit-section-label">Packing system</p>
+                    <h2 id="kitReadinessTitle">Hardware + digital readiness</h2>
+                </div>
+                <div class="kit-readiness-grid" id="kitReadinessGrid"></div>
+            </section>
+
             <div class="kit-layout">
                 <section class="kit-builder-panel" aria-labelledby="kitBuilderTitle">
                     <div class="kit-panel-head">
@@ -90,6 +109,7 @@
                         <h2 id="kitSummaryTitle">Ready to add</h2>
                     </div>
                     <div class="kit-summary-list" id="kitSummaryList"></div>
+                    <div class="kit-total-breakdown" id="kitTotalBreakdown"></div>
                     <div class="kit-summary-total">
                         <span>Estimated total</span>
                         <strong id="kitTotal">R0</strong>
@@ -118,6 +138,8 @@
                 <a href="kit.html?type=new-starter">New Employee Kit</a>
                 <a href="kit.html?type=hybrid">Remote Team Kit</a>
                 <a href="kit.html?type=secure">Secure Business Kit</a>
+                <a href="kit.html?type=power-user">Power User Pack</a>
+                <a href="kit.html?type=executive">Executive Pack</a>
             </div>
             <div class="footer-links">
                 <h4>Support</h4>
@@ -132,7 +154,7 @@
     </footer>
 
     <script src="js/site-footer.js?v=onboarding-20260615"></script>
-    <script src="js/kit-builder.js?v=kit-builder-4"></script>
+    <script src="js/kit-builder.js?v=kit-builder-5"></script>
     <script src="js/auth-ui.js"></script>
 </body>
 </html>

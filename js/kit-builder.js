@@ -12,6 +12,11 @@ const KIT_TYPES = {
         eyebrow: 'New Starter',
         title: 'New Employee Kit',
         intro: 'A day-one setup with one business laptop, Microsoft 365, Duo MFA, and the essentials a new employee needs.',
+        packLabel: 'Starter',
+        packRole: 'New employee',
+        workStyle: 'Office-ready',
+        securityLevel: 'Standard security',
+        icon: 'bx-user-plus',
         defaultBrand: 'HP',
         seats: 1,
         microsoftTerms: ['business premium', 'business standard', 'microsoft 365'],
@@ -25,6 +30,11 @@ const KIT_TYPES = {
         eyebrow: 'Hybrid Work',
         title: 'Remote Team Kit',
         intro: 'A portable team setup with a business laptop, collaboration licensing, MFA, and desk-ready accessories.',
+        packLabel: 'Remote',
+        packRole: 'Hybrid employee',
+        workStyle: 'Anywhere work',
+        securityLevel: 'MFA protected',
+        icon: 'bx-wifi',
         defaultBrand: 'Lenovo',
         seats: 5,
         microsoftTerms: ['teams', 'business standard', 'business premium', 'microsoft 365'],
@@ -39,6 +49,11 @@ const KIT_TYPES = {
         eyebrow: 'Secure Growth',
         title: 'Secure Business Kit',
         intro: 'A security-first procurement setup with a stronger endpoint, cloud productivity, and Duo protection.',
+        packLabel: 'Secure',
+        packRole: 'Security-led rollout',
+        workStyle: 'Managed endpoint',
+        securityLevel: 'High security',
+        icon: 'bx-shield-quarter',
         defaultBrand: 'Dell',
         seats: 10,
         microsoftTerms: ['business premium', 'enterprise', 'microsoft 365'],
@@ -46,6 +61,44 @@ const KIT_TYPES = {
         accessories: [
             { key: 'dock', label: 'Secure desk dock', terms: ['dock', 'docking', 'thunderbolt'] },
             { key: 'monitor', label: 'Office monitor', terms: ['monitor', 'display'] }
+        ]
+    },
+    'power-user': {
+        eyebrow: 'Power User',
+        title: 'Power User Pack',
+        intro: 'A performance-focused setup with a stronger laptop, desk hardware, Microsoft 365, and Duo sign-in protection.',
+        packLabel: 'Power User',
+        packRole: 'Analyst or creator',
+        workStyle: 'Desk plus mobile',
+        securityLevel: 'MFA protected',
+        icon: 'bx-chip',
+        defaultBrand: 'HP',
+        seats: 3,
+        microsoftTerms: ['business premium', 'enterprise', 'teams', 'microsoft 365'],
+        duoTerms: ['advantage', 'premier', 'essentials'],
+        accessories: [
+            { key: 'dock', label: 'Docking station', terms: ['dock', 'docking', 'thunderbolt'] },
+            { key: 'monitor', label: 'Monitor', terms: ['monitor', 'display'] },
+            { key: 'mouse', label: 'Wireless mouse', terms: ['mouse', 'bluetooth silent mouse', 'wireless mouse'] }
+        ]
+    },
+    executive: {
+        eyebrow: 'Executive',
+        title: 'Executive Pack',
+        intro: 'A premium employee setup with portable hardware, productivity licensing, Duo MFA, and polished carry gear.',
+        packLabel: 'Executive',
+        packRole: 'Leadership user',
+        workStyle: 'Premium portable',
+        securityLevel: 'High security',
+        icon: 'bx-briefcase-alt-2',
+        defaultBrand: 'Microsoft',
+        seats: 1,
+        microsoftTerms: ['business premium', 'enterprise', 'microsoft 365'],
+        duoTerms: ['premier', 'advantage', 'essentials'],
+        accessories: [
+            { key: 'bag', label: 'Premium carry gear', terms: ['sleeve', 'bag', 'topload', 'case'] },
+            { key: 'mouse', label: 'Wireless mouse', terms: ['mouse', 'bluetooth silent mouse', 'wireless mouse'] },
+            { key: 'dock', label: 'Desk dock', terms: ['dock', 'docking', 'thunderbolt'] }
         ]
     }
 };
@@ -83,6 +136,7 @@ async function initKitBuilder() {
     kitState.seats = kitState.config.seats;
 
     renderKitHeader();
+    renderPackOptions();
     renderBrandButtons();
     bindKitEvents();
     updateCartBadge();
@@ -107,9 +161,30 @@ function renderKitHeader() {
     setText('kitEyebrow', kitState.config.eyebrow);
     setText('kitTitle', kitState.config.title);
     setText('kitIntro', kitState.config.intro);
+    setText('kitPackCount', `${kitState.seats} employee${kitState.seats === 1 ? '' : 's'}`);
 
     const seatInput = document.getElementById('kitSeatInput');
     if (seatInput) seatInput.value = String(kitState.seats);
+}
+
+function renderPackOptions() {
+    const grid = document.getElementById('kitPackGrid');
+    if (!grid) return;
+
+    grid.innerHTML = Object.entries(KIT_TYPES).map(([key, pack]) => `
+        <button class="kit-pack-card ${key === kitState.type ? 'active' : ''}" type="button" data-kit-type="${escapeHtml(key)}" aria-pressed="${key === kitState.type ? 'true' : 'false'}">
+            <span class="kit-pack-icon"><i class='bx ${escapeHtml(pack.icon)}'></i></span>
+            <span class="kit-pack-copy">
+                <strong>${escapeHtml(pack.packLabel)}</strong>
+                <small>${escapeHtml(pack.packRole)}</small>
+            </span>
+            <span class="kit-pack-meta">${escapeHtml(pack.securityLevel)}</span>
+        </button>
+    `).join('');
+
+    grid.querySelectorAll('[data-kit-type]').forEach(button => {
+        button.addEventListener('click', () => applyKitType(button.dataset.kitType));
+    });
 }
 
 function bindKitEvents() {
@@ -120,7 +195,9 @@ function bindKitEvents() {
     if (seatInput) {
         seatInput.addEventListener('input', () => {
             kitState.seats = clampNumber(seatInput.value, 1, 500);
+            renderKitHeader();
             renderIncludedItems();
+            renderReadiness();
             renderSummary();
         });
     }
@@ -129,6 +206,7 @@ function bindKitEvents() {
         modelSelect.addEventListener('change', () => {
             kitState.selectedLaptopId = modelSelect.value;
             renderLaptopPreview();
+            renderReadiness();
             renderSummary();
         });
     }
@@ -136,6 +214,27 @@ function bindKitEvents() {
     if (addButton) {
         addButton.addEventListener('click', addKitToCart);
     }
+}
+
+function applyKitType(type) {
+    if (!KIT_TYPES[type] || type === kitState.type) return;
+
+    kitState.type = type;
+    kitState.config = KIT_TYPES[type];
+    kitState.selectedBrand = kitState.config.defaultBrand;
+    kitState.seats = kitState.config.seats;
+
+    if (kitState.products.length || kitState.licenses.length) {
+        hydrateKitSelections();
+    }
+
+    renderKitHeader();
+    renderPackOptions();
+    renderKit();
+
+    const url = new URL(window.location.href);
+    url.searchParams.set('type', type);
+    window.history.replaceState({}, '', url);
 }
 
 async function fetchStoreProducts() {
@@ -205,10 +304,12 @@ function groupLaptopsByBrand(products) {
 }
 
 function renderKit() {
+    renderPackOptions();
     renderBrandButtons();
     renderModelOptions();
     renderLaptopPreview();
     renderIncludedItems();
+    renderReadiness();
     renderSummary();
 }
 
@@ -298,6 +399,7 @@ function renderLaptopPreview() {
     preview.querySelector('[data-toggle-item="laptop"]')?.addEventListener('click', () => {
         kitState.enabled.laptop = !kitState.enabled.laptop;
         renderLaptopPreview();
+        renderReadiness();
         renderSummary();
     });
 }
@@ -372,10 +474,12 @@ function renderIncludedItems() {
 function renderSummary() {
     const list = document.getElementById('kitSummaryList');
     const total = document.getElementById('kitTotal');
+    const breakdown = document.getElementById('kitTotalBreakdown');
     const note = document.getElementById('kitNote');
     if (!list || !total) return;
 
     const lines = getKitSummaryLines();
+    const totals = getKitTotals(lines);
 
     list.innerHTML = lines.map(line => `
         <div class="kit-summary-line">
@@ -387,14 +491,75 @@ function renderSummary() {
         </div>
     `).join('');
 
-    total.textContent = formatMoney(lines.reduce((sum, line) => sum + line.price, 0));
+    if (breakdown) {
+        breakdown.innerHTML = `
+            <div>
+                <span>Hardware</span>
+                <strong>${escapeHtml(formatMoney(totals.hardware))}</strong>
+            </div>
+            <div>
+                <span>Digital seats</span>
+                <strong>${escapeHtml(formatMoney(totals.digital))}</strong>
+            </div>
+        `;
+    }
+
+    total.textContent = formatMoney(totals.total);
 
     if (note) {
         const hasQuoteItem = lines.some(line => line.price <= 0);
         note.textContent = hasQuoteItem
             ? 'Microsoft pricing will be added when the live license feed returns a priced item.'
-            : 'Pricing updates from the live catalog where available.';
+            : `${kitState.config.packLabel} pack combines one-time hardware with per-seat digital services.`;
     }
+}
+
+function renderReadiness() {
+    const grid = document.getElementById('kitReadinessGrid');
+    if (!grid) return;
+
+    const items = getReadinessItems();
+    grid.innerHTML = items.map(item => `
+        <article class="kit-readiness-card ${item.ready ? 'is-ready' : 'is-missing'}">
+            <span><i class='bx ${escapeHtml(item.icon)}'></i></span>
+            <div>
+                <strong>${escapeHtml(item.label)}</strong>
+                <small>${escapeHtml(item.detail)}</small>
+            </div>
+        </article>
+    `).join('');
+}
+
+function getReadinessItems() {
+    const enabledAccessories = kitState.selectedAccessories.filter(item => kitState.enabled.accessories[item.key] !== false);
+    const laptop = getSelectedLaptop();
+
+    return [
+        {
+            label: 'Device',
+            detail: laptop && kitState.enabled.laptop ? getProductDisplayName(laptop) : 'No laptop included',
+            icon: 'bx-laptop',
+            ready: Boolean(laptop && kitState.enabled.laptop)
+        },
+        {
+            label: 'Accessories',
+            detail: enabledAccessories.length ? `${enabledAccessories.length} item${enabledAccessories.length === 1 ? '' : 's'} per employee` : 'No accessory items',
+            icon: 'bx-package',
+            ready: enabledAccessories.length > 0
+        },
+        {
+            label: 'Productivity',
+            detail: kitState.selectedMicrosoft && kitState.enabled.microsoft ? `${kitState.seats} Microsoft seat${kitState.seats === 1 ? '' : 's'}` : 'Microsoft not included',
+            icon: 'bxl-microsoft',
+            ready: Boolean(kitState.selectedMicrosoft && kitState.enabled.microsoft)
+        },
+        {
+            label: 'Security',
+            detail: kitState.selectedDuo && kitState.enabled.duo ? `${kitState.seats} Duo MFA seat${kitState.seats === 1 ? '' : 's'}` : 'MFA not included',
+            icon: 'bx-shield-quarter',
+            ready: Boolean(kitState.selectedDuo && kitState.enabled.duo)
+        }
+    ];
 }
 
 function getKitSummaryLines() {
@@ -405,7 +570,8 @@ function getKitSummaryLines() {
         lines.push({
             label: `${kitState.seats} laptop${kitState.seats === 1 ? '' : 's'}`,
             name: getProductDisplayName(laptop),
-            price: getProductPrice(laptop) * kitState.seats
+            price: getProductPrice(laptop) * kitState.seats,
+            category: 'hardware'
         });
     }
 
@@ -415,7 +581,8 @@ function getKitSummaryLines() {
         lines.push({
             label: `${kitState.seats} ${item.label.toLowerCase()}`,
             name: getAccessoryDisplayName(item.product, item.label),
-            price: getProductPrice(item.product) * kitState.seats
+            price: getProductPrice(item.product) * kitState.seats,
+            category: 'hardware'
         });
     });
 
@@ -423,7 +590,8 @@ function getKitSummaryLines() {
         lines.push({
             label: `${kitState.seats} Duo user license${kitState.seats === 1 ? '' : 's'}`,
             name: kitState.selectedDuo.product_name || 'Cisco Duo',
-            price: getProductPrice(kitState.selectedDuo) * kitState.seats
+            price: getProductPrice(kitState.selectedDuo) * kitState.seats,
+            category: 'digital'
         });
     }
 
@@ -431,11 +599,22 @@ function getKitSummaryLines() {
         lines.push({
             label: `${kitState.seats} Microsoft user license${kitState.seats === 1 ? '' : 's'}`,
             name: kitState.selectedMicrosoft.name || 'Microsoft 365',
-            price: getMicrosoftTotal()
+            price: getMicrosoftTotal(),
+            category: 'digital'
         });
     }
 
     return lines;
+}
+
+function getKitTotals(lines = getKitSummaryLines()) {
+    return lines.reduce((totals, line) => {
+        const price = Number(line.price) || 0;
+        if (line.category === 'digital') totals.digital += price;
+        else totals.hardware += price;
+        totals.total += price;
+        return totals;
+    }, { hardware: 0, digital: 0, total: 0 });
 }
 
 async function addKitToCart() {
@@ -877,6 +1056,7 @@ function toggleKitItem(type, key) {
     if (type === 'microsoft') kitState.enabled.microsoft = !kitState.enabled.microsoft;
 
     renderIncludedItems();
+    renderReadiness();
     renderSummary();
 }
 
