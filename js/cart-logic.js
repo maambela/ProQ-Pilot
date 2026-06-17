@@ -145,11 +145,47 @@ document.addEventListener('DOMContentLoaded', async () => {
         return desc.length > 80 ? desc.substring(0, 80) + '...' : desc || 'Premium computing solution';
     }
 
+    function mapLocalCartItem(item, index) {
+        let imagePath = item.image_url || item.image || null;
+        if (imagePath) {
+            if (String(imagePath).startsWith('Images/')) {
+                imagePath = `/${imagePath}`;
+            } else if (!/^https?:\/\//i.test(imagePath) && !imagePath.startsWith('/')) {
+                imagePath = `/product_images/${imagePath}`;
+            }
+        }
+
+        return {
+            id: item.product_id || item.productID || item.id,
+            cart_id: item.id,
+            product_id: item.product_id || item.productID || item.id,
+            name: item.product_name,
+            price: parseFloat(item.price),
+            quantity: item.quantity,
+            description: item.description,
+            image: imagePath,
+            type: item.cart_type || item.type,
+            duo_config: item.duo_config_json || item.duo_config,
+            microsoft_config: item.microsoft_config || item.microsoft_config_json,
+            localIndex: index
+        };
+    }
+
     // --- 2. CORE DATA FETCHING ---
     async function getActiveCart() {
         console.log('[Cart Logic] Getting active cart for user:', user?.userID);
         
         if (user) {
+            const preferLocalCartOnce = localStorage.getItem('preferLocalCartOnce') === '1';
+            if (preferLocalCartOnce) {
+                localStorage.removeItem('preferLocalCartOnce');
+                const localCart = JSON.parse(localStorage.getItem('cart')) || [];
+                if (localCart.length > 0) {
+                    console.log('[Cart] Using freshly saved local kit cart after partial account sync.');
+                    return localCart.map(mapLocalCartItem);
+                }
+            }
+
             try {
                 console.log('[Cart Logic] Fetching cart from server...');
                 const response = await fetch(`/api/v1/cart/${user.userID}`);
@@ -168,7 +204,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     if (localCart.length > 0) {
                         console.log('[Cart] ⚠️ Server cart empty, using localStorage fallback with', localCart.length, 'items');
                         console.log('[Cart] Fallback items:', localCart);
-                        items = localCart;
+                        return localCart.map(mapLocalCartItem);
                     }
                 }
                 
@@ -250,55 +286,13 @@ document.addEventListener('DOMContentLoaded', async () => {
                 console.log('[Cart Logic] Fallback - using localStorage with', localCart.length, 'items');
                 console.log('[Cart Logic] Fallback items:', localCart);
                 
-                return localCart.map((item, index) => {
-                    let imagePath = item.image_url || item.image || null;
-                    if (imagePath) {
-                        if (!/^https?:\/\//i.test(imagePath) && !imagePath.startsWith('/')) {
-                            imagePath = `/product_images/${imagePath}`;
-                        }
-                    }
-                    return {
-                        id: item.product_id || item.productID || item.id,
-                        cart_id: item.id,
-                        product_id: item.product_id || item.productID || item.id,
-                        name: item.product_name,
-                        price: parseFloat(item.price),
-                        quantity: item.quantity,
-                        description: item.description,
-                        image: imagePath,
-                        type: item.cart_type || item.type,
-                        duo_config: item.duo_config_json || item.duo_config,
-                        microsoft_config: item.microsoft_config || item.microsoft_config_json,
-                        localIndex: index
-                    };
-                });
+                return localCart.map(mapLocalCartItem);
             }
         } else {
             // Local storage fallback for guests
             console.log('[Cart Logic] Not logged in - using localStorage only');
             const localCart = JSON.parse(localStorage.getItem('cart')) || [];
-            return localCart.map((item, index) => {
-                let imagePath = item.image_url || item.image || null;
-                if (imagePath) {
-                    if (!/^https?:\/\//i.test(imagePath) && !imagePath.startsWith('/')) {
-                        imagePath = `/product_images/${imagePath}`;
-                    }
-                }
-                    return {
-                        id: item.product_id || item.productID || item.id,
-                        cart_id: item.id,
-                        product_id: item.product_id || item.productID || item.id,
-                        name: item.product_name,
-                        price: parseFloat(item.price),
-                    quantity: item.quantity,
-                    description: item.description,
-                    image: imagePath,
-                    type: item.cart_type || item.type,
-                    duo_config: item.duo_config_json || item.duo_config,
-                    microsoft_config: item.microsoft_config || item.microsoft_config_json,
-                    localIndex: index
-                };
-            });
+            return localCart.map(mapLocalCartItem);
         }
     }
 

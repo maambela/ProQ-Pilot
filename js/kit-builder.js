@@ -458,24 +458,20 @@ async function addKitToCart() {
     localStorage.setItem('cart', JSON.stringify(cart));
 
     if (user?.userID) {
-        try {
-            const response = await fetch('/api/v1/cart/sync', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ userID: user.userID, items: cartItems })
-            });
-            const result = await response.json().catch(() => ({}));
-            if (!response.ok || Number(result.synced) !== cartItems.length) {
-                throw new Error(result.message || `Only ${Number(result.synced) || 0} of ${cartItems.length} kit items synced`);
+        const syncItems = cartItems.map(createServerCartSyncItem).filter(Boolean);
+        const skippedCount = cartItems.length - syncItems.length;
+
+        if (syncItems.length) {
+            const syncResult = await syncKitCartItems(user.userID, syncItems);
+            if (syncResult.failed.length || skippedCount > 0) {
+                console.warn('[Kit Builder] Some kit items are local-only for this cart session.', {
+                    skippedCount,
+                    failed: syncResult.failed
+                });
+                localStorage.setItem('preferLocalCartOnce', '1');
             }
-        } catch (error) {
-            console.error('[Kit Builder] Cart sync failed:', error);
-            if (addButton) {
-                addButton.disabled = false;
-                addButton.innerHTML = "<i class='bx bx-cart-add'></i> Add Kit to Cart";
-            }
-            alert('The kit is saved locally, but it could not be synced to your account. Please try adding it again.');
-            return;
+        } else {
+            localStorage.setItem('preferLocalCartOnce', '1');
         }
     }
 
@@ -499,14 +495,19 @@ function buildCartItems() {
             .map(item => item.product)
     ].filter(Boolean);
 
-    const items = regularProducts.map(product => ({
-        id: getProductId(product),
-        product_name: product.product_name || product.name || 'Kit item',
-        price: getProductPrice(product),
-        image_url: product.image_url || '',
-        description: product.description || product.product_description || '',
-        quantity: kitState.seats
-    }));
+    const items = regularProducts.map(product => {
+        const productId = getProductId(product);
+        return {
+            id: productId,
+            product_id: productId,
+            productID: productId,
+            product_name: product.product_name || product.name || 'Kit item',
+            price: getProductPrice(product),
+            image_url: product.image_url || product.image || product.main_image || '',
+            description: product.description || product.product_description || '',
+            quantity: kitState.seats
+        };
+    });
 
     const microsoftItem = buildMicrosoftCartItem();
     if (kitState.enabled.microsoft && microsoftItem) items.push(microsoftItem);
@@ -514,6 +515,53 @@ function buildCartItems() {
     if (kitState.enabled.duo && duoItem) items.push(duoItem);
 
     return items;
+}
+
+function createServerCartSyncItem(item) {
+    const itemType = item.type || item.cart_type;
+    if (itemType === 'duo-security' || itemType === 'duo-security-upgrade' || itemType === 'microsoft-license') {
+        const config = item.duo_config || item.duo_config_json || item.microsoft_config || item.microsoft_config_json;
+        if (!item.id || !config || !Object.keys(config).length) return null;
+        return item;
+    }
+
+    const productId = Number.parseInt(item.product_id || item.productID || item.id, 10);
+    if (!Number.isFinite(productId)) return null;
+
+    return {
+        ...item,
+        id: productId,
+        product_id: productId,
+        productID: productId,
+        quantity: Math.max(1, Number.parseInt(item.quantity, 10) || 1)
+    };
+}
+
+async function syncKitCartItems(userID, items) {
+    const result = { synced: 0, failed: [] };
+
+    for (const item of items) {
+        try {
+            const response = await fetch('/api/v1/cart/sync', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userID, items: [item] })
+            });
+            const payload = await response.json().catch(() => ({}));
+            if (!response.ok || Number(payload.synced) < 1) {
+                throw new Error(payload.message || 'Item sync failed');
+            }
+            result.synced += 1;
+        } catch (error) {
+            result.failed.push({
+                id: item.id,
+                name: item.product_name,
+                message: error.message
+            });
+        }
+    }
+
+    return result;
 }
 
 function buildDuoCartItem() {
