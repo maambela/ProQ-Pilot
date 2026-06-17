@@ -546,7 +546,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (hasPhysicalProducts && hasDuoItems) {
                 deliveryEl.innerText = `R${deliveryFee} (physical items only)`;
             } else if (hasDuoItems && !hasPhysicalProducts) {
-                deliveryEl.innerHTML = `<span style="color: var(--accent-blue);">R0 (digital)</span>`;
+                deliveryEl.innerHTML = `<span style="color: rgba(255,255,255,0.92); font-weight: 100;">R0 (digital)</span>`;
             } else {
                 deliveryEl.innerText = `R${deliveryFee.toLocaleString()}`;
             }

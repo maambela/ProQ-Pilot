@@ -337,7 +337,7 @@ function renderIncludedItems() {
             key: 'microsoft',
             type: 'microsoft',
             label: 'Cloud productivity',
-            image: '<img src="Images/Microsoft.PNG" alt="Microsoft">',
+            image: '<img src="Images/Microsoft.png" alt="Microsoft">',
             name: kitState.selectedMicrosoft?.name || 'Microsoft 365 recommendation',
             detail: 'Email, Office apps, Teams, and cloud storage.',
             price: getMicrosoftTotal(),
@@ -592,7 +592,7 @@ function buildMicrosoftCartItem() {
         description: microsoftConfig.product_description,
         quantity: 1,
         price: totalPrice,
-        image_url: 'Images/Microsoft.PNG',
+        image_url: 'Images/Microsoft.png',
         microsoft_config: microsoftConfig
     };
 }
@@ -981,7 +981,7 @@ function renderProductImage(product) {
 }
 
 function getBrandLogo(brandName) {
-    return KIT_BRANDS.find(brand => brand.name === brandName)?.logo || 'Images/Microsoft.PNG';
+    return KIT_BRANDS.find(brand => brand.name === brandName)?.logo || 'Images/Microsoft.png';
 }
 
 function isBadAccessoryMatch(product, terms) {

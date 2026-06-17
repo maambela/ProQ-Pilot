@@ -3896,11 +3896,26 @@ color: #d8d8d8;
 
 .summary-card h3 {
     color: var(--text-main);
-    font-weight: 200;
+    font-weight: 100;
 }
 
 .summary-card .summary-row span {
     color: rgba(255, 255, 255, 0.9);
+    font-weight: 100;
+}
+
+.summary-card .summary-row.total {
+    color: rgba(255, 255, 255, 0.92);
+    font-size: 1.05rem;
+    font-weight: 100;
+}
+
+.summary-card .summary-row.total span,
+.summary-card #subtotal-price,
+.summary-card #delivery-cost,
+.summary-card #total-price {
+    color: rgba(255, 255, 255, 0.92) !important;
+    font-weight: 100 !important;
 }
 
 /* Secure checkout small rows with icons */
@@ -3917,7 +3932,7 @@ color: #d8d8d8;
 }
 
 .secure-checkout .secure-item i {
-    color: #ffffff;
+    color: #ffffff !important;
     font-size: 1.15rem;
     min-width: 22px;
 }
@@ -5743,21 +5758,27 @@ color: #d8d8d8;
 }
 
 .recommendation-bottom strong {
-    color: #ffffff;
+    color: #ffffff !important;
     font-size: 0.88rem;
+    font-weight: 100;
     white-space: nowrap;
 }
 
 .recommendation-add {
     min-height: 34px;
     padding: 7px 12px;
-    border: 1px solid rgba(68, 255, 224, 0.35);
+    border: 1px solid rgba(255, 255, 255, 0.56);
     border-radius: 999px;
-    background: rgba(68, 255, 224, 0.12);
+    background: rgba(255, 255, 255, 0.12);
     color: #ffffff;
     cursor: pointer;
     font-size: 0.72rem;
     white-space: nowrap;
+}
+
+.recommendation-add:hover {
+    border-color: rgba(255, 255, 255, 0.82);
+    background: rgba(255, 255, 255, 0.18);
 }
 
 .recommendation-add:disabled,
