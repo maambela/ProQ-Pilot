@@ -1371,8 +1371,8 @@ async function sendNewTarsonProductsEmail(products) {
     `).join('');
     
     const mailOptions = {
-        from: `"${STORE_DETAILS.name}" <${EMAIL_SENDERS.support}>`,
-        to: EMAIL_SENDERS.support,
+        from: `"${STORE_DETAILS.name}" <${EMAIL_SENDERS.sales}>`,
+        to: EMAIL_SENDERS.sales,
         subject: `🆕 ${products.length} New Laptop(s) from Tarsus Online`,
         html: `
             <div style="font-family: Arial, sans-serif; max-width: 900px; margin: 0 auto;">
@@ -1569,8 +1569,8 @@ async function sendNewCoreProductsEmail(products) {
     `).join('');
 
     const mailOptions = {
-        from: `"${STORE_DETAILS.name}" <${EMAIL_SENDERS.support}>`,
-        to: EMAIL_SENDERS.support,
+        from: `"${STORE_DETAILS.name}" <${EMAIL_SENDERS.sales}>`,
+        to: EMAIL_SENDERS.sales,
         subject: `🆕 ${products.length} New Core API Product(s) Added - Action Required`,
         html: `
             <div style="font-family: Arial, sans-serif; max-width: 900px; margin: 0 auto;">
@@ -1935,8 +1935,8 @@ app.patch('/api/v1/core-products/:productId/approve', async (req, res, next) => 
         // Send email notification
         try {
             const mailOptions = {
-                from: `"${STORE_DETAILS.name}" <${EMAIL_SENDERS.support}>`,
-                to: EMAIL_SENDERS.support,
+                from: `"${STORE_DETAILS.name}" <${EMAIL_SENDERS.sales}>`,
+                to: EMAIL_SENDERS.sales,
                 subject: `New Product Approved - ${product.product_name}`,
                 html: `
                     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
@@ -2006,8 +2006,8 @@ app.patch('/api/v1/core-products/:productId/reject', async (req, res, next) => {
         // Send rejection email
         try {
             const mailOptions = {
-                from: `"${STORE_DETAILS.name}" <${EMAIL_SENDERS.support}>`,
-                to: EMAIL_SENDERS.support,
+                from: `"${STORE_DETAILS.name}" <${EMAIL_SENDERS.sales}>`,
+                to: EMAIL_SENDERS.sales,
                 subject: `Product Rejected - ${product.product_name}`,
                 html: `
                     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
@@ -2104,8 +2104,8 @@ app.patch('/api/v1/core-products/:productId/deactivate', async (req, res, next) 
         // Send email notification
         try {
             const mailOptions = {
-                from: `"${STORE_DETAILS.name}" <${EMAIL_SENDERS.support}>`,
-                to: EMAIL_SENDERS.support,
+                from: `"${STORE_DETAILS.name}" <${EMAIL_SENDERS.salest}>`,
+                to: EMAIL_SENDERS.sales,
                 subject: `Product Deactivated - ${product.product_name}`,
                 html: `
                     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
@@ -2171,8 +2171,8 @@ app.patch('/api/v1/core-products/:productId/activate', async (req, res, next) =>
         // Send email notification
         try {
             const mailOptions = {
-                from: `"${STORE_DETAILS.name}" <${EMAIL_SENDERS.support}>`,
-                to: EMAIL_SENDERS.support,
+                from: `"${STORE_DETAILS.name}" <${EMAIL_SENDERS.sales}>`,
+                to: EMAIL_SENDERS.sales,
                 subject: `Product Activated - ${product.product_name}`,
                 html: `
                     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
