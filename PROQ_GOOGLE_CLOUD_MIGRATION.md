@@ -128,12 +128,6 @@ gcloud secrets create YOCO_SECRET_KEY --data-file=-
 gcloud secrets create TARSON_API_URL --data-file=-
 gcloud secrets create TARSON_API_TOKEN --data-file=-
 gcloud secrets create CORE_API_URL --data-file=-
-gcloud secrets create AXIZ_CLIENT_ID --data-file=-
-gcloud secrets create AXIZ_CLIENT_SECRET --data-file=-
-gcloud secrets create AXIZ_SCOPE --data-file=-
-gcloud secrets create AXIZ_TOKEN_URL --data-file=-
-gcloud secrets create AXIZ_BASE_URL --data-file=-
-gcloud secrets create AXIZ_ACCOUNT_NUMBER --data-file=-
 gcloud secrets create DUO_IKEY --data-file=-
 gcloud secrets create DUO_SKEY --data-file=-
 gcloud secrets create DUO_HOST --data-file=-
@@ -146,8 +140,6 @@ gcloud secrets create WESTCON_API_BASE_URL --data-file=-
 gcloud secrets create WESTCON_MICROSOFT_LICENSES_PATH --data-file=-
 gcloud secrets create STITCH_CLIENT_ID --data-file=-
 gcloud secrets create STITCH_CLIENT_SECRET --data-file=-
-gcloud secrets create STITCH_REDIRECT_URI --data-file=-
-gcloud secrets create STITCH_WEBHOOK_SECRET --data-file=-
 ```
 
 In PowerShell, after pasting a value for `--data-file=-`, press `Ctrl+Z`, then `Enter`.
@@ -163,7 +155,7 @@ Use these production callback values for the payment/provider dashboards and sec
 - Yoco webhook URL: `https://proqpilot.com/webhook/yoco`
 
 
-Stitch Express uses STITCH_CLIENT_ID, STITCH_CLIENT_SECRET, STITCH_REDIRECT_URI, and optional STITCH_WEBHOOK_SECRET; cloudbuild.yaml binds these from Secret Manager. Do not set STITCH_SCOPE or use the Stitch Enterprise secure.stitch.money/connect/token endpoint for this project.
+Stitch Express uses `STITCH_CLIENT_ID` and `STITCH_CLIENT_SECRET` from Secret Manager. `STITCH_REDIRECT_URI` is deployed as a normal environment variable: `https://proqpilot.com/api/v1/stitch-payment/verify`. Add `STITCH_WEBHOOK_SECRET` later only after Stitch gives you a webhook signing secret. Do not set `STITCH_SCOPE` or use the Stitch Enterprise `secure.stitch.money/connect/token` endpoint for this project.
 
 
 ## 7. GitHub Trigger To Cloud Run
@@ -181,7 +173,7 @@ When GitHub pushes a commit, Cloud Build will:
 2. Push it to Artifact Registry.
 3. Deploy `proq-pilot` to Cloud Run.
 4. Attach Cloud SQL using `--add-cloudsql-instances`.
-5. Inject only `PROQ_` secrets using `--set-secrets`.
+5. Inject Cloud Run environment variables and Secret Manager values using `--set-env-vars` and `--set-secrets`.
 
 ## 8. Cloud Build IAM
 
