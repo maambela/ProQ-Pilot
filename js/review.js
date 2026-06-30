@@ -202,6 +202,8 @@ document.addEventListener('DOMContentLoaded', async ()=>{
             
             if (selectedMethod === 'payfast') {
                 endpoint = '/api/v1/payfast-checkout';
+            } else if (selectedMethod === 'stitch') {
+                endpoint = '/api/v1/stitch-checkout';
             }
 
             const resp = await fetch(endpoint, { 

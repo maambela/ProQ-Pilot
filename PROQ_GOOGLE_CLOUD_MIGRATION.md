@@ -5,6 +5,7 @@ This guide is for `D:\Websites\Github\ProQ Pilot` only. The StackOps project is 
 ## What Is Separate
 
 - Cloud Run service: `proq-pilot`
+- Production domain: `https://proqpilot.com`
 - Artifact Registry image: `us-central1-docker.pkg.dev/proq-pilot/proq-pilot-repo/proq-pilot`
 - Runtime service account: `proq-pilot-run@proq-pilot.iam.gserviceaccount.com`
 - Secret prefix: `PROQ_`
@@ -124,9 +125,15 @@ gcloud secrets create PAYFAST_RETURN_URL --data-file=-
 gcloud secrets create PAYFAST_CANCEL_URL --data-file=-
 gcloud secrets create PAYFAST_NOTIFY_URL --data-file=-
 gcloud secrets create YOCO_SECRET_KEY --data-file=-
-gcloud secrets create TARSON_API_URI --data-file=-
+gcloud secrets create TARSON_API_URL --data-file=-
 gcloud secrets create TARSON_API_TOKEN --data-file=-
 gcloud secrets create CORE_API_URL --data-file=-
+gcloud secrets create AXIZ_CLIENT_ID --data-file=-
+gcloud secrets create AXIZ_CLIENT_SECRET --data-file=-
+gcloud secrets create AXIZ_SCOPE --data-file=-
+gcloud secrets create AXIZ_TOKEN_URL --data-file=-
+gcloud secrets create AXIZ_BASE_URL --data-file=-
+gcloud secrets create AXIZ_ACCOUNT_NUMBER --data-file=-
 gcloud secrets create DUO_IKEY --data-file=-
 gcloud secrets create DUO_SKEY --data-file=-
 gcloud secrets create DUO_HOST --data-file=-
@@ -137,13 +144,27 @@ gcloud secrets create WESTCON_OAUTH_URL --data-file=-
 gcloud secrets create WESTCON_SUBSCRIPTION_KEY --data-file=-
 gcloud secrets create WESTCON_API_BASE_URL --data-file=-
 gcloud secrets create WESTCON_MICROSOFT_LICENSES_PATH --data-file=-
+gcloud secrets create STITCH_CLIENT_ID --data-file=-
+gcloud secrets create STITCH_CLIENT_SECRET --data-file=-
+gcloud secrets create STITCH_REDIRECT_URI --data-file=-
+gcloud secrets create STITCH_WEBHOOK_SECRET --data-file=-
 ```
 
 In PowerShell, after pasting a value for `--data-file=-`, press `Ctrl+Z`, then `Enter`.
 
-Note: the app code expects `TARSON_API_URL`, but your secret is named `TARSON_API_URI`. `cloudbuild.yaml` maps `TARSON_API_URL=TARSON_API_URI:latest`, so you do not need to rename the secret.
+Use these production callback values for the payment/provider dashboards and secrets:
 
-The current deployment does not bind Axiz secrets because they were not present in your Secret Manager screenshot. If you want Axiz product sync live in production, create these secrets and add them to `cloudbuild.yaml`: `AXIZ_CLIENT_ID`, `AXIZ_CLIENT_SECRET`, `AXIZ_SCOPE`, `AXIZ_TOKEN_URL`, `AXIZ_BASE_URL`, and `AXIZ_ACCOUNT_NUMBER`.
+- `PUBLIC_BASE_URL`: `https://proqpilot.com`
+- `STITCH_REDIRECT_URI`: `https://proqpilot.com/api/v1/stitch-payment/verify`
+- Stitch webhook URL: `https://proqpilot.com/webhook/stitch`
+- `PAYFAST_RETURN_URL`: `https://proqpilot.com/order-success.html`
+- `PAYFAST_CANCEL_URL`: `https://proqpilot.com/cart.html`
+- `PAYFAST_NOTIFY_URL`: `https://proqpilot.com/webhook/payfast`
+- Yoco webhook URL: `https://proqpilot.com/webhook/yoco`
+
+
+Stitch Express uses STITCH_CLIENT_ID, STITCH_CLIENT_SECRET, STITCH_REDIRECT_URI, and optional STITCH_WEBHOOK_SECRET; cloudbuild.yaml binds these from Secret Manager. Do not set STITCH_SCOPE or use the Stitch Enterprise secure.stitch.money/connect/token endpoint for this project.
+
 
 ## 7. GitHub Trigger To Cloud Run
 
@@ -177,9 +198,31 @@ The Cloud Build service account needs:
 - Local `.env` values are ignored by Git and Docker.
 - Product image uploads to `product_images/` are not durable in Cloud Run. For production, move uploaded images to Cloud Storage later.
 
+## 10. Register `proqpilot.com` With Cloud Run
+
+Google's direct Cloud Run domain mapping is currently marked Preview, and Google says it is not recommended for production services where the preview limitations matter. For this project in `us-central1`, the direct mapping command is:
+
+```bash
+gcloud beta run domain-mappings create \
+  --service proq-pilot \
+  --domain proqpilot.com \
+  --region us-central1
+```
+
+Then fetch the DNS records Google generated:
+
+```bash
+gcloud beta run domain-mappings describe \
+  --domain proqpilot.com \
+  --region us-central1
+```
+
+Add every returned `resourceRecords` entry at your domain/DNS provider. If `www.proqpilot.com` should also work, create a second mapping for `www.proqpilot.com` or configure your DNS/provider to redirect `www` to the root domain.
 ## References
 
 - Cloud Run continuous deployment from Git: https://cloud.google.com/run/docs/continuous-deployment-with-cloud-build
 - Cloud Run to Cloud SQL for MySQL: https://cloud.google.com/sql/docs/mysql/connect-run
 - Cloud Run secrets: https://cloud.google.com/run/docs/configuring/secrets
 - Cloud Run service identity: https://cloud.google.com/run/docs/configuring/services/service-identity
+
+

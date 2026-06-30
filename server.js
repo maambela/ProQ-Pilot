@@ -19,12 +19,13 @@ const userRouter = require('./routers/userRouter');
 const duoRouter = require('./routers/duoRouter');
 const microsoftLicenseRouter = require('./routers/microsoftLicenseRouter');
 const catchAsync = require('./utils/catchAsync');
+const stitchApi = require('./utils/stitchApi');
 
 const app = express();
 app.use(cors());
 app.use(express.json({
     verify: (req, res, buf) => {
-        req.rawBody = buf.toString('utf8');
+        req.rawBody = Buffer.from(buf);
     }
 }));
 app.use(express.urlencoded({ extended: true }));
@@ -333,6 +334,332 @@ async function getRetailPrice(warehousePrice, brand) {
         connection.release(); // Always release!
     }
 }
+function unwrapStitchPaymentNode(payload) {
+    return payload?.data?.payment || payload?.payment || payload?.data || payload;
+}
+
+function getStitchPaymentReference(payload, fallback = '') {
+    const payment = unwrapStitchPaymentNode(payload) || {};
+    return String(
+        payment.merchantReference ||
+        payment.externalReference ||
+        payment.reference ||
+        payment.metadata?.merchantReference ||
+        fallback ||
+        ''
+    );
+}
+
+function isStitchPaymentSuccessful(payload) {
+    const payment = unwrapStitchPaymentNode(payload) || {};
+    const status = String(payment.status || payment.state || payment.paymentStatus || '').toLowerCase();
+    return ['paid', 'complete', 'completed', 'success', 'successful', 'settled'].includes(status);
+}
+
+async function processStitchPaymentNode(payload, options = {}) {
+    const payment = unwrapStitchPaymentNode(payload) || {};
+    const paymentId = String(options.paymentId || payment.id || payment.paymentId || '');
+    const externalReference = getStitchPaymentReference(payment, options.externalReference);
+    const providerResponse = JSON.stringify({
+        stitch_payment_id: paymentId || null,
+        stitch_external_reference: externalReference || null,
+        stitch_status: payment.status || payment.state || payment.paymentStatus || null,
+        stitch_payload: payload,
+        stitch_processed_at: new Date().toISOString()
+    });
+
+    let connection;
+    try {
+        connection = await db.getConnection();
+        await connection.beginTransaction();
+
+        const [payments] = await connection.query(
+            `SELECT id, order_id, userID, status, provider_response
+             FROM Payments
+             WHERE provider = 'STITCH'
+               AND (
+                   JSON_UNQUOTE(JSON_EXTRACT(provider_response, '$.stitch_external_reference')) = ?
+                   OR JSON_UNQUOTE(JSON_EXTRACT(provider_response, '$.stitch_payment_request_id')) = ?
+               )
+             ORDER BY id DESC
+             LIMIT 1`,
+            [externalReference, paymentId]
+        );
+
+        if (!payments.length) {
+            throw new Error('Matching Stitch payment record was not found');
+        }
+
+        const localPayment = payments[0];
+        const successful = isStitchPaymentSuccessful(payment);
+        const nextPaymentStatus = successful ? 'completed' : String(payment.status || payment.state || 'pending').toLowerCase();
+
+        await connection.query(
+            'UPDATE Payments SET status = ?, provider_response = ? WHERE id = ?',
+            [nextPaymentStatus, providerResponse, localPayment.id]
+        );
+
+        if (successful) {
+            await connection.query('UPDATE Orders SET status = ? WHERE id = ?', ['paid', localPayment.order_id]);
+        }
+
+        await connection.commit();
+
+        return {
+            orderId: localPayment.order_id,
+            paymentId,
+            externalReference,
+            paid: successful,
+            status: nextPaymentStatus
+        };
+    } catch (error) {
+        if (connection) await connection.rollback();
+        throw error;
+    } finally {
+        if (connection) connection.release();
+    }
+}
+//================================================================================================================//
+//                                                   STITCH PAY BY BANK CHECKOUT                                  //
+//================================================================================================================//
+app.get('/api/v1/stitch-status', (req, res) => {
+    const config = stitchApi.getConfigurationStatus();
+    res.json({
+        status: 'success',
+        data: {
+            ...config,
+            notes: {
+                api: 'Using Stitch Express REST API at ' + config.expressBaseUrl,
+                merchantId: 'STITCH_MERCHANT_ID is not used by Stitch Express payment links.',
+                webhook: config.webhookReady
+                    ? 'Webhook signature verification is configured.'
+                    : 'STITCH_WEBHOOK_SECRET is only needed once you register a Stitch Express webhook.'
+            }
+        }
+    });
+});
+
+app.post('/api/v1/stitch-checkout', async (req, res) => {
+    const userID = Number(req.body.userID);
+    const addressID = Number(req.body.addressID);
+    let createdOrder = null;
+
+    try {
+        stitchApi.validateCheckoutConfiguration();
+        if (!Number.isInteger(userID) || userID <= 0) {
+            return res.status(400).json({ status: 'error', message: 'A valid user is required' });
+        }
+        if (!Number.isInteger(addressID) || addressID <= 0) {
+            return res.status(400).json({ status: 'error', message: 'A delivery address is required for hardware orders' });
+        }
+
+        const order = await executeWithRetry(async () => {
+            let connection;
+            try {
+                connection = await db.getConnection();
+                await connection.beginTransaction();
+
+                const [addresses] = await connection.query(
+                    'SELECT id FROM Addresses WHERE id = ? AND userID = ?',
+                    [addressID, userID]
+                );
+                if (!addresses.length) {
+                    throw new Error('The selected delivery address does not belong to this user');
+                }
+
+                const [digitalItems] = await connection.query(
+                    'SELECT id FROM duo_cart_items WHERE userID = ? LIMIT 1',
+                    [userID]
+                );
+                if (digitalItems.length) {
+                    throw new Error('Stitch Pay by Bank is currently available for hardware-only orders');
+                }
+
+                const [items] = await connection.query(
+                    `SELECT c.productID as id, c.quantity, p.price, p.product_name
+                     FROM Cart c
+                     JOIN Products p ON p.id = c.productID
+                     WHERE c.userID = ?
+                       AND c.quantity > 0
+                       AND (p.is_active = 1 OR p.is_active IS NULL)
+                     FOR UPDATE`,
+                    [userID]
+                );
+                if (!items.length) {
+                    throw new Error('Your hardware cart is empty');
+                }
+
+                const subtotal = items.reduce(
+                    (sum, item) => sum + (Number(item.price) * Number(item.quantity)),
+                    0
+                );
+                const totalAmount = Number((subtotal + 75).toFixed(2));
+                const [orderResult] = await connection.query(
+                    'INSERT INTO Orders (userID, addressID, total_amount, status) VALUES (?, ?, ?, ?)',
+                    [userID, addressID, totalAmount, 'pending']
+                );
+                const orderId = orderResult.insertId;
+
+                for (const item of items) {
+                    await connection.query(
+                        'INSERT INTO OrderItems (order_id, product_id, quantity, price) VALUES (?, ?, ?, ?)',
+                        [orderId, item.id, item.quantity, item.price]
+                    );
+                }
+
+                const externalReference = `proq-${orderId}-${crypto.randomBytes(8).toString('hex')}`;
+                await connection.query(
+                    `INSERT INTO Payments (order_id, userID, amount, provider, status, provider_response)
+                     VALUES (?, ?, ?, ?, ?, ?)`,
+                    [
+                        orderId,
+                        userID,
+                        totalAmount,
+                        'STITCH',
+                        'pending',
+                        JSON.stringify({ stitch_external_reference: externalReference })
+                    ]
+                );
+
+                const [users] = await connection.query(
+                    'SELECT firstName, lastName, email FROM users WHERE userID = ?',
+                    [userID]
+                );
+                await connection.commit();
+                return {
+                    orderId,
+                    externalReference,
+                    totalAmount,
+                    user: users[0] || {}
+                };
+            } catch (error) {
+                if (connection) await connection.rollback();
+                throw error;
+            } finally {
+                if (connection) connection.release();
+            }
+        });
+        createdOrder = order;
+
+        await stitchApi.registerRedirectUrl();
+
+        const reference = order.externalReference;
+        const paymentRequest = await stitchApi.createPaymentRequest({
+            amount: order.totalAmount,
+            externalReference: reference,
+            payerReference: reference,
+            payerInformation: {
+                payerId: String(userID),
+                fullName: `${order.user.firstName || ''} ${order.user.lastName || ''}`.trim(),
+                email: order.user.email || undefined
+            }
+        });
+        const paymentUrl = stitchApi.appendRedirectUri(paymentRequest.url, {
+            payment_id: paymentRequest.id,
+            reference
+        });
+
+        const connection = await db.getConnection();
+        try {
+            await connection.query(
+                `UPDATE Payments
+                 SET provider_response = JSON_SET(
+                     provider_response,
+                     '$.stitch_payment_request_id', ?,
+                     '$.stitch_payment_url', ?
+                 )
+                 WHERE order_id = ? AND provider = 'STITCH'`,
+                [paymentRequest.id, paymentRequest.url, order.orderId]
+            );
+        } finally {
+            connection.release();
+        }
+
+        res.status(200).json({
+            status: 'success',
+            data: {
+                orderId: order.orderId,
+                paymentUrl,
+                amount: order.totalAmount
+            }
+        });
+    } catch (error) {
+        console.error('[STITCH] Checkout error:', error.message);
+        if (createdOrder?.orderId) {
+            let connection;
+            try {
+                connection = await db.getConnection();
+                const [payments] = await connection.query(
+                    'SELECT provider_response FROM Payments WHERE order_id = ? AND provider = ? LIMIT 1',
+                    [createdOrder.orderId, 'STITCH']
+                );
+                const providerResponse = safeJsonParse(payments[0]?.provider_response, {});
+                await connection.query(
+                    'UPDATE Payments SET status = ?, provider_response = ? WHERE order_id = ? AND provider = ?',
+                    [
+                        'failed',
+                        JSON.stringify({
+                            ...providerResponse,
+                            stitch_error: error.message,
+                            stitch_error_at: new Date().toISOString()
+                        }),
+                        createdOrder.orderId,
+                        'STITCH'
+                    ]
+                );
+            } catch (updateError) {
+                console.error('[STITCH] Could not record checkout failure:', updateError.message);
+            } finally {
+                if (connection) connection.release();
+            }
+        }
+        res.status(500).json({ status: 'error', message: error.message });
+    }
+});
+
+app.get('/api/v1/stitch-payment/verify', async (req, res) => {
+    try {
+        const paymentRequestId = String(req.query.payment_id || req.query.id || '');
+        const externalReference = String(req.query.reference || req.query.externalReference || '');
+        if (!paymentRequestId || !externalReference) {
+            return res.status(400).json({ status: 'error', message: 'Missing Stitch Express payment reference' });
+        }
+
+        const paymentNode = await stitchApi.getPaymentRequest(paymentRequestId);
+        const returnedReference = getStitchPaymentReference(paymentNode, externalReference);
+        if (returnedReference !== externalReference) {
+            return res.status(400).json({ status: 'error', message: 'Stitch Express payment reference mismatch' });
+        }
+
+        const result = await processStitchPaymentNode(paymentNode, {
+            externalReference,
+            paymentId: paymentRequestId
+        });
+        if (!String(req.get('accept') || '').includes('application/json')) {
+            return res.redirect(302, '/order-success.html?orderId=' + encodeURIComponent(result.orderId));
+        }
+        res.json({ status: 'success', data: result });
+    } catch (error) {
+        console.error('[STITCH] Verification error:', error.message);
+        res.status(500).json({ status: 'error', message: error.message });
+    }
+});
+
+app.post('/webhook/stitch', async (req, res) => {
+    try {
+        const event = stitchApi.verifySvixWebhook(req.rawBody, req.headers);
+        if (!event?.id) {
+            return res.status(400).json({ status: 'error', message: 'Unsupported Stitch Express webhook payload' });
+        }
+
+        await processStitchPaymentNode(event, { paymentId: String(event.id) });
+        res.status(200).json({ status: 'success' });
+    } catch (error) {
+        console.error('[STITCH] Webhook error:', error.message);
+        res.status(400).json({ status: 'error', message: error.message });
+    }
+});
+
 
 // 🇿🇦 PAYFAST SIGNATURE GENERATION
 function generatePayFastSignature(data, passphrase = null) {
