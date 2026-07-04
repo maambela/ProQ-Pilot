@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ProQ Pilot | Development Preview</title>
+    <title>ProQ Pilot | Development</title>
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/development.css?v=testing-bg-1">
     <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
@@ -16,7 +16,7 @@
                 <span class="brand-name">ProQ Pilot</span>
             </div>
             <nav class="nav-links">
-                <a href="development.html" class="active">Preview</a>
+                <a href="development.html" class="active">Development</a>
                 <a href="signin.html?redirect=index.html">Developer Access</a>
             </nav>
 
@@ -26,11 +26,10 @@
     <main class="dev-gate">
         <section class="dev-hero">
             <div class="dev-hero-content">
-                <span class="badge-pill">Private Development Preview</span>
-                <h1>ProQ Pilot is currently in testing.</h1>
+                <span class="badge-pill">Development Access</span>
+                <h3>ProQ Pilot is being prepared.</h3>
                 <p>
-                    The platform is public for deployment checks, supplier sync testing, payments, and Cloud SQL verification.
-                    Access is limited to authenticated developers until the site is ready for customers.
+                    Access is limited to the development team while the site is being finalized.
                 </p>
 
                 <div class="dev-actions">
@@ -57,7 +56,7 @@
             if (hasDeveloperAccess()) {
                 const button = document.getElementById('devAccessButton');
                 button.href = 'index.html';
-                button.textContent = 'Enter developer preview';
+                button.textContent = 'Enter development area';
             }
         })();
     </script>

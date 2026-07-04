@@ -1,7 +1,11 @@
 .development-page {
     min-height: 100vh;
-    font-family: 'Inter', sans-serif;
-    font-weight: 200;
+    font-family: 'Inter', 'Helvetica Neue', 'Segoe UI', Arial, sans-serif;
+    font-weight: 100;
+    font-synthesis-weight: none;
+    font-variation-settings: "wght" 100;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
     background: url('../Images/15.png') no-repeat center center fixed;
     background-size: cover;
     background-attachment: fixed;
@@ -12,7 +16,10 @@
 }
 
 .development-page * {
-    font-weight: 200;
+    font-weight: 100 !important;
+    font-synthesis-weight: none;
+    font-variation-settings: "wght" 100;
+    text-shadow: none !important;
 }
 
 .development-page::before {
@@ -65,23 +72,25 @@
     margin-bottom: 22px;
 }
 
-.dev-hero h1 {
+.dev-hero h3 {
     width: 100%;
     margin: 0 0 22px;
-    font-size: clamp(1.2rem, 8vw, 4.2rem);
-    line-height: 0.96;
-    letter-spacing: 0;
+    font-size: clamp(1.15rem, 5.6vw, 3.15rem);
+    line-height: 1.12;
+    letter-spacing: 0.02em;
     text-align: center;
     font-weight: 100;
+    color: rgba(255, 255, 255, 0.88);
 }
 
 .dev-hero p {
     width: min(980px, 100%);
     margin: 0 auto;
-    color: rgba(255, 255, 255, 0.82);
+    color: rgba(255, 255, 255, 0.68);
     font-size: clamp(1rem, 1.45vw, 1.32rem);
     line-height: 1.8;
     text-align: center;
+    font-weight: 100;
 }
 
 .dev-actions {
@@ -104,7 +113,7 @@
         width: min(100% - 28px, 1180px);
     }
 
-    .dev-hero h1 {
-        font-size: clamp(2.8rem, 15vw, 4.6rem);
+    .dev-hero h3 {
+        font-size: clamp(2.1rem, 11vw, 3.2rem);
     }
 }
