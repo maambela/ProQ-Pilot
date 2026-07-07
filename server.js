@@ -440,6 +440,7 @@ app.get('/api/v1/stitch-status', (req, res) => {
 });
 
 app.post('/api/v1/stitch-checkout', async (req, res) => {
+    const { items: checkoutItems = [] } = req.body;
     const userID = Number(req.body.userID);
     const addressID = Number(req.body.addressID);
     let createdOrder = null;
@@ -449,7 +450,11 @@ app.post('/api/v1/stitch-checkout', async (req, res) => {
         if (!Number.isInteger(userID) || userID <= 0) {
             return res.status(400).json({ status: 'error', message: 'A valid user is required' });
         }
-        if (!Number.isInteger(addressID) || addressID <= 0) {
+        if (!Array.isArray(checkoutItems) || !checkoutItems.length) {
+            return res.status(400).json({ status: 'error', message: 'Your cart is empty' });
+        }
+        const hasPhysicalProducts = checkoutItems.some(item => !isDigitalLicenseType(item.type || item.cart_type));
+        if (hasPhysicalProducts && (!Number.isInteger(addressID) || addressID <= 0)) {
             return res.status(400).json({ status: 'error', message: 'A delivery address is required for hardware orders' });
         }
 
@@ -459,52 +464,61 @@ app.post('/api/v1/stitch-checkout', async (req, res) => {
                 connection = await db.getConnection();
                 await connection.beginTransaction();
 
-                const [addresses] = await connection.query(
-                    'SELECT id FROM Addresses WHERE id = ? AND userID = ?',
-                    [addressID, userID]
-                );
-                if (!addresses.length) {
-                    throw new Error('The selected delivery address does not belong to this user');
+                if (hasPhysicalProducts) {
+                    const [addresses] = await connection.query(
+                        'SELECT id FROM Addresses WHERE id = ? AND userID = ?',
+                        [addressID, userID]
+                    );
+                    if (!addresses.length) {
+                        throw new Error('The selected delivery address does not belong to this user');
+                    }
                 }
 
-                const [digitalItems] = await connection.query(
-                    'SELECT id FROM duo_cart_items WHERE userID = ? LIMIT 1',
-                    [userID]
-                );
-                if (digitalItems.length) {
-                    throw new Error('Stitch Pay by Bank is currently available for hardware-only orders');
-                }
-
-                const [items] = await connection.query(
-                    `SELECT c.productID as id, c.quantity, p.price, p.product_name
-                     FROM Cart c
-                     JOIN Products p ON p.id = c.productID
-                     WHERE c.userID = ?
-                       AND c.quantity > 0
-                       AND (p.is_active = 1 OR p.is_active IS NULL)
-                     FOR UPDATE`,
-                    [userID]
-                );
-                if (!items.length) {
-                    throw new Error('Your hardware cart is empty');
-                }
+                const items = checkoutItems;
 
                 const subtotal = items.reduce(
-                    (sum, item) => sum + (Number(item.price) * Number(item.quantity)),
+                    (sum, item) => sum + ((Number(item.price) || 0) * (Number(item.quantity) || 0)),
                     0
                 );
-                const totalAmount = Number((subtotal + 75).toFixed(2));
+                const delivery = hasPhysicalProducts ? 75 : 0;
+                const totalAmount = Number((subtotal + delivery).toFixed(2));
+                if (!Number.isFinite(totalAmount) || totalAmount <= 0) {
+                    throw new Error('Your cart total is invalid');
+                }
+                const dbAddressId = hasPhysicalProducts ? addressID : null;
                 const [orderResult] = await connection.query(
                     'INSERT INTO Orders (userID, addressID, total_amount, status) VALUES (?, ?, ?, ?)',
-                    [userID, addressID, totalAmount, 'pending']
+                    [userID, dbAddressId, totalAmount, 'pending']
                 );
                 const orderId = orderResult.insertId;
 
                 for (const item of items) {
-                    await connection.query(
-                        'INSERT INTO OrderItems (order_id, product_id, quantity, price) VALUES (?, ?, ?, ?)',
-                        [orderId, item.id, item.quantity, item.price]
-                    );
+                    const itemType = item.type || item.cart_type;
+                    const quantity = Number(item.quantity) || 0;
+                    const price = Number(item.price) || 0;
+
+                    if (!isDigitalLicenseType(itemType) && item.id !== 0 && item.id !== '0') {
+                        await connection.query(
+                            'INSERT INTO OrderItems (order_id, product_id, quantity, price) VALUES (?, ?, ?, ?)',
+                            [orderId, item.id, quantity, price]
+                        );
+                    }
+
+                    if (isDigitalLicenseType(itemType)) {
+                        await connection.query(
+                            `INSERT INTO duo_order_items_meta (order_id, cart_product_id, cart_type, duo_config_json)
+                             VALUES (?, ?, ?, ?)
+                             ON DUPLICATE KEY UPDATE
+                                cart_type = VALUES(cart_type),
+                                duo_config_json = VALUES(duo_config_json)`,
+                            [
+                                orderId,
+                                String(item.id),
+                                itemType,
+                                JSON.stringify(getDigitalLicenseConfig(item))
+                            ]
+                        );
+                    }
                 }
 
                 const externalReference = `proq-${orderId}-${crypto.randomBytes(8).toString('hex')}`;

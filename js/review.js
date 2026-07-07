@@ -191,14 +191,14 @@ document.addEventListener('DOMContentLoaded', async ()=>{
     const payBtn = document.getElementById('payBtn');
     payBtn.innerText = `Pay R${total.toLocaleString()}`;
     payBtn.addEventListener('click', async ()=>{
-        const selectedMethod = document.querySelector('input[name="paymentMethod"]:checked')?.value || 'payfast';
+        const selectedMethod = document.querySelector('input[name="paymentMethod"]:checked')?.value || 'stitch';
         
         payBtn.disabled = true;
         payBtn.innerText = 'Connecting to payment...';
         
         try {
             const payload = { userID: user.userID, addressID: address.id, items: itemsWithPrices };
-            let endpoint = '/api/v1/checkout-payment'; // Default Yoco
+            let endpoint = '/api/v1/stitch-checkout'; // Default Stitch
             
             if (selectedMethod === 'payfast') {
                 endpoint = '/api/v1/payfast-checkout';
