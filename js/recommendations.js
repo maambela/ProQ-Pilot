@@ -222,17 +222,21 @@
             .filter(item => item && !cartIds.has(Number(item.id)))
             .map(item => {
                 const scoredItem = scoreRecommendation(item, sourceItems, options);
+                const category = item.category || scoredItem.targetCategory;
+                const packageBoost = ['microsoft_license', 'duo_license', 'support', 'charger', 'laptop_bag', 'monitor', 'phone_accessory'].includes(category) ? 16 : 0;
                 return {
                     ...item,
-                    category: item.category || scoredItem.targetCategory,
+                    category,
                     reason: getRecommendationReasonForMatch(scoredItem.sourceCategories, scoredItem.targetCategory, options.context || options.placement),
-                    _smartScore: scoredItem.score
+                    _smartScore: scoredItem.score + packageBoost
                 };
             })
-            .filter(item => item._smartScore > 0)
+            .filter(item => item._smartScore > -45)
             .sort((a, b) => b._smartScore - a._smartScore);
 
-        const pool = scored.slice(0, Math.max(Number(options.limit || 3) * 4, 10));
+        const minimumPool = Math.max(Number(options.limit || 3) * 6, 14);
+        const preferred = scored.filter(item => item._smartScore > 0);
+        const pool = (preferred.length >= Number(options.limit || 3) ? preferred : scored).slice(0, minimumPool);
         const picked = [];
         while (pool.length && picked.length < (Number(options.fetchLimit) || pool.length)) {
             const total = pool.reduce((sum, item) => sum + Math.max(item._smartScore, 1), 0);
@@ -329,7 +333,7 @@
         const cartItems = await getCartItems(options.cartItems);
         const cartIds = cartItems.map((item) => item.id).filter(Boolean).sort((a, b) => a - b).join(',');
         const productId = options.product?.id || options.productId || null;
-        const fetchLimit = Math.max(3, Math.min(Number(options.fetchLimit) || 5, 8));
+        const fetchLimit = Math.max(6, Math.min(Number(options.fetchLimit) || 12, 16));
         const randomize = Boolean(options.randomize || options.context === 'product');
         const randomSeed = randomize ? `${Date.now()}-${Math.random().toString(16).slice(2)}` : '';
         const cacheKey = `stack-recommendations:${options.context || options.placement || 'product'}:${productId || 'none'}:${cartIds}:${fetchLimit}:${randomSeed}`;

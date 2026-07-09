@@ -357,44 +357,123 @@ document.addEventListener('DOMContentLoaded', () => {
     let selectedBrand = null;
     let selectedCategory = null;
     let searchQuery = '';
+    const STORE_PRODUCTS_CACHE_KEY = 'proqPilotStoreProductsCache:v3';
+    const STORE_PRODUCTS_CACHE_MAX_AGE = 30 * 60 * 1000;
+    let storeProductImageWarmSet = new Set();
 
-    async function fetchProducts() {
+    function readStoreProductsCache() {
+        try {
+            const cached = JSON.parse(localStorage.getItem(STORE_PRODUCTS_CACHE_KEY) || 'null');
+            if (!cached || !Array.isArray(cached.products)) return null;
+            return cached;
+        } catch (error) {
+            localStorage.removeItem(STORE_PRODUCTS_CACHE_KEY);
+            return null;
+        }
+    }
+
+    function writeStoreProductsCache(products) {
+        try {
+            localStorage.setItem(STORE_PRODUCTS_CACHE_KEY, JSON.stringify({
+                savedAt: Date.now(),
+                products
+            }));
+        } catch (error) {
+            console.warn('[Store] Product cache could not be saved:', error);
+        }
+    }
+
+    function hydrateStoreProducts(products, { fromCache = false } = {}) {
+        allProducts = (products || []).filter(p =>
+            (Number(p.quantity) || 0) > 0 &&
+            !shouldHideStoreProduct(p)
+        );
+
+        updateStoreCategoryAvailability();
+        applyFiltersAndSort();
+        warmStoreProductImages(allProducts);
+
+        if (resultsCount && !searchQuery) {
+            resultsCount.innerText = `Showing ${allProducts.length} products`;
+        }
+
+        if (fromCache) {
+            console.log('[Store] Showing cached products while refreshing in background');
+        }
+    }
+
+    function warmStoreProductImages(products) {
+        const urls = [...new Set((products || [])
+            .map(product => getStoreProductImageSrc(product))
+            .filter(Boolean))]
+            .filter(url => !storeProductImageWarmSet.has(url));
+
+        if (!urls.length) return;
+
+        const schedule = window.requestIdleCallback || ((callback) => setTimeout(callback, 120));
+        let index = 0;
+
+        const warmBatch = () => {
+            const end = Math.min(index + 6, urls.length);
+            for (; index < end; index += 1) {
+                const url = urls[index];
+                storeProductImageWarmSet.add(url);
+                const image = new Image();
+                image.decoding = 'async';
+                image.loading = 'eager';
+                image.src = url;
+            }
+
+            if (index < urls.length) {
+                schedule(warmBatch, { timeout: 1200 });
+            }
+        };
+
+        schedule(warmBatch, { timeout: 600 });
+    }
+
+    async function fetchProducts({ force = false } = {}) {
         if (!productGrid) return;
 
-        try {
-            productGrid.innerHTML = '<p class="loading-text">Initializing store modules...</p>';
+        const cached = !force ? readStoreProductsCache() : null;
+        const hasFreshCache = cached && Date.now() - (cached.savedAt || 0) < STORE_PRODUCTS_CACHE_MAX_AGE;
 
-            // Add cache busting parameter to always get latest products
-            const timestamp = Date.now();
-            console.log('[Store] Fetching products from API...');
-            const response = await fetch(`/api/v1/products?t=${timestamp}`);
+        if (cached) {
+            hydrateStoreProducts(cached.products, { fromCache: true });
+        } else {
+            productGrid.innerHTML = '<p class="loading-text">Initializing store modules...</p>';
+        }
+
+        if (hasFreshCache) {
+            return;
+        }
+
+        try {
+            console.log('[Store] Refreshing products from API...');
+            const response = await fetch('/api/v1/products', { cache: force ? 'reload' : 'no-cache' });
             console.log('[Store] API Response Status:', response.status);
             const data = await response.json();
             console.log('[Store] API Response Data:', data);
 
             if (data.status === 'success') {
                 // Show synced store products even while supplier images are still being imported.
-                allProducts = (data.data.products || []).filter(p =>
-                    (Number(p.quantity) || 0) > 0 &&
-                    !shouldHideStoreProduct(p)
-                );
+                const products = data.data.products || [];
+                writeStoreProductsCache(products);
+                hydrateStoreProducts(products);
                 console.log('[Store] Loaded', allProducts.length, 'store products');
-                updateStoreCategoryAvailability();
-                applyFiltersAndSort();
-                
-                if (resultsCount) {
-                    resultsCount.innerText = `Showing ${allProducts.length} products`;
-                }
             } else {
                 console.error('[Store] API returned non-success status:', data.status);
-                productGrid.innerHTML = '<p>Error: ' + (data.message || 'Unable to load products') + '</p>';
+                if (!cached) {
+                    productGrid.innerHTML = '<p>Error: ' + (data.message || 'Unable to load products') + '</p>';
+                }
             }
         } catch (err) {
             console.error('[Store] Error fetching products:', err);
-            productGrid.innerHTML = '<p>Error loading inventory: ' + err.message + '</p>';
+            if (!cached) {
+                productGrid.innerHTML = '<p>Error loading inventory: ' + err.message + '</p>';
+            }
         }
     }
-
     function updateStoreCategoryAvailability() {
         if (!productGrid) return;
 
@@ -416,7 +495,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Expose refresh function for store updates from admin panel
     window.refreshStore = function() {
         console.log('Store refresh triggered from admin panel');
-        fetchProducts();
+        fetchProducts({ force: true });
     }
     
     // Function to apply filters and sorting
@@ -1407,8 +1486,36 @@ async function loadFeaturedProducts() {
     if (!grid) return;
 
     try {
-        const response = await fetch('/api/v1/products');
-        const data = await response.json();
+        const cached = (() => {
+            try {
+                const value = JSON.parse(localStorage.getItem('proqPilotStoreProductsCache:v3') || 'null');
+                return Array.isArray(value?.products) ? value.products : null;
+            } catch (error) {
+                return null;
+            }
+        })();
+
+        let data = cached
+            ? { status: 'success', data: { products: cached } }
+            : null;
+
+        const refreshFeaturedProducts = async () => {
+            const response = await fetch('/api/v1/products', { cache: 'no-cache' });
+            const freshData = await response.json();
+            if (freshData.status === 'success') {
+                localStorage.setItem('proqPilotStoreProductsCache:v3', JSON.stringify({
+                    savedAt: Date.now(),
+                    products: freshData.data.products || []
+                }));
+            }
+            return freshData;
+        };
+
+        if (!data) {
+            data = await refreshFeaturedProducts();
+        } else {
+            refreshFeaturedProducts().catch(error => console.warn('[Featured] Background product refresh failed:', error));
+        }
 
         if (data.status === 'success') {
             // Select one best/latest-looking laptop per recognized brand.

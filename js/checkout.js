@@ -285,11 +285,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (window.StackRecommendations) {
             window.StackRecommendations.init({
                 container: '#checkoutRecommendations',
-                title: 'Last-minute useful add-ons',
+                title: 'Before you check out',
                 context: 'checkout',
                 cartItems: itemsWithPrices,
-                limit: 3,
-                fetchLimit: 5,
+                limit: 4,
+                fetchLimit: 16,
+                randomize: true,
+                noCache: true,
                 compact: true,
                 bundleReady: true
             });

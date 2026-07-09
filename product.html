@@ -683,7 +683,7 @@
 
     <script src="js/site-footer.js?v=footer-mobile-bg-20260708"></script>
     <script src="js/auth-ui.js"></script>
-    <script src="js/recommendations.js?v=smart-random-recs-20260709"></script>
+    <script src="js/recommendations.js?v=smart-package-recs-20260709"></script>
     <script>
 
         // Helper function to limit product name to 4 words max
@@ -1073,30 +1073,76 @@
         const urlParams = new URLSearchParams(window.location.search);
         const productId = urlParams.get('id');
 
-        if (productId) {
-            fetchProductDetails(productId);
+
+        const STORE_PRODUCTS_CACHE_KEY = 'proqPilotStoreProductsCache:v3';
+
+        function getCachedProductDetails(id) {
+            try {
+                const cached = JSON.parse(localStorage.getItem(STORE_PRODUCTS_CACHE_KEY) || 'null');
+                const products = Array.isArray(cached?.products) ? cached.products : [];
+                const product = products.find(item => String(item.id) === String(id));
+                if (!product) return null;
+
+                const images = product.image_url ? [{ image_url: product.image_url }] : [];
+                return { product, images };
+            } catch (error) {
+                return null;
+            }
+        }
+
+        function mergeProductIntoCache(product) {
+            try {
+                const cached = JSON.parse(localStorage.getItem(STORE_PRODUCTS_CACHE_KEY) || 'null') || { products: [] };
+                const products = Array.isArray(cached.products) ? cached.products : [];
+                const index = products.findIndex(item => String(item.id) === String(product.id));
+
+                if (index >= 0) {
+                    products[index] = { ...products[index], ...product };
+                } else {
+                    products.unshift(product);
+                }
+
+                localStorage.setItem(STORE_PRODUCTS_CACHE_KEY, JSON.stringify({
+                    savedAt: Date.now(),
+                    products
+                }));
+            } catch (error) {
+                console.warn('[Product] Product cache could not be updated:', error);
+            }
         }
 
         async function fetchProductDetails(id) {
+            const cached = getCachedProductDetails(id);
+            if (cached) {
+                populateProductPage(cached.product, cached.images);
+            }
+
             try {
-                // 1. Fetch basic product data from local DB
-                const response = await fetch(`/api/v1/products/${id}`);
+                // 1. Fetch basic product data from local DB, revalidating any cached page copy.
+                const response = await fetch(`/api/v1/products/${id}`, { cache: 'no-cache' });
                 const data = await response.json();
 
                 if (data.status === 'success') {
                     const product = data.data.product;
                     const images = data.data.images;
+                    mergeProductIntoCache({ ...product, image_url: images?.[0]?.image_url || product.image_url });
                     populateProductPage(product, images);
                     
                     // 2. Try fetching comprehensive details from Axiz (Real-time)
                     fetchAxizDetails(id);
-                } else {
+                } else if (!cached) {
                     showUnavailableProduct();
                 }
             } catch (err) {
                 console.error('Error fetching product details:', err);
-                showUnavailableProduct();
+                if (!cached) {
+                    showUnavailableProduct();
+                }
             }
+        }
+
+        if (productId) {
+            fetchProductDetails(productId);
         }
 
         function showUnavailableProduct() {
@@ -1188,11 +1234,11 @@
             if (window.StackRecommendations) {
                 window.StackRecommendations.init({
                     container: '#productSmartAddons',
-                    title: 'Procurement add-ons',
+                    title: 'Software, security & setup picks',
                     context: 'product',
                     product,
-                    limit: 2,
-                    fetchLimit: 8,
+                    limit: 3,
+                    fetchLimit: 16,
                     compact: true,
                     randomize: true,
                     noCache: true
@@ -1200,12 +1246,11 @@
 
                 window.StackRecommendations.init({
                     container: '#productCompleteSetup',
-                    title: 'Random procurement picks',
+                    title: 'Complete the package',
                     context: 'product',
                     product,
-                    offset: 2,
-                    limit: 3,
-                    fetchLimit: 8,
+                    limit: 4,
+                    fetchLimit: 16,
                     randomize: true,
                     noCache: true
                 });

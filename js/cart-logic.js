@@ -426,11 +426,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (window.StackRecommendations) {
             window.StackRecommendations.init({
                 container: '#cartRecommendations',
-                title: 'Recommended for your cart',
+                title: 'Complete your package',
                 context: 'cart',
                 cartItems: cart,
                 limit: 4,
-                fetchLimit: 5,
+                fetchLimit: 16,
+                randomize: true,
+                noCache: true,
                 bundleReady: true
             });
         }

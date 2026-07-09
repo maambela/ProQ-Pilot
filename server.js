@@ -2761,7 +2761,7 @@ app.get('/api/v1/products', async (req, res, next) => {
             storeProducts.slice(0, 3).forEach(p => {
                 console.log(`  - ID ${p.id}: ${p.product_name?.substring(0, 25)} | Brand: ${p.brand} | Type: ${p.product_type || 'N/A'} | status: ${p.status || 'NULL'}`);
             });
-
+            res.setHeader('Cache-Control', 'private, max-age=60, stale-while-revalidate=300');
             res.status(200).json({
                 status: 'success',
                 results: storeProducts.length,
@@ -3044,7 +3044,7 @@ app.post('/api/v1/recommendations', async (req, res, next) => {
                 noCache = false
             } = req.body || {};
 
-        const safeLimit = Math.max(1, Math.min(Number(limit) || 5, 12));
+        const safeLimit = Math.max(4, Math.min(Number(limit) || 8, 16));
         const cartProductIds = new Set(
             (Array.isArray(cartItems) ? cartItems : [])
                 .map(item => Number(item.id || item.productID || item.product_id))
@@ -3170,9 +3170,9 @@ app.post('/api/v1/recommendations', async (req, res, next) => {
                         reason: getRecommendationReason(sourceCategories, rankedCandidate.category, context)
                     };
                 })
-                .filter(candidate => candidate.recommendation_score > 0)
+                .filter(candidate => candidate.recommendation_score > -45)
                 .sort((a, b) => b.recommendation_score - a.recommendation_score)
-                .slice(0, Math.max(safeLimit * 4, 18))
+                .slice(0, Math.max(safeLimit * 6, 32))
                 .sort((a, b) => b.recommendation_random - a.recommendation_random)
                 .slice(0, safeLimit)
                 .map(candidate => ({
@@ -3274,7 +3274,7 @@ app.get('/api/v1/products/:id', async (req, res, next) => {
             }
 
             const [images] = await connection.query('SELECT * FROM product_images WHERE product_id = ? ORDER BY sort_order', [req.params.id]);
-
+            res.setHeader('Cache-Control', 'private, max-age=60, stale-while-revalidate=300');
             res.status(200).json({
                 status: 'success',
                 data: {

@@ -238,16 +238,36 @@ function applyKitType(type) {
 }
 
 async function fetchStoreProducts() {
-    const response = await fetch('/api/v1/products');
-    const payload = await response.json();
+    const cacheKey = 'proqPilotStoreProductsCache:v3';
+    const cached = (() => {
+        try {
+            const value = JSON.parse(localStorage.getItem(cacheKey) || 'null');
+            return Array.isArray(value?.products) ? value.products : null;
+        } catch (error) {
+            return null;
+        }
+    })();
 
-    if (!response.ok || payload.status !== 'success') {
-        throw new Error(payload.message || 'Product catalog unavailable');
+    const refreshCatalog = async () => {
+        const response = await fetch('/api/v1/products', { cache: 'no-cache' });
+        const payload = await response.json();
+
+        if (!response.ok || payload.status !== 'success') {
+            throw new Error(payload.message || 'Product catalog unavailable');
+        }
+
+        const products = Array.isArray(payload.data?.products) ? payload.data.products : [];
+        localStorage.setItem(cacheKey, JSON.stringify({ savedAt: Date.now(), products }));
+        return products;
+    };
+
+    if (cached) {
+        refreshCatalog().catch(error => console.warn('[Kit Builder] Background catalog refresh failed:', error));
+        return cached;
     }
 
-    return Array.isArray(payload.data?.products) ? payload.data.products : [];
+    return refreshCatalog();
 }
-
 async function fetchMicrosoftLicenses() {
     try {
         const response = await fetch('/api/v1/microsoft/licenses?offset=0&max=100');
