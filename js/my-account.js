@@ -214,7 +214,7 @@ async function loadUserAddresses() {
                     <div style="display: grid; gap: 15px; margin-bottom: 20px;">
                         ${addresses.map(addr => `
                             <div style="padding: 20px; border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 10px; background: rgba(255, 255, 255, 0.02);">
-                                <h4 style="margin: 0 0 10px 0; color: var(--white); font-family: 'Orbitron', sans-serif;">${addr.type || 'Address'}</h4>
+                                <h4 style="margin: 0 0 10px 0; color: var(--white); font-family: 'Inter', sans-serif;">${addr.type || 'Address'}</h4>
                                 <p style="margin: 5px 0; color: rgba(255, 255, 255, 0.7);">${addr.line1}</p>
                                 ${addr.line2 ? `<p style="margin: 5px 0; color: rgba(255, 255, 255, 0.7);">${addr.line2}</p>` : ''}
                                 <p style="margin: 5px 0; color: rgba(255, 255, 255, 0.7);">${addr.city}, ${addr.province} ${addr.postal_code}</p>

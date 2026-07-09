@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ProQ Pilot | Onboarding Procurement Catalog</title>
     <script src="js/dev-access.js"></script>
-    <link rel="stylesheet" href="css/style.css?v=onboarding-20260615">
+    <link rel="stylesheet" href="css/style.css?v=cart-responsive-smart-recs-20260709">
     <link rel="stylesheet" href="css/duo-store.css">
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
 </head>
@@ -14,14 +14,13 @@
     <header class="main-header">
         <div class="header-container">
             <div class="logo-area">
-                <span class="logo-icon">P</span>
-                <span class="brand-name">ProQ Pilot</span>
+                <span class="logo-icon" aria-label="ProQ Pilot"></span>
             </div>
             <nav class="nav-links" id="nav-links">
                 <a href="index.html">Home</a>
                 
                 <a href="store.html" class="active">Store</a>
-                <a href="https://stackopsit.co.za" class="it-services-link" target="_blank" rel="noopener"><i class='bx bx-shield-quarter'></i>IT Services</a>
+
                 <a href="user-orders.html">Orders</a>
                 <a href="my-account.html">My Account</a>
             </nav>
@@ -61,30 +60,6 @@
                 <div class="filter-groups" id="storeFilterGroups">
                     <!-- Modern Category Navigation System -->
                     <div class="filter-group">
-                        <p class="filter-label">Procure by outcome</p>
-
-                        <div class="category-tree onboarding-category-tree">
-                            <button class="category-main-btn onboarding-category-btn expanded" data-toggle="onboarding-submenu">
-                                <i class='bx bx-user-check'></i>
-                                <span>Onboarding Procurement</span>
-                                <i class='bx bx-chevron-down'></i>
-                            </button>
-                            <div class="category-submenu onboarding-submenu" id="onboarding-submenu" aria-hidden="false">
-                                <a class="subcategory-item onboarding-kit-link" href="kit.html?type=new-starter">
-                                    <i class='bx bx-user-plus'></i>
-                                    <span><strong>New Employee Kit</strong><small>One day-one setup</small></span>
-                                </a>
-                                <a class="subcategory-item onboarding-kit-link" href="kit.html?type=hybrid">
-                                    <i class='bx bx-wifi'></i>
-                                    <span><strong>Remote Team Kit</strong><small>Hybrid employee rollout</small></span>
-                                </a>
-                                <a class="subcategory-item onboarding-kit-link" href="kit.html?type=secure">
-                                    <i class='bx bx-shield-plus'></i>
-                                    <span><strong>Secure Business Kit</strong><small>Identity-led onboarding</small></span>
-                                </a>
-                            </div>
-                        </div>
-
                         <p class="filter-label component-filter-label">Shop individual components</p>
                         
                         <!-- All Products Button -->
@@ -194,6 +169,30 @@
                                     <span class="item-icon">•</span>
                                     Cisco Duo
                                 </button>
+                            </div>
+                        </div>
+
+                        <p class="filter-label outcome-filter-label">Procure by outcome</p>
+
+                        <div class="category-tree onboarding-category-tree">
+                            <button class="category-main-btn onboarding-category-btn" data-toggle="onboarding-submenu">
+                                <i class='bx bx-user-check'></i>
+                                <span>Onboarding Procurement</span>
+                                <i class='bx bx-chevron-down'></i>
+                            </button>
+                            <div class="category-submenu onboarding-submenu" id="onboarding-submenu" aria-hidden="true">
+                                <a class="subcategory-item onboarding-kit-link" href="kit.html?type=new-starter">
+                                    <i class='bx bx-user-plus'></i>
+                                    <span><strong>New Employee Kit</strong><small>One day-one setup</small></span>
+                                </a>
+                                <a class="subcategory-item onboarding-kit-link" href="kit.html?type=hybrid">
+                                    <i class='bx bx-wifi'></i>
+                                    <span><strong>Remote Team Kit</strong><small>Hybrid employee rollout</small></span>
+                                </a>
+                                <a class="subcategory-item onboarding-kit-link" href="kit.html?type=secure">
+                                    <i class='bx bx-shield-plus'></i>
+                                    <span><strong>Secure Business Kit</strong><small>Identity-led onboarding</small></span>
+                                </a>
                             </div>
                         </div>
 
@@ -701,52 +700,11 @@
         </div>
     </main>
 
-    <footer class="site-footer">
-        <div class="footer-container">
-            <div class="footer-brand">
-                <div class="logo">
-                    <div class="logo-circle"></div>
-                    <span>ProQ Pilot</span>
-                </div>
-                <p>Employee onboarding procurement for devices, licensing, identity, and role-ready equipment.</p>
-            </div>
-            <div class="footer-links">
-                <h4>Onboarding Procurement</h4>
-                <a href="kit.html?type=new-starter">New Employee Kit</a>
-                <a href="kit.html?type=hybrid">Remote Team Kit</a>
-                <a href="kit.html?type=secure">Secure Business Kit</a>
-            </div>
-            <div class="footer-links">
-                <h4>Support</h4>
-                <a href="contact.html">Contact Us</a>
-                <a href="about.html">Warranty Policy</a>
-                <a href="about.html">Shipping Info</a>
-            </div>
-            <div class="footer-links">
-                <h4>Contact Us</h4>
-                <a href="mailto:info@stackopsit.co.za"><i class='bx bx-envelope'></i> info@stackopsit.co.za</a>
-                <a href="mailto:support@stackopsit.co.za"><i class='bx bx-envelope'></i> support@stackopsit.co.za</a>
-                <a href="mailto:sales@stackopsit.co.za"><i class='bx bx-envelope'></i> sales@stackopsit.co.za</a>
-                <a href="tel:0115689337"><i class='bx bx-phone'></i> 011 568 9337</a>
-                <p><i class='bx bx-map'></i> Mia Drive, Waterfall City, Johannesburg, 1685</p>
-            </div>
-            <div class="footer-newsletter">
-                <h4>Join the Future</h4>
-                <p>Subscribe for hardware updates.</p>
-                <div class="subscribe-box">
-                    <input type="email" placeholder="Email address">
-                    <button class="btn btn-primary">Join</button>
-                </div>
-            </div>
-        </div>
-        <div class="footer-bottom">
-            <p>&copy; 2026 ProQ Pilot. All rights reserved.</p>
-        </div>
-    </footer>
+    <footer class="site-footer"></footer>
 
-    <script src="js/site-footer.js?v=onboarding-20260615"></script>
+    <script src="js/site-footer.js?v=footer-mobile-bg-20260708"></script>
     <script src="js/category-nav.js"></script>
-    <script src="js/script.js?v=macbook-store-fix-20260617"></script>
+    <script src="js/script.js?v=mobile-auto-rail-20260708"></script>
     <script src="js/auth-ui.js"></script>
     <script src="js/microsoft-license.js"></script>
     <script src="diagnostics.js"></script>

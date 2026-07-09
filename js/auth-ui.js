@@ -3,6 +3,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const headerActions = document.querySelector('.header-actions');
     const logoArea = document.querySelector('.logo-area');
     const isAdminPage = window.location.pathname.includes('admin_');
+    const isLocalhostDevelopment = ['localhost', '127.0.0.1', '::1'].includes(window.location.hostname);
 
     initHeaderPreview();
 
@@ -131,7 +132,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         const isAdmin = String(user.role || '').trim().toLowerCase() === 'admin';
-        if (isAdminPage && !isAdmin) {
+        if (isAdminPage && !isAdmin && !isLocalhostDevelopment) {
             window.location.href = 'index.html';
             return;
         }
@@ -153,7 +154,7 @@ document.addEventListener('DOMContentLoaded', () => {
         document.querySelector('.mobile-nav-signout')?.addEventListener('click', logoutUser);
     } else {
         // If no user but on admin page, redirect
-        if (isAdminPage) {
+        if (isAdminPage && !isLocalhostDevelopment) {
             window.location.href = 'signin.html';
         }
     }

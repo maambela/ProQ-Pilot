@@ -2785,7 +2785,10 @@ const RECOMMENDATION_CACHE_TTL = 5 * 60 * 1000;
 function normalizeRecommendationCategory(input) {
     const text = String(input || '').toLowerCase();
 
-    if (/(duo|mfa|multi.?factor|2fa|two.?factor|authentication|security license)/i.test(text)) return 'duo_license';
+    
+    if (/\\b(iphone|galaxy|pixel|smartphone|cellphone|mobile phone|phone)\\b/i.test(text)) return 'phone';
+    if (/(phone case|screen protector|phone cover)/i.test(text)) return 'phone_accessory';
+if (/(duo|mfa|multi.?factor|2fa|two.?factor|authentication|security license)/i.test(text)) return 'duo_license';
     if (/(microsoft|office|365|windows|teams|sharepoint|outlook|license|licence|software)/i.test(text)) return 'microsoft_license';
     if (/(laptop bag|notebook bag|backpack|sleeve|carry case|bag)/i.test(text)) return 'laptop_bag';
     if (/(keyboard|keys|keychron|logitech k|wireless keyboard)/i.test(text)) return 'keyboard';
@@ -2824,6 +2827,19 @@ function inferRecommendationProduct(product) {
 }
 
 const relatedCategoryWeights = {
+    phone: {
+        phone_accessory: 100,
+        charger: 92,
+        support: 72,
+        duo_license: 58,
+        microsoft_license: 48,
+        accessory: 42
+    },
+    phone_accessory: {
+        phone: 90,
+        charger: 76,
+        support: 42
+    },
     laptop: {
         laptop_bag: 95,
         microsoft_license: 92,
@@ -2905,7 +2921,17 @@ const relatedCategoryWeights = {
 function getRecommendationReason(sourceCategories, targetCategory, context) {
     const sourceSet = new Set(sourceCategories);
 
-    if (sourceSet.has('laptop') && targetCategory === 'microsoft_license') {
+    
+    if (sourceSet.has('phone') && targetCategory === 'charger') {
+        return 'Power and charging match for the phone in your cart.';
+    }
+    if (sourceSet.has('phone') && targetCategory === 'phone_accessory') {
+        return 'Protection or accessory pick for the phone you selected.';
+    }
+    if (sourceSet.has('phone') && targetCategory === 'support') {
+        return 'Useful protection for a mobile device purchase.';
+    }
+if (sourceSet.has('laptop') && targetCategory === 'microsoft_license') {
         return 'Recommended because it adds Office productivity to your laptop setup.';
     }
     if (sourceSet.has('laptop') && targetCategory === 'duo_license') {
@@ -2988,6 +3014,8 @@ function scoreRecommendationCandidate(candidate, sourceProfiles, cartCategories,
 
     const text = `${candidate.product_name || ''} ${candidate.description || ''}`.toLowerCase();
     if (sourceCategories.includes('laptop') && /(office|365|microsoft|duo|mfa|bag|mouse|keyboard|monitor|warranty|support)/.test(text)) score += 16;
+    if (sourceCategories.includes('phone') && /(charger|usb|type.?c|case|cover|screen protector|warranty|support|duo|mfa)/.test(text)) score += 20;
+    if (sourceCategories.includes('phone') && /(mouse|keyboard|monitor|laptop bag|backpack)/.test(text)) score -= 80;
     if (sourceCategories.includes('microsoft_license') && /(duo|mfa|security|support|laptop)/.test(text)) score += 18;
     if (sourceCategories.includes('keyboard') && /(mouse|wrist|stand|monitor)/.test(text)) score += 15;
 
@@ -3016,7 +3044,7 @@ app.post('/api/v1/recommendations', async (req, res, next) => {
                 noCache = false
             } = req.body || {};
 
-        const safeLimit = Math.max(1, Math.min(Number(limit) || 5, 8));
+        const safeLimit = Math.max(1, Math.min(Number(limit) || 5, 12));
         const cartProductIds = new Set(
             (Array.isArray(cartItems) ? cartItems : [])
                 .map(item => Number(item.id || item.productID || item.product_id))

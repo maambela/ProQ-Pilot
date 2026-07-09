@@ -7,6 +7,9 @@
     <script>
         (function () {
             try {
+                const localHosts = ['localhost', '127.0.0.1', '::1'];
+                if (localHosts.includes(window.location.hostname)) return;
+
                 const token = localStorage.getItem('token');
                 const user = JSON.parse(localStorage.getItem('user') || 'null');
                 if (!(token && user && user.userID)) {
@@ -17,7 +20,7 @@
             }
         })();
     </script>
-    <link rel="stylesheet" href="css/style.css?v=onboarding-20260615">
+    <link rel="stylesheet" href="css/style.css?v=cart-responsive-smart-recs-20260709">
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
 </head>
 <body>
@@ -25,14 +28,13 @@
     <header class="main-header">
         <div class="header-container">
             <div class="logo-area">
-                <span class="logo-icon">P</span>
-                <span class="brand-name">ProQ Pilot</span>
+                <span class="logo-icon" aria-label="ProQ Pilot"></span>
             </div>
             <nav class="nav-links" id="nav-links">
                 <a href="index.html" class="active">Home</a>
                 
                 <a href="store.html">Store</a>
-                <a href="https://stackopsit.co.za" class="it-services-link" target="_blank" rel="noopener"><i class='bx bx-shield-quarter'></i>IT Services</a>
+
                 <a href="user-orders.html">Orders</a>
                 <a href="my-account.html">My Account</a>
             </nav>
@@ -109,6 +111,45 @@
             </div>
         </section>
 
+                <section class="promo-grid-section animate-on-scroll">
+            <div class="section-title">
+                <h2>Equip every role with the right setup</h2>
+                <p>Use onboarding kits as the baseline, then tailor components to how each employee works.</p>
+            </div>
+            <div class="promo-container">
+                <a href="kit.html?type=new-starter" class="promo-box animate-on-scroll slide-in-left" style="background-image: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url('https://images.unsplash.com/photo-1496181133206-80ce9b88a853?q=80&w=1000')">
+                    <div class="promo-text">
+                        <h3>Office New Starter</h3>
+                        <p>A reliable business device, productivity licensing, MFA, and practical desk accessories.</p>
+                        <span class="btn-link">Build Starter Kit →</span>
+                    </div>
+                </a>
+                <a href="store.html?category=workstations" class="promo-box animate-on-scroll slide-in-top" style="background-image: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url('https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=1000')">
+                    <div class="promo-text">
+                        <h3>Technical & Power Roles</h3>
+                        <p>Higher-performance devices and secure access for engineers, analysts, and technical teams.</p>
+                        <span class="btn-link">Browse Workstations →</span>
+                    </div>
+                </a>
+                <a href="kit.html?type=hybrid" class="promo-box animate-on-scroll slide-in-bottom" style="background-image: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url('https://images.unsplash.com/photo-1558655146-d09347e92766?q=80&w=1000')">
+                    <div class="promo-text">
+                        <h3>Hybrid Employee</h3>
+                        <p>Portable hardware, Teams-ready licensing, secure login, and collaboration essentials.</p>
+                        <span class="btn-link">Configure Hybrid Kit →</span>
+                    </div>
+                </a>
+                <a href="kit.html?type=secure" class="promo-box animate-on-scroll slide-in-right" style="background-image: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url('https://images.unsplash.com/photo-1531297484001-80022131f5a1?q=80&w=1000')">
+                    <div class="promo-text">
+                        <h3>Security-First Onboarding</h3>
+                        <p>Combine managed endpoints, cloud productivity, and identity protection as teams grow.</p>
+                        <span class="btn-link">Build Secure Kit →</span>
+                    </div>
+                </a>
+            </div>
+        </section>
+
+
+        <!--
         <section class="procurement-bundles onboarding-procurement animate-on-scroll" id="onboarding-procurement">
             <div class="onboarding-section-head">
                 <div class="section-title">
@@ -144,7 +185,7 @@
                     <a href="kit.html?type=secure" class="bundle-link">Build Secure Rollout</a>
                 </article>
             </div>
-        </section>
+        </section> -->
 
         <section class="featured-products animate-on-scroll">
             <div class="section-title">
@@ -292,42 +333,7 @@
             </div>
         </section>
 
-        <section class="promo-grid-section animate-on-scroll">
-            <div class="section-title">
-                <h2>Equip every role with the right setup</h2>
-                <p>Use onboarding kits as the baseline, then tailor components to how each employee works.</p>
-            </div>
-            <div class="promo-container">
-                <div class="promo-box animate-on-scroll slide-in-left" style="background-image: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url('https://images.unsplash.com/photo-1496181133206-80ce9b88a853?q=80&w=1000')">
-                    <div class="promo-text">
-                        <h3>Office New Starter</h3>
-                        <p>A reliable business device, productivity licensing, MFA, and practical desk accessories.</p>
-                        <a href="kit.html?type=new-starter" class="btn-link">Build Starter Kit →</a>
-                    </div>
-                </div>
-                <div class="promo-box animate-on-scroll slide-in-top" style="background-image: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url('https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=1000')">
-                    <div class="promo-text">
-                        <h3>Technical & Power Roles</h3>
-                        <p>Higher-performance devices and secure access for engineers, analysts, and technical teams.</p>
-                        <a href="store.html?category=workstations" class="btn-link">Browse Workstations →</a>
-                    </div>
-                </div>
-                <div class="promo-box animate-on-scroll slide-in-bottom" style="background-image: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url('https://images.unsplash.com/photo-1558655146-d09347e92766?q=80&w=1000')">
-                    <div class="promo-text">
-                        <h3>Hybrid Employee</h3>
-                        <p>Portable hardware, Teams-ready licensing, secure login, and collaboration essentials.</p>
-                        <a href="kit.html?type=hybrid" class="btn-link">Configure Hybrid Kit →</a>
-                    </div>
-                </div>
-                <div class="promo-box animate-on-scroll slide-in-right" style="background-image: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url('https://images.unsplash.com/photo-1531297484001-80022131f5a1?q=80&w=1000')">
-                    <div class="promo-text">
-                        <h3>Security-First Onboarding</h3>
-                        <p>Combine managed endpoints, cloud productivity, and identity protection as teams grow.</p>
-                        <a href="kit.html?type=secure" class="btn-link">Build Secure Kit →</a>
-                    </div>
-                </div>
-            </div>
-        </section>
+
 
         
         <section class="features animate-on-scroll">
@@ -384,41 +390,14 @@
                 <div class="brand-card animate-on-scroll fade-in-scale">
                     <img src="Images/lenovo.PNG" alt="Lenovo" class="brand-image">
                 </div>
-
             </div>
         </section>
 
-        <footer class="site-footer animate-on-scroll">
-            <div class="footer-container">
-                <div class="footer-brand animate-on-scroll slide-in-left">
-                    <div class="logo">
-                        <div class="logo-circle"></div>
-                        <span>ProQ Pilot</span>
-                    </div>
-                    <p>Employee onboarding procurement for devices, licensing, identity, and role-ready equipment.</p>
-                </div>
-                <div class="footer-links animate-on-scroll slide-in-bottom">
-                    <h4>Onboarding Procurement</h4>
-                    <a href="kit.html?type=new-starter">New Employee Kit</a>
-                    <a href="kit.html?type=hybrid">Remote Team Kit</a>
-                    <a href="kit.html?type=secure">Secure Business Kit</a>
-                </div>
-                <div class="footer-links animate-on-scroll slide-in-top">
-                    <h4>Support</h4>
-                    <a href="contact.html">Contact Us</a>
-                    <a href="about.html">Warranty Policy</a>
-                    <a href="about.html">Shipping Info</a>
-                </div>
-
-            </div>
-            <div class="footer-bottom">
-                <p>&copy; 2026 ProQ Pilot. All rights reserved.</p>
-            </div>
-        </footer>
+        <footer class="site-footer animate-on-scroll"></footer>
     </main>
 
-    <script src="js/site-footer.js?v=onboarding-20260615"></script>
-    <script src="js/script.js?v=onboarding-20260615"></script>
+    <script src="js/site-footer.js?v=footer-mobile-bg-20260708"></script>
+    <script src="js/script.js?v=mobile-auto-rail-20260708"></script>
     <script src="js/auth-ui.js"></script>
 </body>
 </html>

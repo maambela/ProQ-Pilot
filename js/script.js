@@ -1,5 +1,7 @@
 function hasDeveloperAccess() {
     try {
+        if (isLocalhostDevelopment()) return true;
+
         const token = localStorage.getItem('token');
         const user = JSON.parse(localStorage.getItem('user') || 'null');
         return Boolean(token && user && user.userID);
@@ -8,6 +10,9 @@ function hasDeveloperAccess() {
     }
 }
 
+function isLocalhostDevelopment() {
+    return ['localhost', '127.0.0.1', '::1'].includes(window.location.hostname);
+}
 function enforceDevelopmentGate() {
     const currentPage = (window.location.pathname.split('/').pop() || 'index.html').toLowerCase();
     const publicPages = new Set([
@@ -1479,7 +1484,7 @@ async function loadFeaturedProducts() {
 
             if (featuredProcurementTimer) clearInterval(featuredProcurementTimer);
             if (featuredProcurementItems.length > 3) {
-                featuredProcurementTimer = setInterval(advanceFeaturedProcurementCarousel, 5000);
+                featuredProcurementTimer = setInterval(advanceFeaturedProcurementCarousel, 7000);
             }
 
             if (!featuredProcurementResizeBound) {
@@ -1704,3 +1709,44 @@ document.addEventListener('DOMContentLoaded', () => {
         initHeroAnimations();
     }
 });
+
+function initMobileAutoScrollRails() {
+    const mobileQuery = window.matchMedia('(max-width: 768px)');
+    const rails = Array.from(document.querySelectorAll('.preferred-category-panel .category-grid'));
+    let timers = [];
+
+    const stop = () => {
+        timers.forEach(timer => clearInterval(timer));
+        timers = [];
+    };
+
+    const start = () => {
+        stop();
+        if (!mobileQuery.matches) return;
+
+        rails.forEach(rail => {
+            if (!rail || rail.scrollWidth <= rail.clientWidth + 4) return;
+
+            const timer = setInterval(() => {
+                if (!mobileQuery.matches) return;
+
+                const firstCard = rail.querySelector('.category-card');
+                const styles = window.getComputedStyle(rail);
+                const gap = parseFloat(styles.columnGap || styles.gap || 0) || 0;
+                const step = firstCard ? firstCard.getBoundingClientRect().width + gap : rail.clientWidth * 0.78;
+                const maxScroll = rail.scrollWidth - rail.clientWidth - 4;
+                const nextLeft = rail.scrollLeft >= maxScroll ? 0 : Math.min(rail.scrollLeft + step, maxScroll);
+
+                rail.scrollTo({ left: nextLeft, behavior: 'smooth' });
+            }, 7000);
+
+            timers.push(timer);
+        });
+    };
+
+    mobileQuery.addEventListener?.('change', start);
+    window.addEventListener('resize', start);
+    start();
+}
+
+document.addEventListener('DOMContentLoaded', initMobileAutoScrollRails);
