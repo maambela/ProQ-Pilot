@@ -510,7 +510,104 @@
 
         @media (max-width: 720px) {
             .account-container {
-                padding-top: 122px;
+                padding: 112px 14px 42px;
+            }
+
+            .account-header {
+                gap: 12px;
+                margin-bottom: 18px;
+                padding: 14px 16px;
+                border-radius: 16px;
+            }
+
+            .account-avatar {
+                width: 48px;
+                height: 48px;
+                font-size: 1.45rem;
+                box-shadow: 0 0 16px rgba(68, 255, 224, 0.25);
+            }
+
+            .account-info {
+                min-width: 0;
+            }
+
+            .account-info h1 {
+                max-width: 100%;
+                font-size: 0.98rem;
+                line-height: 1.15;
+                letter-spacing: 0;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+
+            .account-info p {
+                font-size: 0.68rem;
+                line-height: 1.2;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+
+            #dashboard-section .account-info h1 {
+                font-size: 0.98rem !important;
+                line-height: 1.15 !important;
+                letter-spacing: 0 !important;
+            }
+
+            #dashboard-section .account-info p {
+                font-size: 0.68rem !important;
+                line-height: 1.2 !important;
+            }
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+                gap: 10px;
+                margin-bottom: 28px;
+            }
+
+            .dashboard-card {
+                flex-direction: row;
+                align-items: center;
+                justify-content: flex-start;
+                gap: 10px;
+                min-height: 58px;
+                padding: 10px 12px;
+                border-radius: 14px;
+                text-align: left;
+            }
+
+            .dashboard-card:hover {
+                transform: translateY(-2px);
+            }
+
+            .dashboard-card-icon {
+                width: 34px;
+                min-width: 34px;
+                margin: 0;
+                font-size: 1.35rem;
+                line-height: 1;
+                text-align: center;
+            }
+
+            .dashboard-card h3 {
+                flex: 0 0 94px;
+                margin: 0;
+                font-size: 0.82rem;
+                line-height: 1.1;
+                letter-spacing: 0;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+
+            .dashboard-card p {
+                flex: 1;
+                min-width: 0;
+                font-size: 0.66rem;
+                line-height: 1.2;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
             }
 
             .form-row,
