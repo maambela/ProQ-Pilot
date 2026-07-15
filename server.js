@@ -3261,7 +3261,15 @@ app.get('/api/v1/products/:id', async (req, res, next) => {
             // 1. Manual products (status IS NULL) AND active
             // 2. Approved Core API products (status = 'approved') AND active
             const [products] = await connection.query(
-                'SELECT * FROM Products WHERE id = ? AND (status IS NULL OR status = ?) AND (is_active = 1 OR is_active IS NULL)', 
+                `SELECT p.*, (
+                    SELECT image_url
+                    FROM product_images
+                    WHERE product_id = p.id
+                    ORDER BY is_primary DESC, sort_order ASC, id ASC
+                    LIMIT 1
+                ) AS image_url
+                FROM Products p
+                WHERE p.id = ? AND (p.status IS NULL OR p.status = ?) AND (p.is_active = 1 OR p.is_active IS NULL)`,
                 [req.params.id, 'approved']
             );
             

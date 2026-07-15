@@ -137,7 +137,7 @@
         .brand-logo-tag { max-height: 44px; }
         .product-title {
             max-width: 680px;
-            font-size: clamp(1.95rem, 4vw, 3.15rem);
+            font-size: clamp(1.35rem, 2.4vw, 2rem);
             line-height: 1.05;
             margin: 12px 0;
             font-weight: 100;
@@ -327,8 +327,9 @@
             }
 
             .product-title {
-                font-size: 2rem;
+                font-size: 1.35rem;
                 line-height: 1.08;
+                font-weight: 100;
             }
 
             .description {
@@ -398,8 +399,10 @@
             }
 
             .product-title {
-                font-size: 1.45rem;
+                font-size: 1.02rem;
+                line-height: 1.12;
                 margin: 6px 0;
+                font-weight: 100;
             }
 
             .rating-row {
@@ -703,6 +706,111 @@
             }[char]));
         }
 
+        const PRODUCT_PLACEHOLDER_IMAGE = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAwIiBoZWlnaHQ9IjYwMCIgdmlld0JveD0iMCAwIDYwMCA2MDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjYwMCIgaGVpZ2h0PSI2MDAiIHJ4PSI0MCIgZmlsbD0iI2Y4ZmFmYyIvPjxwYXRoIGQ9Ik0xNzAgMzkwbDg4LTkyIDYyIDY4IDQ2LTUyIDY0IDc2SDE3MHoiIGZpbGw9IiNkMWQ1ZGIiLz48Y2lyY2xlIGN4PSIzOTUiIGN5PSIyMTAiIHI9IjM4IiBmaWxsPSIjYzVkMWQ4Ii8+PHRleHQgeD0iMzAwIiB5PSI0NzAiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIyNCIgZmlsbD0iIzg4OTJhMCI+SW1hZ2UgdW5hdmFpbGFibGU8L3RleHQ+PC9zdmc+';
+
+        function normalizeProductImageUrl(value) {
+            const raw = typeof value === 'string'
+                ? value
+                : (value?.image_url || value?.imageUrl || value?.url || value?.image || value?.src || '');
+            const url = String(raw || '').trim();
+            if (!url) return '';
+            if (/^(data:|blob:)/i.test(url)) return url;
+            if (/^https?:\/\//i.test(url)) return `/image-proxy?url=${encodeURIComponent(url)}`;
+            if (url.startsWith('/')) return url;
+            if (/^Images\//i.test(url)) return `/${url}`;
+            if (/^product_images\//i.test(url)) return `/${url}`;
+            return `/product_images/${url}`;
+        }
+
+        function collectProductImageUrls(product, images) {
+            const candidates = [];
+            (Array.isArray(images) ? images : []).forEach((image) => candidates.push(image));
+            ['image_url', 'image', 'main_image', 'product_image', 'thumbnail'].forEach((key) => {
+                if (product?.[key]) candidates.push(product[key]);
+            });
+
+            const seen = new Set();
+            return candidates
+                .map(normalizeProductImageUrl)
+                .filter(Boolean)
+                .filter((url) => {
+                    if (seen.has(url)) return false;
+                    seen.add(url);
+                    return true;
+                });
+        }
+
+        function getProductSpecSource(product) {
+            return [
+                product?.product_name,
+                product?.name,
+                product?.description,
+                product?.product_description,
+                product?.processor,
+                product?.ram,
+                product?.memory,
+                product?.storage,
+                product?.display,
+                product?.graphics,
+                product?.os,
+                product?.operating_system,
+                product?.warranty,
+                product?.brand,
+                product?.product_number
+            ].filter(Boolean).join(' ');
+        }
+
+        function addSpecValue(specs, label, value) {
+            const text = String(value || '').replace(/\s+/g, ' ').trim();
+            if (!text || /^unknown$/i.test(text) || /^n\/?a$/i.test(text) || text === '-') return;
+            if (!specs[label]) specs[label] = text;
+        }
+
+        function normalizeSpecsForDisplay(rawSpecs = {}) {
+            const labelMap = {
+                processor: 'Processor',
+                cpu: 'Processor',
+                ram: 'RAM',
+                memory: 'RAM',
+                storage: 'Storage',
+                display: 'Display',
+                screen: 'Display',
+                graphics: 'Graphics',
+                gpu: 'Graphics',
+                os: 'Operating System',
+                operating_system: 'Operating System',
+                operatingsystem: 'Operating System',
+                security: 'Access Security',
+                touchscreen: 'Touchscreen',
+                camera: 'Camera',
+                microphone: 'Microphone',
+                connectivity: 'Connectivity',
+                warranty: 'Warranty',
+                charger: 'Charger'
+            };
+            const normalized = {};
+            Object.entries(rawSpecs || {}).forEach(([key, value]) => {
+                const normalizedKey = String(key || '').toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '');
+                const label = labelMap[normalizedKey] || String(key || '').replace(/[_-]+/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+                addSpecValue(normalized, label, value);
+            });
+            return normalized;
+        }
+
+        function buildProductSpecs(product) {
+            const specs = {};
+            addSpecValue(specs, 'Processor', product?.processor);
+            addSpecValue(specs, 'RAM', product?.ram || product?.memory);
+            addSpecValue(specs, 'Storage', product?.storage);
+            addSpecValue(specs, 'Display', product?.display || product?.screen);
+            addSpecValue(specs, 'Graphics', product?.graphics || product?.gpu);
+            addSpecValue(specs, 'Operating System', product?.os || product?.operating_system);
+            addSpecValue(specs, 'Warranty', product?.warranty);
+
+            const extracted = normalizeSpecsForDisplay(extractSpecs(getProductSpecSource(product)));
+            Object.entries(extracted).forEach(([label, value]) => addSpecValue(specs, label, value));
+            return specs;
+        }
         function sentenceCase(value) {
             const text = String(value || '').trim();
             if (!text) return '';
@@ -1173,70 +1281,45 @@
         let currentProduct = null;
 
         function populateProductPage(product, images) {
-            currentProduct = product;
-            
-            document.querySelector('.brand-label').innerHTML = getBrandDisplay(product.brand);
-            document.querySelector('.product-title').innerText = cleanProductName(product.product_name);
-            document.title = `ProQ Pilot | ${cleanProductName(product.product_name)}`;
-            document.querySelector('.current-price').innerText = `R${parseFloat(product.price).toLocaleString()}`;
-            document.querySelector('.description').innerText = product.description;
-            document.getElementById('stock-text').innerText = `${product.quantity} Products Remaining`;
-
-            // Extract specs from description using regex patterns
-            const extractedSpecs = extractSpecs(product.description);
-
-            // Map keys to display labels
-            const specLabels = {
-                processor: "Processor",
-                ram: "RAM",
-                storage: "Storage",
-                display: "Display",
-                graphics: "Graphics",
-                os: "Operating System",
-                security: "Access Security",
-                touchscreen: "Touchscreen",
-                camera: "Camera",
-                microphone: "Microphone",
-                connectivity: "Connectivity",
-                warranty: "Warranty",
-                charger: "Charger"
+            const displayName = cleanProductName(product.product_name || product.name || 'Product');
+            const imageUrls = collectProductImageUrls(product, images);
+            currentProduct = {
+                ...product,
+                image_url: imageUrls[0] || product.image_url || product.image || ''
             };
 
-            // Create specs object with only found specs
-            const specsToShow = {};
-            Object.keys(extractedSpecs).forEach(key => {
-                if (specLabels[key]) {
-                    specsToShow[specLabels[key]] = extractedSpecs[key];
-                }
-            });
+            document.querySelector('.brand-label').innerHTML = getBrandDisplay(product.brand);
+            document.querySelector('.product-title').innerText = displayName;
+            document.title = `ProQ Pilot | ${displayName}`;
+            document.querySelector('.current-price').innerText = `R${parseFloat(product.price || 0).toLocaleString()}`;
+            document.getElementById('stock-text').innerText = `${Number(product.quantity || 0)} Products Remaining`;
 
-            // Display Specs
+            const specsToShow = buildProductSpecs(product);
             updateSpecsUI(specsToShow);
             updateProcurementFit(product, specsToShow);
-
-            // Store current specs for merging with Axiz data
             window.currentExtractedSpecs = specsToShow;
-            document.querySelector('.description').innerText = buildProcurementSummary(product, specsToShow);
 
-            // Update Gallery
-            if (images && images.length > 0) {
-                updateGalleryUI(images.map(img => {
-                    let url = img.image_url;
-                    return url.startsWith('http') ? url : `/product_images/${url}`;
-                }));
-                currentProduct.image_url = images[0].image_url;
-            }
+            document.querySelector('.description').innerText = buildProcurementSummary(product, specsToShow);
+            updateGalleryUI(imageUrls, displayName);
 
             // Update Stock Gauge
-            currentStock = product.quantity;
+            currentStock = Number(product.quantity || 0);
             updateStockUI();
 
             if (window.StackRecommendations) {
+                const recommendationProduct = {
+                    ...currentProduct,
+                    category: getProductProcurementType(product, specsToShow)
+                };
+
                 window.StackRecommendations.init({
                     container: '#productSmartAddons',
                     title: 'Software, security & setup picks',
                     context: 'product',
-                    product,
+                    product: recommendationProduct,
+                    productId,
+                    category: recommendationProduct.category,
+                    price: product.price,
                     limit: 3,
                     fetchLimit: 16,
                     compact: true,
@@ -1248,7 +1331,10 @@
                     container: '#productCompleteSetup',
                     title: 'Complete the package',
                     context: 'product',
-                    product,
+                    product: recommendationProduct,
+                    productId,
+                    category: recommendationProduct.category,
+                    price: product.price,
                     limit: 4,
                     fetchLimit: 16,
                     randomize: true,
@@ -1256,7 +1342,6 @@
                 });
             }
         }
-
         function populateAxizDetails(axizData) {
             // Update Description if more comprehensive
             if (axizData.description) {
@@ -1270,7 +1355,7 @@
             // Update Specs from Axiz specifications
             if (axizData.specifications && Object.keys(axizData.specifications).length > 0) {
                 // Merge Axiz specs with extracted specs (Axiz takes precedence for overlapping keys)
-                const mergedSpecs = { ...window.currentExtractedSpecs, ...axizData.specifications };
+                const mergedSpecs = { ...window.currentExtractedSpecs, ...normalizeSpecsForDisplay(axizData.specifications) };
                 updateSpecsUI(mergedSpecs);
                 updateProcurementFit(currentProduct, mergedSpecs);
                 document.querySelector('.description').innerText = buildProcurementSummary(currentProduct, mergedSpecs);
@@ -1292,7 +1377,7 @@
 
             // Update Gallery from Axiz
             if (axizData.productImageGallery && axizData.productImageGallery.length > 0) {
-                updateGalleryUI(axizData.productImageGallery.map(img => img.imageUrl));
+                updateGalleryUI(axizData.productImageGallery.map(img => img.imageUrl), document.querySelector('.product-title')?.innerText || 'Product');
             }
 
             // Update Stock if available
@@ -1304,42 +1389,69 @@
 
         function updateSpecsUI(specs) {
             const specsGrid = document.querySelector('.specs-grid');
+            const entries = Object.entries(specs || {}).filter(([, value]) => String(value || '').trim());
             specsGrid.innerHTML = '';
-            
-            Object.entries(specs).forEach(([label, value], index, array) => {
+
+            if (entries.length === 0) {
+                specsGrid.innerHTML = `
+                    <div class="spec-item full-width">
+                        <span class="label">Technical details</span>
+                        <span class="value">No structured technical specifications are available for this product yet.</span>
+                    </div>
+                `;
+                return;
+            }
+
+            entries.forEach(([label, value], index, array) => {
                 const specItem = document.createElement('div');
                 specItem.className = 'spec-item';
-                // Make the last item full width if odd number of items
                 if (index === array.length - 1 && array.length % 2 !== 0) {
                     specItem.classList.add('full-width');
                 }
                 specItem.innerHTML = `
-                    <span class="label">${label}</span>
-                    <span class="value">${value}</span>
+                    <span class="label">${safeProductText(label)}</span>
+                    <span class="value">${safeProductText(value)}</span>
                 `;
                 specsGrid.appendChild(specItem);
             });
         }
 
-        function updateGalleryUI(imageUrls) {
+        function updateGalleryUI(imageUrls, altText = 'Product image') {
             const mainImg = document.getElementById('main-product-img');
             const thumbRow = document.querySelector('.thumbnail-row');
-            
-            if (imageUrls.length > 0) {
-                mainImg.src = imageUrls[0];
+            const urls = (Array.isArray(imageUrls) ? imageUrls : [])
+                .map(normalizeProductImageUrl)
+                .filter(Boolean)
+                .filter((url, index, array) => array.indexOf(url) === index);
+
+            mainImg.alt = altText;
+            mainImg.onerror = () => {
+                if (mainImg.src.indexOf(PRODUCT_PLACEHOLDER_IMAGE) === -1) {
+                    mainImg.src = PRODUCT_PLACEHOLDER_IMAGE;
+                }
+            };
+
+            if (urls.length === 0) {
+                mainImg.src = PRODUCT_PLACEHOLDER_IMAGE;
                 thumbRow.innerHTML = '';
-                imageUrls.forEach((url, index) => {
-                    const thumb = document.createElement('img');
-                    thumb.src = url;
-                    thumb.className = `thumb ${index === 0 ? 'active' : ''}`;
-                    thumb.addEventListener('click', () => {
-                        mainImg.src = thumb.src;
-                        document.querySelectorAll('.thumb').forEach(t => t.classList.remove('active'));
-                        thumb.classList.add('active');
-                    });
-                    thumbRow.appendChild(thumb);
-                });
+                return;
             }
+
+            mainImg.src = urls[0];
+            thumbRow.innerHTML = '';
+            urls.forEach((url, index) => {
+                const thumb = document.createElement('img');
+                thumb.src = url;
+                thumb.alt = `${altText} ${index + 1}`;
+                thumb.className = `thumb ${index === 0 ? 'active' : ''}`;
+                thumb.onerror = () => thumb.remove();
+                thumb.addEventListener('click', () => {
+                    mainImg.src = thumb.src;
+                    document.querySelectorAll('.thumb').forEach(t => t.classList.remove('active'));
+                    thumb.classList.add('active');
+                });
+                thumbRow.appendChild(thumb);
+            });
         }
 
         // Gallery Functionality (Legacy for static, will be overridden by dynamic)
