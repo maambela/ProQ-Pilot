@@ -686,7 +686,7 @@
 
     <script src="js/site-footer.js?v=footer-mobile-bg-20260708"></script>
     <script src="js/auth-ui.js"></script>
-    <script src="js/recommendations.js?v=smart-package-recs-20260709"></script>
+    <script src="js/recommendations.js?v=product-recs-dynamic-20260715"></script>
     <script>
 
         // Helper function to limit product name to 4 words max
@@ -1180,10 +1180,43 @@
 
         // Fetch product details
         const urlParams = new URLSearchParams(window.location.search);
-        const productId = urlParams.get('id');
+        let productId = urlParams.get('id') || urlParams.get('productId') || urlParams.get('productID') || urlParams.get('product_id');
 
 
         const STORE_PRODUCTS_CACHE_KEY = 'proqPilotStoreProductsCache:v3';
+        const SELECTED_PRODUCT_CACHE_KEY = 'proqPilotSelectedProduct:v1';
+        var currentProduct = null;
+        var currentStock = 5;
+        var maxStock = 20;
+        var stockBar = document.getElementById('stock-gauge');
+        var stockText = document.getElementById('stock-text');
+
+        function getSelectedProductSnapshot(id) {
+            try {
+                const snapshot = JSON.parse(localStorage.getItem(SELECTED_PRODUCT_CACHE_KEY) || 'null');
+                if (!snapshot?.product) return null;
+                const snapshotId = snapshot.product.id || snapshot.product.productID || snapshot.product.product_id;
+                if (id && String(snapshotId) !== String(id)) return null;
+                const product = { ...snapshot.product, id: snapshotId };
+                const images = collectProductImageUrls(product, snapshot.images || []).map(image_url => ({ image_url }));
+                return { product, images };
+            } catch (error) {
+                return null;
+            }
+        }
+
+        function setProductLoadingState() {
+            const title = document.querySelector('.product-title');
+            const description = document.querySelector('.description');
+            const brand = document.querySelector('.brand-label');
+            const stockText = document.getElementById('stock-text');
+            if (brand) brand.textContent = 'PROCUREMENT STORE';
+            if (title) title.textContent = 'Loading product';
+            if (description) description.textContent = 'Loading the selected product details, technical specifications, images, and recommendations.';
+            if (stockText) stockText.textContent = 'Checking availability';
+            updateSpecsUI({});
+            updateGalleryUI([], 'Loading product');
+        }
 
         function getCachedProductDetails(id) {
             try {
@@ -1250,8 +1283,21 @@
             }
         }
 
+        setProductLoadingState();
+        const selectedSnapshot = getSelectedProductSnapshot(productId);
+        if (!productId && selectedSnapshot?.product?.id) {
+            productId = String(selectedSnapshot.product.id);
+            history.replaceState(null, '', `product.html?id=${encodeURIComponent(productId)}`);
+        }
+
+        if (selectedSnapshot) {
+            populateProductPage(selectedSnapshot.product, selectedSnapshot.images);
+        }
+
         if (productId) {
             fetchProductDetails(productId);
+        } else {
+            showUnavailableProduct();
         }
 
         function showUnavailableProduct() {
@@ -1278,9 +1324,6 @@
                 console.error('Error fetching Axiz details:', err);
             }
         }
-
-        let currentProduct = null;
-
         function populateProductPage(product, images) {
             const displayName = cleanProductName(product.product_name || product.name || 'Product');
             const imageUrls = collectProductImageUrls(product, images);
@@ -1483,11 +1526,6 @@
         });
 
         // Stock Gauge Logic
-        let currentStock = 5; 
-        const maxStock = 20;
-        const stockBar = document.getElementById('stock-gauge');
-        const stockText = document.getElementById('stock-text');
-        
         function updateStockUI() {
             let percentage = (currentStock / maxStock) * 100;
             stockBar.style.width = percentage + '%';

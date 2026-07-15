@@ -796,6 +796,26 @@ document.addEventListener('DOMContentLoaded', () => {
         return desc || `The ${cleanName} is a premium computing solution.`;
     }
 
+    function rememberSelectedProductForDetails(product) {
+        try {
+            const id = product?.id || product?.productID || product?.product_id;
+            if (!id) return '';
+            const images = [product.image_url, product.image, product.main_image, product.product_image].filter(Boolean);
+            localStorage.setItem('proqPilotSelectedProduct:v1', JSON.stringify({
+                savedAt: Date.now(),
+                product: { ...product, id },
+                images
+            }));
+            return String(id);
+        } catch (error) {
+            return String(product?.id || product?.productID || product?.product_id || '');
+        }
+    }
+
+    function openProductDetails(product) {
+        const id = rememberSelectedProductForDetails(product);
+        window.location.href = id ? `product.html?id=${encodeURIComponent(id)}` : 'product.html';
+    }
     function renderProducts(products) {
         if (!productGrid) return;
         productGrid.innerHTML = ''; 
@@ -846,7 +866,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // Click to view details
             card.addEventListener('click', (e) => {
                 if (e.target.closest('.action-btn')) return;
-                window.location.href = `product.html?id=${product.id}`;
+                openProductDetails(product);
             });
 
             // Wishlist Toggle
@@ -1649,7 +1669,7 @@ function renderFeaturedProcurementCard(product) {
                     <div class="price-box">
                         <span class="current-price">R${parseFloat(product.price).toLocaleString()}</span>
                     </div>
-                    <button class="btn-view-details" onclick="window.location.href='product.html?id=${product.id}'">View Product</button>
+                    <button class="btn-view-details" data-product-id="${product.id}">View Product</button>
                 </div>
             </div>
         `;
@@ -1657,12 +1677,12 @@ function renderFeaturedProcurementCard(product) {
 
 function attachFeaturedProcurementEvents(carousel) {
     featuredProcurementItems.forEach(product => {
-        const card = Array.from(carousel.querySelectorAll('.product-card')).find(c => c.querySelector(`.btn-view-details`).getAttribute('onclick').includes(`id=${product.id}`));
+        const card = Array.from(carousel.querySelectorAll('.product-card')).find(c => String(c.querySelector(`.btn-view-details`)?.dataset.productId) === String(product.id));
         if (!card) return;
 
         card.addEventListener('click', (e) => {
             if (e.target.closest('.action-btn') || e.target.closest('.btn-view-details')) return;
-            window.location.href = `product.html?id=${product.id}`;
+            openProductDetails(product);
         });
 
         const wishBtn = card.querySelector('.wishlist-btn');
@@ -1671,7 +1691,7 @@ function attachFeaturedProcurementEvents(carousel) {
             if (typeof addToWishlistFromStore === 'function') {
                 addToWishlistFromStore(product, wishBtn);
             } else {
-                window.location.href = `product.html?id=${product.id}`;
+                openProductDetails(product);
             }
         };
 
@@ -1683,7 +1703,7 @@ function attachFeaturedProcurementEvents(carousel) {
                 cartBtn.style.background = "#00d2be";
                 setTimeout(() => cartBtn.style.background = "black", 500);
             } else {
-                window.location.href = `product.html?id=${product.id}`;
+                openProductDetails(product);
             }
         };
     });

@@ -1,7 +1,7 @@
 (function () {
     const CACHE_TTL = 5 * 60 * 1000;
     const CART_CACHE_TTL = 45 * 1000;
-    const DEFAULT_IMAGE = '/Images/DUO.png';
+    const DEFAULT_IMAGE = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDQwIiBoZWlnaHQ9IjMyMCIgdmlld0JveD0iMCAwIDQ0MCAzMjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZyI+PHJlY3Qgd2lkdGg9IjQ0MCIgaGVpZ2h0PSIzMjAiIHJ4PSIyNCIgZmlsbD0iI2Y4ZmFmYyIvPjxwYXRoIGQ9Ik0xMTAgMjIwbDY0LTY2IDQ0IDQ4IDM0LTM4IDc4IDkySDExMHoiIGZpbGw9IiNkMWQ1ZGIiLz48Y2lyY2xlIGN4PSIyOTAiIGN5PSIxMTAiIHI9IjI4IiBmaWxsPSIjYzVkMWQ4Ii8+PHRleHQgeD0iMjIwIiB5PSIyNzAiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxOCIgZmlsbD0iIzg4OTJhMCI+UHJvZHVjdCBwaWNrPC90ZXh0Pjwvc3ZnPg==';
     let cartCache = null;
 
     function safeText(value) {
@@ -32,9 +32,13 @@
     }
 
     function normalizeImage(url) {
-        if (!url) return DEFAULT_IMAGE;
-        if (/^https?:\/\//i.test(url) || url.startsWith('/')) return url;
-        return `/product_images/${url}`;
+        const value = String(url || '').trim();
+        if (!value) return DEFAULT_IMAGE;
+        if (/^(data:|blob:)/i.test(value)) return value;
+        if (/^https?:\/\//i.test(value) || value.startsWith('/')) return value;
+        if (/^Images\//i.test(value)) return `/${value}`;
+        if (/^product_images\//i.test(value)) return `/${value}`;
+        return `/product_images/${value}`;
     }
 
     function hasUsableImage(url) {
@@ -279,12 +283,12 @@
         const price = Number(item.price || 0).toLocaleString();
         return `
             <article class="recommendation-card${compact ? ' recommendation-card--compact' : ''}" data-product-id="${item.id}">
-                <a class="recommendation-image" href="/product.html?id=${item.id}" aria-label="View ${safeText(item.product_name)}">
+                <a class="recommendation-image" href="/product.html?id=${item.id}" data-product-link="${item.id}" aria-label="View ${safeText(item.product_name)}">
                     <img src="${normalizeImage(item.image_url)}" alt="${safeText(item.product_name)}" width="220" height="160" loading="lazy" decoding="async" onerror="this.src='${DEFAULT_IMAGE}'">
                 </a>
                 <div class="recommendation-copy">
                     <span>${safeText(item.brand || item.category || 'Add-on')}</span>
-                    <a href="/product.html?id=${item.id}">${safeText(item.product_name)}</a>
+                    <a href="/product.html?id=${item.id}" data-product-link="${item.id}">${safeText(item.product_name)}</a>
                     <p>${safeText(item.reason)}</p>
                     <div class="recommendation-bottom">
                         <strong>R${price}</strong>
@@ -319,6 +323,20 @@
             </div>
         `;
 
+        container.querySelectorAll('[data-product-link]').forEach((link) => {
+            link.addEventListener('click', () => {
+                const id = Number(link.dataset.productLink);
+                const product = recommendations.find((item) => Number(item.id) === id);
+                if (!product) return;
+                try {
+                    localStorage.setItem('proqPilotSelectedProduct:v1', JSON.stringify({
+                        savedAt: Date.now(),
+                        product,
+                        images: [product.image_url, product.image, product.main_image].filter(Boolean)
+                    }));
+                } catch (error) {}
+            });
+        });
         container.querySelectorAll('[data-add-recommendation]').forEach((button) => {
             button.addEventListener('click', async () => {
                 const id = Number(button.dataset.addRecommendation);
@@ -361,7 +379,7 @@
 
         if (!response.ok) throw new Error('Recommendation request failed');
         const result = await response.json();
-        const recommendations = weightedRandomize((result?.data?.recommendations || []).filter((item) => hasUsableImage(item.image_url)), options, cartItems);
+        const recommendations = weightedRandomize((result?.data?.recommendations || []), options, cartItems);
         if (!options.noCache && !randomize) writeCache(cacheKey, recommendations);
         return recommendations;
     }
