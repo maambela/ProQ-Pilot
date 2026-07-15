@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="js/dev-access.js"></script>
     <title>ProQ Pilot | Legion Pro 7i Details</title>
-    <link rel="stylesheet" href="css/style.css?v=cart-responsive-smart-recs-20260709">
+    <link rel="stylesheet" href="css/style.css?v=product-wishlist-mobile-dynamic-20260715">
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
     <style>
         /* Square Image Constraints */
@@ -1040,6 +1040,7 @@
                     os = os.replace(/chrome/i, 'Chrome');
                     // Capitalize first letter of each word
                     os = os.replace(/\b\w/g, l => l.toUpperCase());
+                    os = os.replace(/^(Windows\s+(?:10|11)\s+(?:Pro|Home|Enterprise|Education))\s+\d+$/i, '$1');
                     specs.os = os;
                     break;
                 }
