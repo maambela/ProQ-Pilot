@@ -1368,6 +1368,99 @@ let tarsonProductsCache = {
     lastFetch: 0,
     cacheExpiry: 2 * 60 * 60 * 1000  // 2 hour cache
 };
+const liveSupplierProductsCache = {
+    data: [],
+    byId: new Map(),
+    lastFetch: 0,
+    promise: null,
+    cacheExpiry: Number(process.env.SUPPLIER_CATALOG_CACHE_MS || 30 * 60 * 1000)
+};
+
+function parseSupplierNumber(...values) {
+    for (const value of values) {
+        if (value === null || value === undefined || value === '') continue;
+        const parsed = Number(String(value).replace(/,/g, '').trim());
+        if (Number.isFinite(parsed)) return parsed;
+    }
+    return 0;
+}
+
+function createVirtualSupplierId(source, sku) {
+    const safeSku = Buffer.from(String(sku || '').trim()).toString('base64url');
+    return `${String(source).toLowerCase()}:${safeSku}`;
+}
+
+function normalizeTarsonStoreProduct(item) {
+    const sku = item.Product_Number || item.product_number || item.sku || item.code || item.product_code ||
+        item.SKU || item.Code || item.ProductCode || item.ProductId || item.product_id;
+    const productName = item.Product_Description || item.product_description || item.name || item.product_name ||
+        item.title || item.Name || item.ProductName || item.Title || item.product_title || item.ProductTitle;
+    if (!sku || !productName) return null;
+    const description = item.Product_Description || item.product_description || item.Description || item.ProductDescription || productName;
+    const price = parseSupplierNumber(item.Price_ex_Vat, item.price_ex_vat, item.Price, item.price, item.SellingPrice, item.selling_price, item.SalePrice, item.sale_price, item.list_price, item.ListPrice);
+    const quantity = Math.floor(parseSupplierNumber(item.Available_Stock, item.available_stock, item.Quantity, item.quantity, item.stock, item.Stock, item.available_quantity, item.AvailableQuantity));
+    const brand = item.Manufacturer || item.manufacturer || item.brand || item.Brand || 'Unknown';
+    const imageUrl = item.Image_URL || item.image_url || item.ImageUrl || item.ImageURL || item.image || item.Image || item.img || item.Img || item.picture || item.Picture || item.photo || item.Photo || item.thumbnail || item.Thumbnail || item.image_link || item.ImageLink || '';
+    if (price <= 0 || quantity <= 0) return null;
+    const product = { id: createVirtualSupplierId('tarsus', sku), product_number: String(sku), product_name: String(productName).split('|')[0].trim(), description: String(description), price, warehouse_price: price, quantity, brand, product_type: item.Product_Type || item.product_type || item.Type || 'Electronics', supplier_source: 'Tarsus', status: 'approved', is_active: 1, image_url: imageUrl, updated_at: new Date().toISOString() };
+    return shouldHideStoreApiProduct(product) ? null : product;
+}
+
+function normalizeCoreStoreProduct(item) {
+    if (!item.StockCode || !item.Description) return null;
+    const descriptionStr = String(item.Description || '');
+    if (shouldSkipStoreSyncItem(descriptionStr, item.StockCode)) return null;
+    const standardPrice = String(item.StandardPrice || '').replace(/,/g, '');
+    const promoPrice = item.PromoPrice ? String(item.PromoPrice).replace(/,/g, '') : standardPrice;
+    const price = parseFloat(promoPrice) || parseFloat(standardPrice) || 0;
+    const quantity = Math.floor(parseSupplierNumber(item.StockOnHand, item.Quantity, item.quantity));
+    if (price <= 0 || quantity <= 0) return null;
+    const product = { id: createVirtualSupplierId('core', item.StockCode), product_number: String(item.StockCode), product_name: extractCleanProductName(descriptionStr), description: descriptionStr, price, warehouse_price: price, quantity, brand: extractBrand(descriptionStr), product_type: extractProductType(descriptionStr), supplier_source: 'Core', status: 'approved', is_active: 1, image_url: item.Image_URL || item.image_url || item.ImageUrl || item.ImageURL || '', updated_at: new Date().toISOString() };
+    return shouldHideStoreApiProduct(product) ? null : product;
+}
+
+async function getLiveSupplierStoreProducts({ force = false } = {}) {
+    const isFresh = liveSupplierProductsCache.data.length > 0 && Date.now() - liveSupplierProductsCache.lastFetch < liveSupplierProductsCache.cacheExpiry;
+    if (!force && isFresh) return liveSupplierProductsCache.data;
+    if (!force && liveSupplierProductsCache.promise) return liveSupplierProductsCache.promise;
+    liveSupplierProductsCache.promise = (async () => {
+        const [coreItems, tarsonItems] = await Promise.all([
+            getCoreGroupProducts().catch(error => { console.warn('[Supplier Catalog] Core fetch skipped:', error.message); return []; }),
+            getTarsonProducts().catch(error => { console.warn('[Supplier Catalog] Tarsus fetch skipped:', error.message); return []; })
+        ]);
+        const products = [...coreItems.map(normalizeCoreStoreProduct), ...tarsonItems.map(normalizeTarsonStoreProduct)].filter(Boolean);
+        liveSupplierProductsCache.data = products;
+        liveSupplierProductsCache.byId = new Map(products.map(product => [String(product.id), product]));
+        liveSupplierProductsCache.lastFetch = Date.now();
+        console.log(`[Supplier Catalog] Cached ${products.length} live products without database writes`);
+        return products;
+    })().finally(() => { liveSupplierProductsCache.promise = null; });
+    return liveSupplierProductsCache.promise;
+}
+
+async function findLiveSupplierProduct(identifier) {
+    const id = String(identifier || '');
+    if (!id.includes(':')) return null;
+    const cached = liveSupplierProductsCache.byId.get(id);
+    if (cached) return cached;
+    await getLiveSupplierStoreProducts({ force: liveSupplierProductsCache.data.length === 0 });
+    return liveSupplierProductsCache.byId.get(id) || null;
+}
+
+async function ensureSupplierProductRow(connection, product) {
+    const [result] = await connection.query(
+        `INSERT INTO products (product_number, product_name, description, price, warehouse_price, quantity, brand, supplier_source, status, is_active, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
+         ON DUPLICATE KEY UPDATE product_name = VALUES(product_name), description = VALUES(description), price = VALUES(price), warehouse_price = VALUES(warehouse_price), quantity = VALUES(quantity), brand = VALUES(brand), supplier_source = VALUES(supplier_source), status = VALUES(status), is_active = VALUES(is_active), updated_at = NOW()`,
+        [product.product_number, product.product_name, product.description, product.price, product.warehouse_price || product.price, product.quantity, product.brand, product.supplier_source, 'approved', 1]
+    );
+    const productId = result.insertId > 0 ? result.insertId : (await connection.query('SELECT id FROM products WHERE product_number = ? LIMIT 1', [product.product_number]))[0][0]?.id;
+    if (productId && product.image_url) {
+        const [images] = await connection.query('SELECT id FROM product_images WHERE product_id = ? LIMIT 1', [productId]);
+        if (!images.length) await connection.query('INSERT INTO product_images (product_id, image_url, is_primary, sort_order) VALUES (?, ?, ?, ?)', [productId, product.image_url, true, 0]);
+    }
+    return productId;
+}
 
 // Fetch products from Tarsus Online API with smart retry logic
 async function getTarsonProducts() {
@@ -1974,41 +2067,41 @@ async function sendNewCoreProductsEmail(products) {
     }
 }
 
-// Set up hourly sync for Core API (1 hour = 3600000ms)
+// Warm live supplier catalogue without bulk database writes.
+console.log('[Supplier Catalog] Live supplier products are cached in memory and localStorage; SQL is written only when an item enters cart.');
 setInterval(() => {
-    syncCoreGroupProducts().catch(err => console.error("[CORE API] Scheduled sync failed:", err.message));
-}, 3600000);
+    getLiveSupplierStoreProducts({ force: true }).catch(err => console.error('[Supplier Catalog] Scheduled refresh failed:', err.message));
+}, 30 * 60 * 1000);
 
-// Initial sync on startup
-syncCoreGroupProducts().catch(err => console.error("[CORE API] Initial sync failed:", err));
-
-// Set up sync for Tarsus Online (every 2 hours = 7200000ms - respecting aggressive API rate limits)
-console.log("[TARSUS] Sync scheduled every 2 hours (API is rate-limited, cache enabled)");
-setInterval(syncTarsonProducts, 7200000);
-
-// Initial Tarsus sync on startup (with 60s delay to let other APIs go first).
-setTimeout(() => {
-    syncTarsonProducts().catch(err => console.error("[TARSUS] Initial sync failed:", err));
-}, 60000);
-
+getLiveSupplierStoreProducts().catch(err => console.error('[Supplier Catalog] Initial refresh failed:', err.message));
 // Route: Manual sync Core products
 app.post('/api/v1/sync-core', async (req, res, next) => {
     try {
-        const summary = await syncCoreGroupProducts({ resetToPending: true });
+        const products = await getLiveSupplierStoreProducts({ force: true });
+        const coreProducts = products.filter(product => product.supplier_source === 'Core');
         res.status(200).json({
             status: 'success',
-            message: `Core sync complete: ${summary.reset} products reset to pending, ${summary.fetched} fetched, ${summary.inStock} in stock.`,
-            data: { summary }
+            message: `Core catalogue refreshed in memory: ${coreProducts.length} products available. No bulk SQL write was performed.`,
+            data: { summary: { fetched: coreProducts.length, cached: products.length, databaseWrites: 0 } }
         });
     } catch (error) {
-        next(new AppError(`Core sync failed: ${error.message}`, 502));
+        next(new AppError(`Core refresh failed: ${error.message}`, 502));
     }
 });
 
-// Route: Manual sync Tarsus products. The legacy URL remains for compatibility.
-app.post('/api/v1/sync-tarson', async (req, res) => {
-    await syncTarsonProducts();
-    res.status(200).json({ status: 'success', message: 'Tarsus products synced' });
+// Route: Manual refresh Tarsus products. The legacy URL remains for compatibility.
+app.post('/api/v1/sync-tarson', async (req, res, next) => {
+    try {
+        const products = await getLiveSupplierStoreProducts({ force: true });
+        const tarsonProducts = products.filter(product => product.supplier_source === 'Tarsus');
+        res.status(200).json({
+            status: 'success',
+            message: `Tarsus catalogue refreshed in memory: ${tarsonProducts.length} products available. No bulk SQL write was performed.`,
+            data: { summary: { fetched: tarsonProducts.length, cached: products.length, databaseWrites: 0 } }
+        });
+    } catch (error) {
+        next(new AppError(`Tarsus refresh failed: ${error.message}`, 502));
+    }
 });
 
 // Route: Get Tarsus sync status and stats. The legacy URL remains for compatibility.
@@ -2751,13 +2844,16 @@ app.get('/api/v1/products', async (req, res, next) => {
                      ORDER BY is_primary DESC, id ASC 
                      LIMIT 1) as image_url
                 FROM products p 
-                WHERE (p.status IS NULL OR p.status = 'approved') AND (p.is_active = 1 OR p.is_active IS NULL)
+                WHERE (p.status IS NULL OR p.status = 'approved')
+                  AND (p.is_active = 1 OR p.is_active IS NULL)
+                  AND (p.supplier_source IS NULL OR p.supplier_source NOT IN ('Core', 'Tarsus'))
                 ORDER BY p.updated_at DESC
             `);
 
-            const storeProducts = dedupeStoreProducts(products);
+            const supplierProducts = await getLiveSupplierStoreProducts();
+            const storeProducts = dedupeStoreProducts([...products, ...supplierProducts]);
 
-            console.log(`[Store API] Returning ${storeProducts.length} grouped products from ${products.length} rows`);
+            console.log(`[Store API] Returning ${storeProducts.length} grouped products from ${products.length} manual rows + ${supplierProducts.length} live supplier products`);
             storeProducts.slice(0, 3).forEach(p => {
                 console.log(`  - ID ${p.id}: ${p.product_name?.substring(0, 25)} | Brand: ${p.brand} | Type: ${p.product_type || 'N/A'} | status: ${p.status || 'NULL'}`);
             });
@@ -3255,6 +3351,16 @@ app.post('/api/v1/products/:productId/images', upload.array('photos', 10), async
 
 app.get('/api/v1/products/:id', async (req, res, next) => {
     try {
+        const liveProduct = await findLiveSupplierProduct(req.params.id);
+        if (liveProduct) {
+            const images = liveProduct.image_url ? [{ image_url: liveProduct.image_url, is_primary: true, sort_order: 0 }] : [];
+            res.setHeader('Cache-Control', 'private, max-age=300, stale-while-revalidate=900');
+            return res.status(200).json({
+                status: 'success',
+                data: { product: liveProduct, images }
+            });
+        }
+
         const connection = await db.getConnection();
         try {
             // Only fetch products that are visible to customers:
@@ -3387,25 +3493,35 @@ app.post('/api/v1/cart/sync', async (req, res, next) => {
                 continue;
             }
 
-            const productID = parseInt(item.product_id || item.productID || item.id);
+            const rawProductID = item.product_id || item.productID || item.id;
+            let productID = parseInt(rawProductID);
             const quantity = Math.max(1, parseInt(item.quantity) || 1);
+
             if (isNaN(productID)) {
-                throw new AppError(`Invalid product ID: ${item.product_id || item.productID || item.id}`, 400);
+                const supplierProduct = await findLiveSupplierProduct(rawProductID);
+                if (!supplierProduct) {
+                    throw new AppError(`Product not found: ${rawProductID}`, 404);
+                }
+                productID = await ensureSupplierProductRow(connection, supplierProduct);
+            } else {
+                const [productCheck] = await connection.query(
+                    'SELECT id FROM products WHERE id = ? LIMIT 1',
+                    [productID]
+                );
+                if (!productCheck?.length) {
+                    throw new AppError(`Product not found: ${productID}`, 404);
+                }
             }
 
-            const [productCheck] = await connection.query(
-                'SELECT id FROM products WHERE id = ? LIMIT 1',
-                [productID]
-            );
-            if (!productCheck?.length) {
-                throw new AppError(`Product not found: ${productID}`, 404);
+            if (!productID) {
+                throw new AppError(`Product could not be prepared for cart: ${rawProductID}`, 500);
             }
 
             await connection.query(
                 'INSERT INTO Cart (userID, productID, quantity) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE quantity = quantity + VALUES(quantity)',
                 [userID, productID, quantity]
             );
-            console.log(`[Cart API] Product synced: ${productID}`);
+            console.log(`[Cart API] Product synced: ${rawProductID} -> ${productID}`);
             syncCount++;
         }
 
