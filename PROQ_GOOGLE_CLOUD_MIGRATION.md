@@ -9,7 +9,7 @@ This guide is for `D:\Websites\Github\ProQ Pilot` only. The StackOps project is 
 - Artifact Registry image: `us-central1-docker.pkg.dev/proq-pilot/proq-pilot-repo/proq-pilot`
 - Runtime service account: `proq-pilot-run@proq-pilot.iam.gserviceaccount.com`
 - Secret prefix: `PROQ_`
-- Recommended Cloud SQL instance: `proq-pilot-db`
+- Recommended Cloud SQL instance: `proqpilot`
 - Recommended database name: use a ProQ-only database, for example `proq_pilot` or your current imported schema name
 
 Do not reuse StackOps private keys, JWT secrets, database users, Cloud Run services, Cloud Build triggers, or Secret Manager names.
@@ -59,10 +59,10 @@ gcloud projects add-iam-policy-binding proq-pilot \
 
 ## 4. Create Cloud SQL For ProQ
 
-Best separation is a dedicated ProQ Cloud SQL instance:
+The production project uses this dedicated ProQ Cloud SQL instance:
 
 ```bash
-gcloud sql instances create proq-pilot-db \
+gcloud sql instances create proqpilot \
   --database-version=MYSQL_8_0 \
   --region=us-central1 \
   --tier=db-f1-micro
@@ -72,10 +72,10 @@ Create a ProQ-only database and user:
 
 ```bash
 gcloud sql databases create proq_pilot \
-  --instance=proq-pilot-db
+  --instance=proqpilot
 
 gcloud sql users create proq_pilot_app \
-  --instance=proq-pilot-db \
+  --instance=proqpilot \
   --host=% \
   --password="REPLACE_WITH_STRONG_PASSWORD"
 ```
@@ -87,17 +87,17 @@ If you choose to use the existing Cloud SQL instance instead, still create a sep
 Export your current local MySQL database, upload it to Cloud Storage, then import it into Cloud SQL.
 
 ```bash
-gcloud storage buckets create gs://proq-pilot-db-imports-proq-pilot \
+gcloud storage buckets create gs://proqpilot-imports-proq-pilot \
   --location=us-central1
 ```
 
 From your local machine, create a SQL dump with your MySQL tools, upload it, then import:
 
 ```bash
-gcloud storage cp proq-pilot.sql gs://proq-pilot-db-imports-proq-pilot/proq-pilot.sql
+gcloud storage cp proq-pilot.sql gs://proqpilot-imports-proq-pilot/proq-pilot.sql
 
-gcloud sql import sql proq-pilot-db \
-  gs://proq-pilot-db-imports-proq-pilot/proq-pilot.sql \
+gcloud sql import sql proqpilot \
+  gs://proqpilot-imports-proq-pilot/proq-pilot.sql \
   --database=proq_pilot
 ```
 
