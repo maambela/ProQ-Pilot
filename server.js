@@ -1152,6 +1152,9 @@ async function getAxizProductDetails(identifier, brandName) {
 
 // THE SYNC LOGIC
 async function syncAxizProducts() {
+    console.warn('[Axiz] Database catalogue sync disabled; use live supplier APIs instead.');
+    return { databaseWrites: 0, disabled: true };
+
     let connection;
     try {
         console.log("Starting Scheduled Sync Quest... 🛡️");
@@ -1193,6 +1196,16 @@ async function syncAxizProducts() {
             // EXTRACT SPECS for the database columns
             const processor = item.name.match(/i\d|Ryzen \d/i)?.[0] || 'Unknown';
             const description = axizDetails?.additionalInfo?.LongDescription || item.additionalInfo?.LongDescription || item.description || "High-performance computing module.";
+            const imageUrl = axizDetails?.productImageGallery?.[0]?.imageUrl || item.imageUrl || '';
+            if (!isStoreReadySupplierProduct({
+                product_name: cleanedTitle,
+                description,
+                price: retailPrice,
+                quantity: item.availableToSell,
+                brand: brandName,
+                product_number: item.productIdentifier,
+                image_url: imageUrl
+            })) continue;
 
             // DEDUPLICATION: Use INSERT...ON DUPLICATE KEY UPDATE for clean handling
             const [result] = await connection.query(
@@ -1206,6 +1219,8 @@ async function syncAxizProducts() {
                  quantity = VALUES(quantity),
                  processor = VALUES(processor),
                  supplier_source = VALUES(supplier_source),
+                 status = 'approved',
+                 is_active = 1,
                  updated_at = NOW()`,
                 [item.productIdentifier, cleanedTitle, description, retailPrice, item.price, item.availableToSell, brandName, processor, 'Axiz']
             );
@@ -1232,6 +1247,7 @@ async function syncAxizProducts() {
             }
         }
 
+        await removeUnavailableSupplierProducts(connection, 'Axiz');
         await connection.commit();
         console.log("Sync Quest Complete! 🏹");
     } catch (error) {
@@ -1242,16 +1258,9 @@ async function syncAxizProducts() {
     }
 }
 
-// Set up hourly sync (3600000 ms)
-setInterval(syncAxizProducts, 3600000);
-
-// Initial sync on startup
-syncAxizProducts().catch(err => console.error("Initial sync failed:", err));
-
 // Routes
 app.post('/api/v1/sync-axiz', async (req, res) => {
-    await syncAxizProducts();
-    res.status(200).json({ status: 'success', message: 'Inventory Synced' });
+    res.status(410).json({ status: 'error', message: 'Axiz database sync is disabled. Use the live Core or Tarsus catalogue.' });
 });
 
 // ============================================================================//
@@ -1376,6 +1385,10 @@ const liveSupplierProductsCache = {
     cacheExpiry: Number(process.env.SUPPLIER_CATALOG_CACHE_MS || 30 * 60 * 1000)
 };
 
+// Core review data stays in memory until an administrator approves it.
+const coreReviewCache = new Map();
+const coreReviewImages = new Map();
+
 function parseSupplierNumber(...values) {
     for (const value of values) {
         if (value === null || value === undefined || value === '') continue;
@@ -1415,7 +1428,7 @@ function normalizeCoreStoreProduct(item) {
     const price = parseFloat(promoPrice) || parseFloat(standardPrice) || 0;
     const quantity = Math.floor(parseSupplierNumber(item.StockOnHand, item.Quantity, item.quantity));
     if (price <= 0 || quantity <= 0) return null;
-    const product = { id: createVirtualSupplierId('core', item.StockCode), product_number: String(item.StockCode), product_name: extractCleanProductName(descriptionStr), description: descriptionStr, price, warehouse_price: price, quantity, brand: extractBrand(descriptionStr), product_type: extractProductType(descriptionStr), supplier_source: 'Core', status: 'approved', is_active: 1, image_url: item.Image_URL || item.image_url || item.ImageUrl || item.ImageURL || '', updated_at: new Date().toISOString() };
+    const product = { id: createVirtualSupplierId('core', item.StockCode), product_number: String(item.StockCode), product_name: extractCleanProductName(descriptionStr), description: descriptionStr, price, warehouse_price: price, quantity, brand: extractBrand(descriptionStr), product_type: extractProductType(descriptionStr), supplier_source: 'Core', status: 'pending', is_active: 0, image_url: item.Image_URL || item.image_url || item.ImageUrl || item.ImageURL || '', updated_at: new Date().toISOString() };
     return shouldHideStoreApiProduct(product) ? null : product;
 }
 
@@ -1429,6 +1442,15 @@ async function getLiveSupplierStoreProducts({ force = false } = {}) {
             getTarsonProducts().catch(error => { console.warn('[Supplier Catalog] Tarsus fetch skipped:', error.message); return []; })
         ]);
         const products = [...coreItems.map(normalizeCoreStoreProduct), ...tarsonItems.map(normalizeTarsonStoreProduct)].filter(Boolean);
+        products.filter(product => product.supplier_source === 'Core').forEach(product => {
+            const existing = coreReviewCache.get(String(product.id));
+            coreReviewCache.set(String(product.id), {
+                ...product,
+                status: existing?.status || 'pending',
+                is_active: existing?.is_active || 0,
+                updated_at: new Date().toISOString()
+            });
+        });
         liveSupplierProductsCache.data = products;
         liveSupplierProductsCache.byId = new Map(products.map(product => [String(product.id), product]));
         liveSupplierProductsCache.lastFetch = Date.now();
@@ -1442,12 +1464,17 @@ async function findLiveSupplierProduct(identifier) {
     const id = String(identifier || '');
     if (!id.includes(':')) return null;
     const cached = liveSupplierProductsCache.byId.get(id);
-    if (cached) return cached;
+    if (cached && (cached.supplier_source !== 'Core' || cached.status === 'approved')) return cached;
     await getLiveSupplierStoreProducts({ force: liveSupplierProductsCache.data.length === 0 });
-    return liveSupplierProductsCache.byId.get(id) || null;
+    const product = liveSupplierProductsCache.byId.get(id);
+    return product && (product.supplier_source !== 'Core' || product.status === 'approved') ? product : null;
 }
 
 async function ensureSupplierProductRow(connection, product) {
+    if (!isStoreReadySupplierProduct(product)) {
+        throw new AppError('Supplier product is not approved, active, and in stock', 409);
+    }
+
     const [result] = await connection.query(
         `INSERT INTO products (product_number, product_name, description, price, warehouse_price, quantity, brand, supplier_source, status, is_active, updated_at)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
@@ -1631,6 +1658,37 @@ function shouldSkipStoreSyncItem(...values) {
         text.includes('legion notebook combination nano');
 }
 
+function isStoreReadySupplierProduct(product) {
+    return Number(product?.price || 0) > 0 &&
+        Number(product?.quantity || 0) > 0 &&
+        String(product?.status || 'approved').toLowerCase() === 'approved' &&
+        Number(product?.is_active ?? 1) === 1 &&
+        !shouldHideStoreApiProduct(product);
+}
+
+async function removeUnavailableSupplierProducts(connection, supplierSource) {
+    await connection.query(`
+        DELETE pi
+        FROM product_images pi
+        INNER JOIN products p ON p.id = pi.product_id
+        LEFT JOIN OrderItems oi ON oi.product_id = p.id
+        WHERE p.supplier_source = ?
+          AND (p.quantity <= 0 OR p.status <> 'approved' OR p.is_active = 0)
+          AND oi.product_id IS NULL
+    `, [supplierSource]);
+
+    const [result] = await connection.query(`
+        DELETE p
+        FROM products p
+        LEFT JOIN OrderItems oi ON oi.product_id = p.id
+        WHERE p.supplier_source = ?
+          AND (p.quantity <= 0 OR p.status <> 'approved' OR p.is_active = 0)
+          AND oi.product_id IS NULL
+    `, [supplierSource]);
+
+    return result.affectedRows || 0;
+}
+
 // Extract laptop specs from Tarson product data
 function extractLaptopSpecs(product) {
     const specs = {};
@@ -1663,6 +1721,9 @@ function extractLaptopSpecs(product) {
 
 // Sync Tarsus Online products to database
 async function syncTarsonProducts() {
+    console.warn('[Tarsus] Database catalogue sync disabled; products remain live-only until cart materialization.');
+    return { databaseWrites: 0, disabled: true };
+
     let connection;
     const newProducts = [];
     try {
@@ -1715,6 +1776,22 @@ async function syncTarsonProducts() {
                 console.log(`[TARSUS] Skipping ${productName} - invalid price`);
                 continue;
             }
+
+            const imageUrl = item.Image_URL || item.image_url || item.ImageUrl || item.ImageURL ||
+                            item.image || item.Image || item.img || item.Img || item.picture || item.Picture ||
+                            item.photo || item.Photo || item.thumbnail || item.Thumbnail || item.image_link || item.ImageLink || '';
+            if (!isStoreReadySupplierProduct({
+                product_name: productName,
+                description,
+                price,
+                quantity,
+                brand,
+                product_number: sku,
+                image_url: imageUrl
+            })) {
+                console.log(`[TARSUS] Skipping ${productName} - not store-ready`);
+                continue;
+            }
             
             // Extract laptop specs
             const specs = extractLaptopSpecs(item);
@@ -1722,15 +1799,15 @@ async function syncTarsonProducts() {
             
             // Check if product exists
             const [existing] = await connection.query(
-                "SELECT id FROM products WHERE product_number = ? AND brand LIKE ?",
-                [sku, `%${brand}%`]
+                "SELECT id FROM products WHERE product_number = ? LIMIT 1",
+                [sku]
             );
             
             if (existing.length > 0) {
                 // Update existing
                 await connection.query(
-                    "UPDATE products SET quantity = ?, warehouse_price = ?, price = ?, description = ?, supplier_source = 'Tarsus', updated_at = NOW() WHERE product_number = ?",
-                    [quantity, price, price, description, sku]
+                    "UPDATE products SET product_name = ?, quantity = ?, warehouse_price = ?, price = ?, description = ?, brand = ?, supplier_source = 'Tarsus', status = 'approved', is_active = 1, updated_at = NOW() WHERE product_number = ?",
+                    [cleanName, quantity, price, price, description, brand, sku]
                 );
             } else {
                 // Insert new product as approved because this supplier feed is trusted.
@@ -1743,9 +1820,6 @@ async function syncTarsonProducts() {
                 const productId = result.insertId;
                 
                 // Save product images if available.
-                const imageUrl = item.Image_URL || item.image_url || item.ImageUrl || item.ImageURL ||
-                                item.image || item.Image || item.img || item.Img || item.picture || item.Picture || 
-                                item.photo || item.Photo || item.thumbnail || item.Thumbnail || item.image_link || item.ImageLink;
                 if (imageUrl) {
                     try {
                         await connection.query(
@@ -1772,6 +1846,7 @@ async function syncTarsonProducts() {
             }
         }
         
+        await removeUnavailableSupplierProducts(connection, 'Tarsus');
         await connection.commit();
         console.log(`[TARSUS] Sync completed - ${newProducts.length} new laptops added`);
         
@@ -1853,6 +1928,9 @@ async function sendNewTarsonProductsEmail(products) {
 
 // Sync Core API products to database. Manual resets can return the catalogue to review.
 async function syncCoreGroupProducts({ resetToPending = false } = {}) {
+    console.warn('[Core] Database catalogue sync disabled; products remain in the live admin review cache until approval.');
+    return { databaseWrites: 0, disabled: true };
+
     let connection;
     const newProducts = []; // Track newly added products for email
     let updatedProducts = 0;
@@ -1906,6 +1984,19 @@ async function syncCoreGroupProducts({ resetToPending = false } = {}) {
             const standardPrice = String(item.StandardPrice).replace(/,/g, '');
             const promoPrice = item.PromoPrice ? String(item.PromoPrice).replace(/,/g, '') : standardPrice;
             const price = parseFloat(promoPrice) || parseFloat(standardPrice) || 0;
+            const quantity = Math.floor(item.StockOnHand || 0);
+            if (!isStoreReadySupplierProduct({
+                product_name: cleanProductName,
+                description: descriptionStr,
+                price,
+                quantity,
+                brand: brandName,
+                product_number: item.StockCode,
+                image_url: item.Image_URL || item.image_url || item.ImageUrl || item.ImageURL || ''
+            })) {
+                skippedProducts += 1;
+                continue;
+            }
             
             // Check if product already exists
             // Use INSERT...ON DUPLICATE KEY UPDATE to handle duplicates and ensure clean sync
@@ -1920,8 +2011,10 @@ async function syncCoreGroupProducts({ resetToPending = false } = {}) {
                  quantity = VALUES(quantity),
                  brand = VALUES(brand),
                  supplier_source = VALUES(supplier_source),
+                 status = 'approved',
+                 is_active = 1,
                  updated_at = NOW()`,
-                [item.StockCode, cleanProductName, descriptionStr, price, price, Math.floor(item.StockOnHand || 0), brandName, 'Core', 'pending', 0]
+                [item.StockCode, cleanProductName, descriptionStr, price, price, quantity, brandName, 'Core', 'approved', 1]
             );
 
             // Only count as new if insert was successful (not updated)
@@ -1940,13 +2033,15 @@ async function syncCoreGroupProducts({ resetToPending = false } = {}) {
             }
         }
 
+        const removedProducts = await removeUnavailableSupplierProducts(connection, 'Core');
         const summary = {
             fetched: items.length,
             added: newProducts.length,
             updated: updatedProducts,
             skipped: skippedProducts,
             inStock: items.filter(item => Number(item.StockOnHand) > 0).length,
-            reset: resetProducts
+            reset: resetProducts,
+            removed: removedProducts
         };
 
         await connection.query(
@@ -2146,29 +2241,17 @@ app.get('/api/v1/tarson-status', async (req, res, next) => {
 
 // Route: Get pending Core API products
 app.get('/api/v1/core-products/pending', async (req, res, next) => {
-    let connection;
     try {
-        connection = await db.getConnection();
-        await ensureSupplierTrackingSchema(connection);
-        const [products] = await connection.query(
-            `SELECT p.id, p.product_number, p.product_name, p.description, p.price, p.quantity, p.brand,
-                    p.supplier_source, p.status, p.updated_at,
-                    COUNT(pi.id) as image_count
-             FROM products p 
-             LEFT JOIN product_images pi ON p.id = pi.product_id
-             WHERE p.status = 'pending'
-               AND p.quantity > 0
-               AND p.price > 0
-               AND (p.supplier_source = 'Core'
-                    OR (p.supplier_source IS NULL AND p.brand IN ('APPLE', 'IPHONE', 'IPAD', 'MACBOOK', 'AIRPODS', 'IMAC', 'MAC', 'IWATCH')))
-             GROUP BY p.id
-             ORDER BY p.created_at DESC`
-        );
-        
-        connection.release();
+        await getLiveSupplierStoreProducts({ force: true });
+        const products = Array.from(coreReviewCache.values())
+            .filter(product => product.status === 'pending' && isStoreReadySupplierProduct(product))
+            .map(product => ({
+                ...product,
+                image_count: (coreReviewImages.get(String(product.id)) || []).length
+            }))
+            .sort((left, right) => String(right.updated_at).localeCompare(String(left.updated_at)));
         res.status(200).json({ status: 'success', data: { products } });
     } catch (err) {
-        if (connection) connection.release();
         next(err);
     }
 });
@@ -2205,29 +2288,17 @@ app.get('/api/v1/core-products/approved/list', async (req, res, next) => {
 
 // Route: Get rejected Core products
 app.get('/api/v1/core-products/rejected/list', async (req, res, next) => {
-    let connection;
     try {
-        connection = await db.getConnection();
-        await ensureSupplierTrackingSchema(connection);
-        const [products] = await connection.query(
-            `SELECT p.id, p.product_number, p.product_name, p.description, p.price, p.quantity, p.brand,
-                    p.supplier_source, p.status, p.is_active, p.updated_at,
-                    COUNT(pi.id) as image_count
-             FROM products p
-             LEFT JOIN product_images pi ON p.id = pi.product_id
-             WHERE p.status = 'rejected'
-               AND p.quantity > 0
-               AND p.price > 0
-               AND (p.supplier_source = 'Core'
-                    OR (p.supplier_source IS NULL AND p.brand IN ('APPLE', 'IPHONE', 'IPAD', 'MACBOOK', 'AIRPODS', 'IMAC', 'MAC', 'IWATCH')))
-             GROUP BY p.id
-             ORDER BY p.updated_at DESC`
-        );
-
-        connection.release();
+        await getLiveSupplierStoreProducts({ force: true });
+        const products = Array.from(coreReviewCache.values())
+            .filter(product => product.status === 'rejected' && isStoreReadySupplierProduct({ ...product, status: 'approved', is_active: 1 }))
+            .map(product => ({
+                ...product,
+                image_count: (coreReviewImages.get(String(product.id)) || []).length
+            }))
+            .sort((left, right) => String(right.updated_at).localeCompare(String(left.updated_at)));
         res.status(200).json({ status: 'success', data: { products } });
     } catch (err) {
-        if (connection) connection.release();
         next(err);
     }
 });
@@ -2238,6 +2309,11 @@ app.get('/api/v1/core-products/:productId/images', async (req, res, next) => {
     try {
         connection = await db.getConnection();
         const productId = req.params.productId;
+        const cachedImages = coreReviewImages.get(String(productId));
+        if (cachedImages) {
+            connection.release();
+            return res.status(200).json({ status: 'success', data: { images: cachedImages } });
+        }
         console.log(`[Images GET] Fetching images for product: ${productId}`);
         
         const [images] = await connection.query(
@@ -2279,6 +2355,25 @@ app.post('/api/v1/core-products/:productId/images', upload.array('images', 10), 
         if (!files || files.length === 0) {
             console.log(`[Upload] ERROR: No files in request`);
             return next(new AppError('No files uploaded', 400));
+        }
+
+        if (coreReviewCache.has(String(productId))) {
+            const existingImages = coreReviewImages.get(String(productId)) || [];
+            const uploadedImages = files.map((file, index) => ({
+                id: `${productId}:image:${Date.now()}:${index}`,
+                product_id: productId,
+                image_url: file.filename,
+                is_primary: existingImages.length === 0 && index === 0 ? 1 : 0,
+                sort_order: existingImages.length + index
+            }));
+            coreReviewImages.set(String(productId), [...existingImages, ...uploadedImages]);
+            return res.status(201).json({
+                status: 'success',
+                message: `${files.length} image(s) uploaded successfully`,
+                imagesUploaded: files.length,
+                productId,
+                filenames: files.map(file => file.filename)
+            });
         }
 
         connection = await db.getConnection();
@@ -2336,9 +2431,47 @@ app.patch('/api/v1/core-products/:productId/approve', async (req, res, next) => 
     let connection;
     try {
         const productId = req.params.productId;
+        const cachedProduct = coreReviewCache.get(String(productId));
+        const cachedImages = coreReviewImages.get(String(productId)) || [];
+
+        if (cachedProduct) {
+            if (cachedImages.length === 0) {
+                return next(new AppError('Product must have at least one image before approval', 400));
+            }
+
+            connection = await db.getConnection();
+            const [result] = await connection.query(
+                `INSERT INTO products
+                    (product_number, product_name, description, price, warehouse_price, quantity, brand, supplier_source, status, is_active, updated_at)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, 'Core', 'approved', 1, NOW())
+                 ON DUPLICATE KEY UPDATE
+                    product_name = VALUES(product_name),
+                    description = VALUES(description),
+                    price = VALUES(price),
+                    warehouse_price = VALUES(warehouse_price),
+                    quantity = VALUES(quantity),
+                    brand = VALUES(brand),
+                    supplier_source = 'Core',
+                    status = 'approved',
+                    is_active = 1,
+                    updated_at = NOW()`,
+                [cachedProduct.product_number, cachedProduct.product_name, cachedProduct.description, cachedProduct.price, cachedProduct.warehouse_price, cachedProduct.quantity, cachedProduct.brand]
+            );
+            const approvedId = result.insertId || (await connection.query('SELECT id FROM products WHERE product_number = ? LIMIT 1', [cachedProduct.product_number]))[0][0]?.id;
+            await connection.query('DELETE FROM product_images WHERE product_id = ?', [approvedId]);
+            for (const image of cachedImages) {
+                await connection.query(
+                    'INSERT INTO product_images (product_id, image_url, is_primary, sort_order) VALUES (?, ?, ?, ?)',
+                    [approvedId, image.image_url, image.is_primary, image.sort_order]
+                );
+            }
+            connection.release();
+            coreReviewCache.delete(String(productId));
+            coreReviewImages.delete(String(productId));
+            return res.status(200).json({ status: 'success', message: 'Product approved and activated', data: { productId: approvedId } });
+        }
+
         connection = await db.getConnection();
-        
-        // Get product details
         const [products] = await connection.query('SELECT * FROM products WHERE id = ?', [productId]);
         if (products.length === 0) {
             connection.release();
@@ -2346,24 +2479,12 @@ app.patch('/api/v1/core-products/:productId/approve', async (req, res, next) => 
         }
 
         const product = products[0];
-
-        // Check if product has images
-        const [images] = await connection.query(
-            'SELECT COUNT(*) as count FROM product_images WHERE product_id = ?',
-            [productId]
-        );
-
+        const [images] = await connection.query('SELECT COUNT(*) as count FROM product_images WHERE product_id = ?', [productId]);
         if (images[0].count === 0) {
             connection.release();
             return next(new AppError('Product must have at least one image before approval', 400));
         }
-
-        // Update product status
-        await connection.query(
-            'UPDATE products SET status = ?, is_active = 1, updated_at = NOW() WHERE id = ?',
-            ['approved', productId]
-        );
-
+        await connection.query('UPDATE products SET status = ?, is_active = 1, updated_at = NOW() WHERE id = ?', ['approved', productId]);
         connection.release();
 
         // Send email notification
@@ -2417,6 +2538,18 @@ app.patch('/api/v1/core-products/:productId/reject', async (req, res, next) => {
     try {
         const productId = req.params.productId;
         const { reason } = req.body;
+
+        const cachedProduct = coreReviewCache.get(String(productId));
+        if (cachedProduct) {
+            coreReviewCache.set(String(productId), {
+                ...cachedProduct,
+                status: 'rejected',
+                is_active: 0,
+                rejection_reason: reason || null,
+                updated_at: new Date().toISOString()
+            });
+            return res.status(200).json({ status: 'success', message: 'Product rejected' });
+        }
 
         connection = await db.getConnection();
         
@@ -2480,6 +2613,13 @@ app.patch('/api/v1/core-products/:productId/reject', async (req, res, next) => {
 app.delete('/api/v1/core-products/:productId/images/:imageId', async (req, res, next) => {
     let connection;
     try {
+        const cachedImages = coreReviewImages.get(String(req.params.productId));
+        if (cachedImages) {
+            const remainingImages = cachedImages.filter(image => String(image.id) !== String(req.params.imageId));
+            coreReviewImages.set(String(req.params.productId), remainingImages);
+            return res.status(200).json({ status: 'success', message: 'Image deleted' });
+        }
+
         connection = await db.getConnection();
 
         // Get image info
@@ -2846,11 +2986,11 @@ app.get('/api/v1/products', async (req, res, next) => {
                 FROM products p 
                 WHERE (p.status IS NULL OR p.status = 'approved')
                   AND (p.is_active = 1 OR p.is_active IS NULL)
-                  AND (p.supplier_source IS NULL OR p.supplier_source NOT IN ('Core', 'Tarsus'))
                 ORDER BY p.updated_at DESC
             `);
 
-            const supplierProducts = await getLiveSupplierStoreProducts();
+            const supplierProducts = (await getLiveSupplierStoreProducts())
+                .filter(product => product.supplier_source !== 'Core' || product.status === 'approved');
             const storeProducts = dedupeStoreProducts([...products, ...supplierProducts]);
 
             console.log(`[Store API] Returning ${storeProducts.length} grouped products from ${products.length} manual rows + ${supplierProducts.length} live supplier products`);
@@ -3505,7 +3645,13 @@ app.post('/api/v1/cart/sync', async (req, res, next) => {
                 productID = await ensureSupplierProductRow(connection, supplierProduct);
             } else {
                 const [productCheck] = await connection.query(
-                    'SELECT id FROM products WHERE id = ? LIMIT 1',
+                                        `SELECT id
+                                         FROM products
+                                         WHERE id = ?
+                                             AND (status IS NULL OR status = 'approved')
+                                             AND (is_active = 1 OR is_active IS NULL)
+                                             AND COALESCE(quantity, 0) > 0
+                                         LIMIT 1`,
                     [productID]
                 );
                 if (!productCheck?.length) {
@@ -3573,6 +3719,14 @@ app.get('/api/v1/core-status', async (req, res, next) => {
               AND (supplier_source = 'Core'
                    OR (supplier_source IS NULL AND brand IN ('APPLE', 'IPHONE', 'IPAD', 'MACBOOK', 'AIRPODS', 'IMAC', 'MAC', 'IWATCH')))
         `);
+
+            await getLiveSupplierStoreProducts({ force: true });
+            const liveCoreProducts = Array.from(coreReviewCache.values()).filter(product => isStoreReadySupplierProduct(product));
+            const livePendingCount = liveCoreProducts.filter(product => product.status === 'pending').length;
+            const liveRejectedCount = liveCoreProducts.filter(product => product.status === 'rejected').length;
+            inventory.pending_count = livePendingCount;
+            inventory.rejected_count = liveRejectedCount;
+            inventory.usable_count = Number(inventory.usable_count || 0) + liveCoreProducts.filter(product => product.status === 'approved').length;
 
         res.status(200).json({
             status: 'success',
