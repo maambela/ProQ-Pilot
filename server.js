@@ -12,6 +12,7 @@ const {
     sendSupportEmail,
     verifyGraphEmailConfig
 } = require('./utils/email');
+const { cleanPublicBaseUrl, createEmail, createPlainText, detailsTable, section, notice, itemList, formatCurrency, richParagraph, escapeHtml } = require('./utils/emailTemplates');
 const duoApi = require('./utils/duoApi'); // Path to your duoApi.js file
 
 const db = require('./utils/db');
@@ -1869,60 +1870,43 @@ async function syncTarsonProducts() {
 
 // Email notification for new Tarsus products
 async function sendNewTarsonProductsEmail(products) {
-    const productsHTML = products.map((product, index) => `
-        <tr style="border-bottom: 1px solid #ddd;">
-            <td style="padding: 12px; text-align: left;">${index + 1}</td>
-            <td style="padding: 12px; text-align: left;">${product.brand}</td>
-            <td style="padding: 12px; text-align: left;">${product.name}</td>
-            <td style="padding: 12px; text-align: center;">${product.quantity} units</td>
-            <td style="padding: 12px; text-align: right;">R${parseFloat(product.price).toLocaleString()}</td>
-        </tr>
-    `).join('');
-    
+    const title = `${products.length} new Tarsus ${products.length === 1 ? 'product is' : 'products are'} live`;
+    const catalogueItems = products.map((product, index) => ({
+        title: product.name || `Tarsus product ${index + 1}`,
+        meta: [
+            product.brand || 'Brand not supplied',
+            `${product.quantity || 0} units in stock`
+        ],
+        amount: formatCurrency(product.price)
+    }));
     const mailOptions = {
         from: `"${STORE_DETAILS.name}" <${EMAIL_SENDERS.sales}>`,
         to: EMAIL_SENDERS.sales,
         subject: `🆕 ${products.length} New Laptop(s) from Tarsus Online`,
-        html: `
-            <div style="font-family: Arial, sans-serif; max-width: 900px; margin: 0 auto;">
-                <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 24px; text-align: center; border-radius: 8px 8px 0 0;">
-                    <h1 style="margin: 0; font-size: 28px;">💻 New Laptops from Tarsus Online</h1>
-                    <p style="margin: 8px 0 0 0; font-size: 16px;">${products.length} laptop(s) added and live on store</p>
-                </div>
-                <div style="padding: 24px; background: white; border: 1px solid #ddd;">
-                    <p style="color: #666; margin: 0 0 20px 0; font-size: 15px;">
-                        New laptops have been automatically synced from Tarsus Online and are <strong>already live on your store</strong>.
-                    </p>
-                    <h2 style="margin: 20px 0 16px 0; color: #1a202c; border-bottom: 2px solid #667eea; padding-bottom: 12px;">New Laptop Summary</h2>
-                    <table style="width: 100%; border-collapse: collapse; margin-bottom: 24px;">
-                        <thead>
-                            <tr style="background: #f0f0f0;">
-                                <th style="padding: 12px; text-align: left; border-bottom: 2px solid #ddd;">#</th>
-                                <th style="padding: 12px; text-align: left; border-bottom: 2px solid #ddd;">Brand</th>
-                                <th style="padding: 12px; text-align: left; border-bottom: 2px solid #ddd;">Model</th>
-                                <th style="padding: 12px; text-align: center; border-bottom: 2px solid #ddd;">Stock</th>
-                                <th style="padding: 12px; text-align: right; border-bottom: 2px solid #ddd;">Price</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${productsHTML}
-                        </tbody>
-                    </table>
-                    <div style="background: #eef2ff; border-left: 4px solid #667eea; padding: 16px; margin: 20px 0; border-radius: 4px;">
-                        <p style="margin: 0; color: #4c51bf; font-size: 14px;">
-                            <strong>✓ Status:</strong> These laptops are automatically approved and live on your store. Check them out!
-                        </p>
-                    </div>
-                </div>
-            </div>
-        `
+        html: createEmail({
+            variant: 'success',
+            eyebrow: 'CATALOGUE UPDATE',
+            title,
+            preview: `${products.length} new Tarsus product${products.length === 1 ? '' : 's'} were added to the store.`,
+            intro: 'New Tarsus products have been synced and are already live in the ProQ Pilot store.',
+            body: section('New products', itemList(catalogueItems)) + notice('Status: automatically approved and visible to customers.', 'success'),
+            footerNote: 'Automated catalogue notification.'
+        }),
+        text: createPlainText({
+            title,
+            intro: 'New Tarsus products have been synced and are already live in the ProQ Pilot store.',
+            lines: [
+                ...catalogueItems.map(item => `${item.title} — ${item.meta.join(', ')} — ${item.amount}`),
+                'Status: automatically approved and visible to customers.'
+            ]
+        })
     };
-    
+
     try {
         const info = await transporter.sendMail(mailOptions);
         console.log(`[TARSUS EMAIL] Sent: ${info.messageId}`);
     } catch (err) {
-        console.error(`[TARSUS EMAIL] Failed:`, err);
+        console.error('[TARSUS EMAIL] Failed:', err);
     }
 }
 
@@ -2086,70 +2070,42 @@ async function syncCoreGroupProducts({ resetToPending = false } = {}) {
 
 // Email notification for new Core API products
 async function sendNewCoreProductsEmail(products) {
-    const productsHTML = products.map((product, index) => `
-        <tr style="border-bottom: 1px solid #ddd;">
-            <td style="padding: 12px; text-align: left;">${index + 1}</td>
-            <td style="padding: 12px; text-align: left;">${product.brand}</td>
-            <td style="padding: 12px; text-align: left;">${product.name}</td>
-            <td style="padding: 12px; text-align: center;">${product.type}</td>
-            <td style="padding: 12px; text-align: center;">${product.quantity}</td>
-            <td style="padding: 12px; text-align: right;">R${parseFloat(product.price).toLocaleString()}</td>
-        </tr>
-    `).join('');
-
+    const publicBaseUrl = cleanPublicBaseUrl();
+    const reviewUrl = publicBaseUrl ? `${publicBaseUrl}/admin_core_products.html` : '';
+    const title = `${products.length} Core ${products.length === 1 ? 'product requires' : 'products require'} review`;
+    const catalogueItems = products.map((product, index) => ({
+        title: product.name || `Core product ${index + 1}`,
+        meta: [
+            product.brand || 'Brand not supplied',
+            product.type || 'Type not supplied',
+            `Qty ${product.quantity || 0}`
+        ],
+        amount: formatCurrency(product.price)
+    }));
     const mailOptions = {
         from: `"${STORE_DETAILS.name}" <${EMAIL_SENDERS.sales}>`,
         to: EMAIL_SENDERS.sales,
         subject: `🆕 ${products.length} New Core API Product(s) Added - Action Required`,
-        html: `
-            <div style="font-family: Arial, sans-serif; max-width: 900px; margin: 0 auto;">
-                <div style="background: linear-gradient(135deg, #f59e0b 0%, #f97316 100%); color: white; padding: 24px; text-align: center; border-radius: 8px 8px 0 0;">
-                    <h1 style="margin: 0; font-size: 28px;">🆕 New Products from Core API</h1>
-                    <p style="margin: 8px 0 0 0; font-size: 16px;">${products.length} product(s) requiring your attention</p>
-                </div>
-                
-                <div style="padding: 24px; background: white; border: 1px solid #ddd;">
-                    <p style="color: #666; margin: 0 0 20px 0; font-size: 15px;">
-                        New products have been automatically added from the Core Group API and are awaiting your approval. 
-                        <strong>Please add product images and approve them to make them live on your store.</strong>
-                    </p>
-
-                    <h2 style="margin: 20px 0 16px 0; color: #1a202c; border-bottom: 2px solid #f59e0b; padding-bottom: 12px;">New Products Summary</h2>
-                    <table style="width: 100%; border-collapse: collapse; margin-bottom: 24px;">
-                        <thead>
-                            <tr style="background: #fef3c7;">
-                                <th style="padding: 12px; text-align: left; border-bottom: 2px solid #ddd;">#</th>
-                                <th style="padding: 12px; text-align: left; border-bottom: 2px solid #ddd;">Brand</th>
-                                <th style="padding: 12px; text-align: left; border-bottom: 2px solid #ddd;">Product Name</th>
-                                <th style="padding: 12px; text-align: center; border-bottom: 2px solid #ddd;">Type</th>
-                                <th style="padding: 12px; text-align: center; border-bottom: 2px solid #ddd;">Qty</th>
-                                <th style="padding: 12px; text-align: right; border-bottom: 2px solid #ddd;">Price</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${productsHTML}
-                        </tbody>
-                    </table>
-
-                    <div style="background: #fef3c7; border-left: 4px solid #f59e0b; padding: 16px; margin: 20px 0; border-radius: 4px;">
-                        <p style="margin: 0; color: #b45309; font-size: 14px;">
-                            <strong>⚠️ Action Required:</strong> These products are pending approval. 
-                            Upload at least one image for each product, then approve them in the Admin Panel to make them live.
-                        </p>
-                    </div>
-
-                    <div style="margin: 24px 0; text-align: center;">
-                        <a href="http://localhost:3000/admin_core_products.html" style="display: inline-block; padding: 12px 24px; background: #f59e0b; color: white; text-decoration: none; border-radius: 6px; font-weight: bold;">
-                            Go to Core Products Admin
-                        </a>
-                    </div>
-
-                    <p style="color: #718096; font-size: 12px; margin: 24px 0 0 0; text-align: center; border-top: 1px solid #ddd; padding-top: 12px;">
-                        This is an automated notification from your inventory system. No reply needed.
-                    </p>
-                </div>
-            </div>
-        `
+        html: createEmail({
+            publicBaseUrl,
+            variant: 'warning',
+            eyebrow: 'CATALOGUE REVIEW',
+            title,
+            preview: 'New Core products are awaiting catalogue approval.',
+            intro: 'New products have been added from Core and are awaiting your approval.',
+            body: section('Products awaiting review', itemList(catalogueItems)) + notice('Action required: add at least one product image, then approve each product to make it live.', 'warning'),
+            cta: reviewUrl ? { href: reviewUrl, label: 'Review Core products', ariaLabel: 'Review Core products in the ProQ Pilot admin panel' } : null,
+            footerNote: 'Automated catalogue notification.'
+        }),
+        text: createPlainText({
+            title,
+            intro: 'New products have been added from Core and are awaiting your approval.',
+            lines: [
+                ...catalogueItems.map(item => `${item.title} — ${item.meta.join(', ')} — ${item.amount}`),
+                'Action required: add at least one product image, then approve each product to make it live.'
+            ],
+            cta: reviewUrl ? { href: reviewUrl, label: 'Review Core products' } : null
+        })
     };
 
     try {
@@ -2157,7 +2113,7 @@ async function sendNewCoreProductsEmail(products) {
         console.log(`[CORE API EMAIL] Notification sent successfully: ${info.messageId}`);
         return true;
     } catch (err) {
-        console.error(`[CORE API EMAIL] Error sending email:`, err);
+        console.error('[CORE API EMAIL] Error sending email:', err);
         throw err;
     }
 }
@@ -2489,29 +2445,15 @@ app.patch('/api/v1/core-products/:productId/approve', async (req, res, next) => 
 
         // Send email notification
         try {
-            const mailOptions = {
-                from: `"${STORE_DETAILS.name}" <${EMAIL_SENDERS.sales}>`,
-                to: EMAIL_SENDERS.sales,
+            const mailOptions = buildProductStatusMail({
+                product,
+                title: 'Product approved',
                 subject: `New Product Approved - ${product.product_name}`,
-                html: `
-                    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-                        <div style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; padding: 24px; text-align: center; border-radius: 8px 8px 0 0;">
-                            <h1 style="margin: 0; font-size: 24px;">✓ Product Approved</h1>
-                        </div>
-                        
-                        <div style="padding: 24px; background: white; border: 1px solid #eee;">
-                            <h2 style="margin: 0 0 16px 0; color: #333;">New Product Activated</h2>
-                            <p style="color: #666; margin: 0 0 12px 0;"><strong>Product Name:</strong> ${product.product_name}</p>
-                            <p style="color: #666; margin: 0 0 12px 0;"><strong>Stock Code:</strong> ${product.product_number}</p>
-                            <p style="color: #666; margin: 0 0 12px 0;"><strong>Price:</strong> R${parseFloat(product.price).toLocaleString()}</p>
-                            <p style="color: #666; margin: 0 0 12px 0;"><strong>Quantity:</strong> ${product.quantity} units</p>
-                            <p style="color: #666;"><strong>Status:</strong> <span style="color: #10b981; font-weight: bold;">ACTIVE</span></p>
-                            
-                            <p style="margin: 20px 0 0 0; color: #666; font-size: 14px;">The product is now live on your store and visible to customers.</p>
-                        </div>
-                    </div>
-                `
-            };
+                status: 'Active',
+                message: 'The product is now live in the ProQ Pilot store and visible to customers.',
+                variant: 'success',
+                includeInventory: true
+            });
 
             await transporter.sendMail(mailOptions);
             console.log(`[EMAIL] Product approval notification sent for ${product.product_name}`);
@@ -2572,25 +2514,15 @@ app.patch('/api/v1/core-products/:productId/reject', async (req, res, next) => {
 
         // Send rejection email
         try {
-            const mailOptions = {
-                from: `"${STORE_DETAILS.name}" <${EMAIL_SENDERS.sales}>`,
-                to: EMAIL_SENDERS.sales,
+            const mailOptions = buildProductStatusMail({
+                product,
+                title: 'Product rejected',
                 subject: `Product Rejected - ${product.product_name}`,
-                html: `
-                    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-                        <div style="background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color: white; padding: 24px; text-align: center; border-radius: 8px 8px 0 0;">
-                            <h1 style="margin: 0; font-size: 24px;">✗ Product Rejected</h1>
-                        </div>
-                        
-                        <div style="padding: 24px; background: white; border: 1px solid #eee;">
-                            <h2 style="margin: 0 0 16px 0; color: #333;">Product Not Approved</h2>
-                            <p style="color: #666; margin: 0 0 12px 0;"><strong>Product Name:</strong> ${product.product_name}</p>
-                            <p style="color: #666; margin: 0 0 12px 0;"><strong>Stock Code:</strong> ${product.product_number}</p>
-                            ${reason ? `<p style="color: #666; margin: 0 0 12px 0;"><strong>Reason:</strong> ${reason}</p>` : ''}
-                        </div>
-                    </div>
-                `
-            };
+                status: 'Rejected',
+                message: 'The product was not approved for the ProQ Pilot store.',
+                variant: 'alert',
+                reason
+            });
 
             await transporter.sendMail(mailOptions);
             console.log(`[EMAIL] Product rejection notification sent for ${product.product_name}`);
@@ -2677,27 +2609,14 @@ app.patch('/api/v1/core-products/:productId/deactivate', async (req, res, next) 
 
         // Send email notification
         try {
-            const mailOptions = {
-                from: `"${STORE_DETAILS.name}" <${EMAIL_SENDERS.salest}>`,
-                to: EMAIL_SENDERS.sales,
+            const mailOptions = buildProductStatusMail({
+                product,
+                title: 'Product deactivated',
                 subject: `Product Deactivated - ${product.product_name}`,
-                html: `
-                    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-                        <div style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: white; padding: 24px; text-align: center; border-radius: 8px 8px 0 0;">
-                            <h1 style="margin: 0; font-size: 24px;">⊘ Product Deactivated</h1>
-                        </div>
-                        
-                        <div style="padding: 24px; background: white; border: 1px solid #eee;">
-                            <h2 style="margin: 0 0 16px 0; color: #333;">Product Removed from Store</h2>
-                            <p style="color: #666; margin: 0 0 12px 0;"><strong>Product Name:</strong> ${product.product_name}</p>
-                            <p style="color: #666; margin: 0 0 12px 0;"><strong>Stock Code:</strong> ${product.product_number}</p>
-                            <p style="color: #666; margin: 0 0 12px 0;"><strong>Status:</strong> <span style="color: #f59e0b; font-weight: bold;">DEACTIVATED</span></p>
-                            
-                            <p style="margin: 20px 0 0 0; color: #666; font-size: 14px;">The product has been deactivated and is no longer visible to customers.</p>
-                        </div>
-                    </div>
-                `
-            };
+                status: 'Deactivated',
+                message: 'The product has been removed from the ProQ Pilot store and is no longer visible to customers.',
+                variant: 'warning'
+            });
 
             await transporter.sendMail(mailOptions);
             console.log(`[EMAIL] Product deactivation notification sent for ${product.product_name}`);
@@ -2744,27 +2663,14 @@ app.patch('/api/v1/core-products/:productId/activate', async (req, res, next) =>
 
         // Send email notification
         try {
-            const mailOptions = {
-                from: `"${STORE_DETAILS.name}" <${EMAIL_SENDERS.sales}>`,
-                to: EMAIL_SENDERS.sales,
+            const mailOptions = buildProductStatusMail({
+                product,
+                title: 'Product activated',
                 subject: `Product Activated - ${product.product_name}`,
-                html: `
-                    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-                        <div style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; padding: 24px; text-align: center; border-radius: 8px 8px 0 0;">
-                            <h1 style="margin: 0; font-size: 24px;">✓ Product Activated</h1>
-                        </div>
-                        
-                        <div style="padding: 24px; background: white; border: 1px solid #eee;">
-                            <h2 style="margin: 0 0 16px 0; color: #333;">Product Back in Store</h2>
-                            <p style="color: #666; margin: 0 0 12px 0;"><strong>Product Name:</strong> ${product.product_name}</p>
-                            <p style="color: #666; margin: 0 0 12px 0;"><strong>Stock Code:</strong> ${product.product_number}</p>
-                            <p style="color: #666; margin: 0 0 12px 0;"><strong>Status:</strong> <span style="color: #10b981; font-weight: bold;">ACTIVE</span></p>
-                            
-                            <p style="margin: 20px 0 0 0; color: #666; font-size: 14px;">The product has been reactivated and is now visible to customers.</p>
-                        </div>
-                    </div>
-                `
-            };
+                status: 'Active',
+                message: 'The product has been reactivated and is now visible to customers in the ProQ Pilot store.',
+                variant: 'success'
+            });
 
             await transporter.sendMail(mailOptions);
             console.log(`[EMAIL] Product activation notification sent for ${product.product_name}`);
@@ -4148,41 +4054,71 @@ app.post('/api/v1/contact', async (req, res, next) => {
         }
         contactRequestTimes.set(requester, Date.now());
 
-        const safe = {
-            name: escapeSupportText(name),
-            email: escapeSupportText(email),
-            phone: escapeSupportText(phone || 'Not supplied'),
-            topic: escapeSupportText(topic),
-            orderNumber: escapeSupportText(orderNumber || 'Not supplied'),
-            message: escapeSupportText(message).replace(/\r?\n/g, '<br>')
+                const supportDetails = {
+            name,
+            email,
+            phone: phone || 'Not supplied',
+            topic,
+            orderNumber: orderNumber || 'Not supplied'
         };
+        const messageHtml = escapeHtml(message).replace(/\r?\n/g, '<br>');
+        const supportTitle = 'New support request';
 
         await sendSupportEmail({
             to: EMAIL_SENDERS.support,
             replyTo: email,
             subject: `[ProQ Pilot Support] ${topic} - ${name}`,
-            html: `
-                <h2>New ProQ Pilot support message</h2>
-                <p><strong>Name:</strong> ${safe.name}</p>
-                <p><strong>Email:</strong> ${safe.email}</p>
-                <p><strong>Phone:</strong> ${safe.phone}</p>
-                <p><strong>Topic:</strong> ${safe.topic}</p>
-                <p><strong>Order number:</strong> ${safe.orderNumber}</p>
-                <hr>
-                <p>${safe.message}</p>
-            `
+            html: createEmail({
+                variant: 'warning',
+                eyebrow: 'SUPPORT INTAKE',
+                title: supportTitle,
+                preview: `${name} submitted a ${topic} request.`,
+                intro: 'A customer has submitted a support request through ProQ Pilot.',
+                body: section('Request details', detailsTable([
+                    { label: 'Customer', value: supportDetails.name },
+                    { label: 'Email', value: supportDetails.email },
+                    { label: 'Phone', value: supportDetails.phone },
+                    { label: 'Topic', value: supportDetails.topic },
+                    { label: 'Order number', value: supportDetails.orderNumber }
+                ])) + section('Message', richParagraph(messageHtml)),
+                footerNote: 'Reply directly to this message to respond to the customer.'
+            }),
+            text: createPlainText({
+                title: supportTitle,
+                intro: 'A customer has submitted a support request through ProQ Pilot.',
+                lines: [
+                    `Customer: ${supportDetails.name}`,
+                    `Email: ${supportDetails.email}`,
+                    `Phone: ${supportDetails.phone}`,
+                    `Topic: ${supportDetails.topic}`,
+                    `Order number: ${supportDetails.orderNumber}`,
+                    `Message: ${message}`
+                ]
+            })
         });
 
         try {
+            const acknowledgementTitle = 'We received your support request';
             await sendSupportEmail({
                 to: email,
                 subject: 'We received your ProQ Pilot support request',
-                html: `
-                    <h2>Thanks, ${safe.name}</h2>
-                    <p>Your message has reached the ProQ Pilot support team.</p>
-                    <p><strong>Topic:</strong> ${safe.topic}</p>
-                    <p>We will reply to this email address as soon as possible.</p>
-                `
+                html: createEmail({
+                    variant: 'info',
+                    eyebrow: 'SUPPORT REQUEST',
+                    title: acknowledgementTitle,
+                    preview: 'Your message has reached the ProQ Pilot support team.',
+                    intro: `Thank you, ${name}. Your message has reached the ProQ Pilot support team.`,
+                    body: section('Request summary', detailsTable([
+                        { label: 'Topic', value: topic },
+                        { label: 'Order number', value: orderNumber || 'Not supplied' }
+                    ])),
+                    footerNote: 'We will reply to this email address as soon as possible.'
+                }),
+                text: createPlainText({
+                    title: acknowledgementTitle,
+                    intro: `Thank you, ${name}. Your message has reached the ProQ Pilot support team.`,
+                    lines: [`Topic: ${topic}`, `Order number: ${orderNumber || 'Not supplied'}`, 'We will reply to this email address as soon as possible.']
+                })
             });
         } catch (confirmationError) {
             console.warn('[CONTACT] Support message sent, but confirmation failed:', confirmationError.message);
@@ -4226,76 +4162,114 @@ const STORE_DETAILS = {
 };
 
 // ========== EMAIL HELPER FUNCTIONS ==========
+function buildProductStatusMail({ product, title, subject, status, message, variant, reason, includeInventory = false }) {
+    const detailRows = [
+        { label: 'Product', value: product.product_name },
+        { label: 'Stock code', value: product.product_number || 'Not supplied' },
+        ...(includeInventory ? [
+            { label: 'Price', value: formatCurrency(product.price) },
+            { label: 'Quantity', value: `${product.quantity || 0} units` }
+        ] : []),
+        { label: 'Status', value: status }
+    ];
+    if (reason) detailRows.push({ label: 'Reason', value: reason });
+
+    return {
+        from: `"${STORE_DETAILS.name}" <${EMAIL_SENDERS.sales}>`,
+        to: EMAIL_SENDERS.sales,
+        subject,
+        html: createEmail({
+            variant,
+            eyebrow: 'CATALOGUE STATUS',
+            title,
+            preview: `${product.product_name || 'A product'} is now ${String(status || '').toLowerCase()}.`,
+            intro: message,
+            body: section('Product details', detailsTable(detailRows)) + notice(message, variant),
+            footerNote: 'Automated catalogue notification.'
+        }),
+        text: createPlainText({
+            title,
+            intro: message,
+            lines: [
+                `Product: ${product.product_name || 'Not supplied'}`,
+                `Stock code: ${product.product_number || 'Not supplied'}`,
+                ...(includeInventory ? [`Price: ${formatCurrency(product.price)}`, `Quantity: ${product.quantity || 0} units`] : []),
+                `Status: ${status}`,
+                ...(reason ? [`Reason: ${reason}`] : [])
+            ]
+        })
+    };
+}
+
+function getEmailProductImagePath(imageUrl) {
+    const value = String(imageUrl || '').trim();
+    if (!value) return '';
+    if (/^https?:\/\//i.test(value) || /^\/?(?:product_images|Images)\//i.test(value)) return value;
+    return `product_images/${value.replace(/^\/+/, '')}`;
+}
+
 async function sendCustomerEmail(order, customer, items, address) {
     console.log(`[EMAIL] Starting to send customer email to ${customer.email}`);
-    
-    const productsHTML = items.map(item => `
-        <div style="margin: 16px 0; padding: 16px; background: #f9f9f9; border-radius: 8px;">
-            <div style="display: flex; gap: 12px;">
-                <img src="${item.image_url.startsWith('http') ? item.image_url : `http://localhost:3000/product_images/${item.image_url}`}" 
-                     alt="${item.product_name}" style="width: 80px; height: 80px; object-fit: cover; border-radius: 6px;">
-                <div>
-                    <h4 style="margin: 0 0 8px 0; font-size: 16px;">${item.product_name}</h4>
-                    <p style="margin: 0; color: #666;">Quantity: ${item.quantity}</p>
-                    <p style="margin: 0; font-weight: bold; color: #333;">R${parseFloat(item.price).toLocaleString()}</p>
-                </div>
-            </div>
-        </div>
-    `).join('');
+
+    const publicBaseUrl = cleanPublicBaseUrl();
+    const orderDetailsUrl = publicBaseUrl
+        ? `${publicBaseUrl}/order-details.html?orderId=${encodeURIComponent(String(order.id))}`
+        : '';
+    const orderItems = items.map(item => ({
+        title: item.product_name || 'Ordered item',
+        imageUrl: getEmailProductImagePath(item.image_url),
+        meta: [
+            `Quantity ${item.quantity || 0}`,
+            `Unit price ${formatCurrency(item.price)}`
+        ],
+        amount: formatCurrency(Number(item.price || 0) * Number(item.quantity || 0))
+    }));
+    const orderItemsHtml = itemList(orderItems, { showImages: true, publicBaseUrl });
+    const title = `Order #${order.id} confirmed`;
+    const customerName = customer.username || 'there';
+    const customerHtml = createEmail({
+        publicBaseUrl,
+        variant: 'success',
+        eyebrow: 'ORDER CONFIRMATION',
+        title,
+        preview: 'Your ProQ Pilot order has been received.',
+        intro: `Thank you, ${customerName}. Your order has been successfully placed.`,
+        body: section('Order items', orderItemsHtml)
+            + section('Delivery address', detailsTable([
+                { label: 'Address', value: [address.line1, address.line2].filter(Boolean).join(', ') },
+                { label: 'City', value: [address.city, address.province, address.postal_code].filter(Boolean).join(', ') },
+                { label: 'Country', value: address.country },
+                { label: 'Phone', value: address.phone },
+                { label: 'Delivery instructions', value: address.delivery_instructions }
+            ]))
+            + section('Payment summary', detailsTable([
+                { label: 'Subtotal', value: formatCurrency(Number(order.total_amount || 0) - 2) },
+                { label: 'Delivery fee', value: formatCurrency(2) },
+                { label: 'Total amount paid', value: formatCurrency(order.total_amount) }
+            ]))
+            + notice('Expected delivery: within one week.', 'info'),
+        cta: orderDetailsUrl ? { href: orderDetailsUrl, label: 'View order details', ariaLabel: `View order ${order.id} details` } : null,
+        footerNote: `${STORE_DETAILS.phone} · ${STORE_DETAILS.address}`
+    });
 
     const mailOptions = {
         from: `"${STORE_DETAILS.name}" <${EMAIL_SENDERS.sales}>`,
         to: customer.email,
         subject: `Order Confirmation #${order.id} - ProQ Pilot`,
-        html: `
-            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-                <div style="background: linear-gradient(135deg, #00bcd4 0%, #00d2be 100%); color: white; padding: 24px; text-align: center; border-radius: 8px 8px 0 0;">
-                    <h1 style="margin: 0; font-size: 28px;">✓ Order Confirmed</h1>
-                    <p style="margin: 8px 0 0 0; font-size: 18px;">Order #${order.id}</p>
-                </div>
-                
-                <div style="padding: 24px; background: white; border: 1px solid #eee;">
-                    <h2 style="margin: 0 0 16px 0; color: #333; font-size: 20px;">Thank you, ${customer.username}!</h2>
-                    <p style="color: #666; line-height: 1.6;">Your order has been successfully placed. Here are your order details:</p>
-                    
-                    <h3 style="margin: 20px 0 12px 0; color: #333;">Order Items</h3>
-                    ${productsHTML}
-                    
-                    <h3 style="margin: 20px 0 12px 0; color: #333;">Delivery Address</h3>
-                    <p style="margin: 0; color: #666;">${address.line1}${address.line2 ? ', ' + address.line2 : ''}</p>
-                    <p style="margin: 0; color: #666;">${address.city}, ${address.province} ${address.postal_code}</p>
-                    <p style="margin: 0; color: #666;">${address.country}</p>
-                    ${address.phone ? `<p style="margin: 8px 0 0 0; color: #666;"><strong>Phone:</strong> ${address.phone}</p>` : ''}
-                    ${address.delivery_instructions ? `<p style="margin: 8px 0 0 0; color: #666;"><strong>Delivery Instructions:</strong> ${address.delivery_instructions}</p>` : ''}
-                    
-                    <hr style="margin: 20px 0; border: none; border-top: 1px solid #eee;">
-                    
-                    <div style="background: #f9f9f9; padding: 16px; border-radius: 8px; margin: 16px 0;">
-                        <p style="margin: 0 0 8px 0; color: #666; font-size: 14px;">Subtotal</p>
-                        <p style="margin: 0 0 12px 0; font-size: 18px; font-weight: bold; color: #333;">R${(order.total_amount -2).toLocaleString()}</p>
-                        
-                        <p style="margin: 0 0 8px 0; color: #666; font-size: 14px;">Delivery Fee</p>
-                        <p style="margin: 0 0 12px 0; font-size: 18px; font-weight: bold; color: #333;">R2.00</p>
-                        
-                        <hr style="margin: 12px 0; border: none; border-top: 2px solid #00bcd4;">
-                        
-                        <p style="margin: 0 0 4px 0; color: #666; font-size: 14px;">Total Amount Paid</p>
-                        <p style="margin: 0; font-size: 24px; font-weight: bold; color: #00bcd4;">R${parseFloat(order.total_amount).toLocaleString()}</p>
-                    </div>
-                    
-                    <p style="color: #666; font-size: 14px; margin: 16px 0 0 0;"><strong>📦 Expected Delivery:</strong> Within 1 week</p>
-                    
-                    <a href="http://localhost:3000/order-details.html?orderId=${order.id}" style="display: inline-block; margin-top: 20px; padding: 12px 24px; background: #00bcd4; color: white; text-decoration: none; border-radius: 6px; font-weight: bold;">
-                        View Order Details
-                    </a>
-                </div>
-                
-                <div style="padding: 16px; background: #f9f9f9; text-align: center; border-radius: 0 0 8px 8px; color: #666; font-size: 12px;">
-                    <p style="margin: 0;">${STORE_DETAILS.name} | ${STORE_DETAILS.email} | ${STORE_DETAILS.phone}</p>
-                    <p style="margin: 8px 0 0 0;">${STORE_DETAILS.address}</p>
-                </div>
-            </div>
-        `
+        html: customerHtml,
+        text: createPlainText({
+            title,
+            intro: `Thank you, ${customerName}. Your order has been successfully placed.`,
+            lines: [
+                ...orderItems.map(item => `${item.title} — ${item.meta.join(', ')} — ${item.amount}`),
+                `Delivery address: ${[address.line1, address.line2, address.city, address.province, address.postal_code, address.country].filter(Boolean).join(', ')}`,
+                `Subtotal: ${formatCurrency(Number(order.total_amount || 0) - 2)}`,
+                `Delivery fee: ${formatCurrency(2)}`,
+                `Total amount paid: ${formatCurrency(order.total_amount)}`,
+                'Expected delivery: within one week.'
+            ],
+            cta: orderDetailsUrl ? { href: orderDetailsUrl, label: 'View order details' } : null
+        })
     };
 
     try {
@@ -4304,7 +4278,7 @@ async function sendCustomerEmail(order, customer, items, address) {
         return true;
     } catch (err) {
         console.error(`[EMAIL] Error sending customer email to ${customer.email}:`, err);
-        throw err; // Re-throw to webhook handler
+        throw err;
     }
 }
 
@@ -4322,81 +4296,66 @@ async function sendAdminEmail(order, customer, items, address) {
             ? 'Core'
             : 'Tarsus';
     };
-    
-    const productsHTML = items.map(item => `
-        <tr style="border-bottom: 1px solid #ddd;">
-            <td style="padding: 12px; text-align: left;">${item.product_name}</td>
-            <td style="padding: 12px; text-align: center;">${item.product_number || 'N/A'}</td>
-            <td style="padding: 12px; text-align: center; font-weight: bold;">${getVendorName(item)}</td>
-            <td style="padding: 12px; text-align: center;">${item.quantity}</td>
-            <td style="padding: 12px; text-align: right;">R${parseFloat(item.warehouse_price).toLocaleString()}</td>
-            <td style="padding: 12px; text-align: right;">R${parseFloat(item.price).toLocaleString()}</td>
-            <td style="padding: 12px; text-align: right;">R${(item.price * item.quantity).toLocaleString()}</td>
-        </tr>
-    `).join('');
+
+    const orderItems = items.map(item => {
+        const vendor = getVendorName(item);
+        return {
+            title: item.product_name || 'Ordered item',
+            meta: [
+                `Code ${item.product_number || 'N/A'}`,
+                vendor,
+                `Qty ${item.quantity || 0}`,
+                `Cost ${formatCurrency(item.warehouse_price)}`,
+                `Retail ${formatCurrency(item.price)}`
+            ],
+            amount: formatCurrency(Number(item.price || 0) * Number(item.quantity || 0))
+        };
+    });
+    const title = `New order #${order.id}`;
+    const adminHtml = createEmail({
+        variant: 'success',
+        eyebrow: 'ORDER DESK',
+        title,
+        preview: `A new order was received from ${customer.username || customer.email || 'a customer'}.`,
+        intro: 'A new ProQ Pilot order is ready for fulfilment.',
+        body: section('Customer information', detailsTable([
+            { label: 'Customer', value: customer.username || 'Not supplied' },
+            { label: 'Email', value: customer.email },
+            { label: 'Phone', value: address.phone || 'Not provided' }
+        ]))
+            + section('Delivery address', detailsTable([
+                { label: 'Address', value: [address.line1, address.line2].filter(Boolean).join(', ') },
+                { label: 'City', value: [address.city, address.province, address.postal_code].filter(Boolean).join(', ') },
+                { label: 'Country', value: address.country },
+                { label: 'Delivery instructions', value: address.delivery_instructions }
+            ]))
+            + section('Order items', itemList(orderItems))
+            + section('Order totals', detailsTable([
+                { label: 'Subtotal', value: formatCurrency(Number(order.total_amount || 0) - 75) },
+                { label: 'Delivery', value: formatCurrency(75) },
+                { label: 'Total', value: formatCurrency(order.total_amount) }
+            ])),
+        footerNote: 'Automated order notification. Reply only if follow-up is required.'
+    });
 
     const mailOptions = {
         from: `"${STORE_DETAILS.name}" <${EMAIL_SENDERS.sales}>`,
         to: ORDER_NOTIFICATION_RECIPIENTS,
         subject: `New Order Received #${order.id} - ProQ Pilot`,
-        html: `
-            <div style="font-family: Arial, sans-serif; max-width: 900px; margin: 0 auto;">
-                <div style="background: #2c3e50; color: white; padding: 24px; text-align: center;">
-                    <h1 style="margin: 0; font-size: 28px;">🎉 New Order Received</h1>
-                    <p style="margin: 8px 0 0 0; font-size: 16px;">Order #${order.id}</p>
-                </div>
-                
-                <div style="padding: 24px; background: white; border: 1px solid #ddd;">
-                    <h2 style="margin: 0 0 16px 0; color: #2c3e50; border-bottom: 2px solid #00bcd4; padding-bottom: 12px;">Customer Information</h2>
-                    <table style="width: 100%; margin-bottom: 24px;">
-                        <tr>
-                            <td style="padding: 8px 0;"><strong>Customer Name:</strong></td>
-                            <td>${customer.username || 'N/A'}</td>
-                        </tr>
-                        <tr>
-                            <td style="padding: 8px 0;"><strong>Customer Email:</strong></td>
-                            <td>${customer.email}</td>
-                        </tr>
-                        <tr>
-                            <td style="padding: 8px 0;"><strong>Phone:</strong></td>
-                            <td>${address.phone || 'Not provided'}</td>
-                        </tr>
-                    </table>
-                    
-                    <h2 style="margin: 20px 0 16px 0; color: #2c3e50; border-bottom: 2px solid #00bcd4; padding-bottom: 12px;">Delivery Address</h2>
-                    <p style="margin: 0; color: #333;">${address.line1}${address.line2 ? ', ' + address.line2 : ''}</p>
-                    <p style="margin: 4px 0; color: #333;">${address.city}, ${address.province} ${address.postal_code}</p>
-                    <p style="margin: 4px 0; color: #333;">${address.country}</p>
-                    ${address.delivery_instructions ? `<p style="margin: 12px 0 0 0; color: #666;"><strong>Delivery Instructions:</strong> ${address.delivery_instructions}</p>` : ''}
-                    
-                    <h2 style="margin: 20px 0 16px 0; color: #2c3e50; border-bottom: 2px solid #00bcd4; padding-bottom: 12px;">Order Items</h2>
-                    <table style="width: 100%; border-collapse: collapse;">
-                        <thead>
-                            <tr style="background: #f0f0f0; font-weight: bold;">
-                                <th style="padding: 12px; text-align: left; border-bottom: 2px solid #ddd;">Product</th>
-                                <th style="padding: 12px; text-align: center; border-bottom: 2px solid #ddd;">Product #</th>
-                                <th style="padding: 12px; text-align: center; border-bottom: 2px solid #ddd;">Vendor</th>
-                                <th style="padding: 12px; text-align: center; border-bottom: 2px solid #ddd;">Qty</th>
-                                <th style="padding: 12px; text-align: right; border-bottom: 2px solid #ddd;">Warehouse Price</th>
-                                <th style="padding: 12px; text-align: right; border-bottom: 2px solid #ddd;">Retail Price</th>
-                                <th style="padding: 12px; text-align: right; border-bottom: 2px solid #ddd;">Total</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${productsHTML}
-                        </tbody>
-                    </table>
-                    
-                    <div style="margin-top: 20px; text-align: right; padding: 16px; background: #f9f9f9; border-radius: 6px;">
-                        <p style="margin: 0 0 8px 0; color: #666; font-size: 14px;">Subtotal: <strong>R${(order.total_amount - 75).toLocaleString()}</strong></p>
-                        <p style="margin: 0 0 12px 0; color: #666; font-size: 14px;">Delivery: <strong>R75.00</strong></p>
-                        <p style="margin: 0; font-size: 18px; font-weight: bold; color: #00bcd4;">Total: R${parseFloat(order.total_amount).toLocaleString()}</p>
-                    </div>
-                    
-                    <p style="margin: 20px 0 0 0; color: #666; font-size: 12px; text-align: center;">This is an automated notification. Please do not reply to this email.</p>
-                </div>
-            </div>
-        `
+        html: adminHtml,
+        text: createPlainText({
+            title,
+            intro: 'A new ProQ Pilot order is ready for fulfilment.',
+            lines: [
+                `Customer: ${customer.username || 'Not supplied'} (${customer.email || 'No email'})`,
+                `Phone: ${address.phone || 'Not provided'}`,
+                `Delivery address: ${[address.line1, address.line2, address.city, address.province, address.postal_code, address.country].filter(Boolean).join(', ')}`,
+                ...orderItems.map(item => `${item.title} — ${item.meta.join(', ')} — ${item.amount}`),
+                `Subtotal: ${formatCurrency(Number(order.total_amount || 0) - 75)}`,
+                `Delivery: ${formatCurrency(75)}`,
+                `Total: ${formatCurrency(order.total_amount)}`
+            ]
+        })
     };
 
     try {
@@ -4405,7 +4364,7 @@ async function sendAdminEmail(order, customer, items, address) {
         return true;
     } catch (err) {
         console.error(`[EMAIL] Error sending admin email for order #${order.id}:`, err);
-        throw err; // Re-throw to webhook handler
+        throw err;
     }
 }
 

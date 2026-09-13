@@ -10,6 +10,7 @@ const db = require('../utils/db');
 const duoApi = require('../utils/duoApi');
 const catchAsync = require('../utils/catchAsync');
 const { sendSupportEmail } = require('../utils/email');
+const { createEmail, createPlainText, detailsTable, section, notice } = require('../utils/emailTemplates');
 
 
 /**
@@ -167,37 +168,44 @@ router.post('/create-account', catchAsync(async (req, res) => {
             'BEYOND': 'Beyond'
         }[selectedEdition] || selectedEdition;
 
-        const emailContent = `
-        <h2>Welcome to Cisco Duo Security!</h2>
-        <p>Your organization has been successfully created with ProQ Pilot.</p>
-        
-        <h3>Organization Details:</h3>
-        <ul>
-            <li><strong>Organization:</strong> ${organization_name}</li>
-            <li><strong>Edition:</strong> ${editionDisplayName}</li>
-            <li><strong>Licensed Users:</strong> ${user_limit}</li>
-            <li><strong>Account ID:</strong> ${accountId}</li>
-            <li><strong>Administrators:</strong> ${adminText}</li>
-        </ul>
-        
-        <h3>Next Steps:</h3>
-        <ol>
-            <li>Log in to your Duo admin dashboard</li>
-            <li>Configure your security policies</li>
-            <li>Add your team members</li>
-            <li>Enable multi-factor authentication</li>
-            <li>Test with a pilot group</li>
-        </ol>
-        
-        <p><strong>Support:</strong> Our team is available 24/7 for assistance.</p>
-        `;
+        const dashboardUrl = `https://admin-${encodeURIComponent(String(accountId))}.duosecurity.com`;
+        const emailTitle = 'Your Duo Security account is ready';
+        const emailHtml = createEmail({
+            variant: 'success',
+            eyebrow: 'DUO SECURITY',
+            title: emailTitle,
+            preview: `${organization_name} is configured and ready for administration.`,
+            intro: 'Your organisation has been successfully created and configured through ProQ Pilot.',
+            body: section('Organisation details', detailsTable([
+                { label: 'Organisation', value: organization_name },
+                { label: 'Edition', value: editionDisplayName },
+                { label: 'Licensed users', value: `${user_limit} users` },
+                { label: 'Duo account ID', value: accountId },
+                { label: 'Administrators', value: adminText }
+            ])) + section('Recommended next steps', '<ol style="margin:0;padding:0 0 0 19px;color:#253244;font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.7;"><li>Sign in to your Duo Admin dashboard.</li><li>Configure your security policies.</li><li>Add your team members and enable multi-factor authentication.</li><li>Test the rollout with a pilot group.</li></ol>') + notice('ProQ Pilot Support is available if you need help completing your setup.', 'info'),
+            cta: { href: dashboardUrl, label: 'Open Duo Admin', ariaLabel: 'Open your Duo Admin dashboard' }
+        });
+        const emailText = createPlainText({
+            title: emailTitle,
+            intro: 'Your organisation has been successfully created and configured through ProQ Pilot.',
+            lines: [
+                `Organisation: ${organization_name}`,
+                `Edition: ${editionDisplayName}`,
+                `Licensed users: ${user_limit}`,
+                `Duo account ID: ${accountId}`,
+                `Administrators: ${adminText}`,
+                'Next steps: sign in to Duo Admin, configure policies, add your team members, and test with a pilot group.'
+            ],
+            cta: { href: dashboardUrl, label: 'Open Duo Admin' }
+        });
 
         for (const email of admin_emails) {
             try {
                 await sendSupportEmail({
                     to: email,
                     subject: `Duo Security Account Created: ${organization_name}`,
-                    html: emailContent
+                    html: emailHtml,
+                    text: emailText
                 });
                 console.log(`[Email] Sent confirmation to ${email}`);
             } catch (err) {
@@ -303,27 +311,39 @@ router.post('/upgrade-license', catchAsync(async (req, res) => {
 
         // Step 5: Send confirmation email
         const adminEmails = JSON.parse(duoOrg.admin_emails || '[]');
-        const emailContent = `
-        <h2>Duo License Upgraded!</h2>
-        <p><strong>${duoOrg.organization_name}</strong> has been upgraded successfully.</p>
-        
-        <h3>Upgrade Summary:</h3>
-        <ul>
-            <li><strong>Organization:</strong> ${duoOrg.organization_name}</li>
-            <li><strong>Previous Limit:</strong> ${oldLimit} users</li>
-            <li><strong>New Limit:</strong> ${new_user_limit} users</li>
-            <li><strong>Additional Users:</strong> ${new_user_limit - oldLimit}</li>
-        </ul>
-        
-        <p>You can now protect more team members. Log in to your dashboard to assign new users.</p>
-        `;
+        const additionalUsers = new_user_limit - oldLimit;
+        const emailTitle = 'Your Duo license has been upgraded';
+        const emailHtml = createEmail({
+            variant: 'success',
+            eyebrow: 'DUO SECURITY',
+            title: emailTitle,
+            preview: `${duoOrg.organization_name} now has capacity for ${new_user_limit} users.`,
+            intro: `${duoOrg.organization_name} has been upgraded successfully.`,
+            body: section('Upgrade summary', detailsTable([
+                { label: 'Organisation', value: duoOrg.organization_name },
+                { label: 'Previous limit', value: `${oldLimit} users` },
+                { label: 'New limit', value: `${new_user_limit} users` },
+                { label: 'Additional capacity', value: `${additionalUsers} users` }
+            ])) + notice('You can now protect more team members. Sign in to Duo Admin to assign new users.', 'info')
+        });
+        const emailText = createPlainText({
+            title: emailTitle,
+            intro: `${duoOrg.organization_name} has been upgraded successfully.`,
+            lines: [
+                `Previous limit: ${oldLimit} users`,
+                `New limit: ${new_user_limit} users`,
+                `Additional capacity: ${additionalUsers} users`,
+                'You can now protect more team members. Sign in to Duo Admin to assign new users.'
+            ]
+        });
 
         for (const email of adminEmails) {
             try {
                 await sendSupportEmail({
                     to: email,
                     subject: `Duo License Upgraded: ${duoOrg.organization_name}`,
-                    html: emailContent
+                    html: emailHtml,
+                    text: emailText
                 });
             } catch (err) {
                 console.error(`Error sending upgrade email to ${email}:`, err.message);

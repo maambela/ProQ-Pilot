@@ -1,9 +1,9 @@
 const axios = require('axios');
 
 const EMAIL_SENDERS = {
-    sales: process.env.EMAIL_SALES_FROM || 'sales@stackopsit.co.za',
-    support: process.env.EMAIL_SUPPORT_FROM || 'support@stackopsit.co.za',
-    noreply: process.env.EMAIL_NOREPLY_FROM || 'noreply@stackopsit.co.za'
+    sales: process.env.EMAIL_SALES_FROM || 'sales@proqpilot.com',
+    support: process.env.EMAIL_SUPPORT_FROM || 'support@proqpilot.com',
+    noreply: process.env.EMAIL_NOREPLY_FROM || 'noreply@proqpilot.com'
 };
 
 const ORDER_NOTIFICATION_RECIPIENTS = [

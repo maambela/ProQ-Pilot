@@ -4,6 +4,7 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const AppError = require('../utils/appError');
 const { sendNoReplyEmail } = require('../utils/email');
+const { createEmail, createPlainText, notice } = require('../utils/emailTemplates');
 
 function getPublicBaseUrl(req) {
     return (process.env.PUBLIC_BASE_URL || `${req.protocol}://${req.get('host')}`).replace(/\/+$/, '');
@@ -19,19 +20,31 @@ function validatePassword(password, passwordConfirm) {
 }
 
 async function sendVerificationEmail(req, user, verificationToken) {
-    const verifyURL = `${getPublicBaseUrl(req)}/verify-email.html?token=${encodeURIComponent(verificationToken)}`;
-    const html = `
-        <h1>Welcome to ProQ Pilot!</h1>
-        <p>Please verify your email by clicking the link below:</p>
-        <p><a href="${verifyURL}" target="_blank">Verify Email</a></p>
-        <p>This link will expire in 24 hours.</p>
-    `;
+    const publicBaseUrl = getPublicBaseUrl(req);
+    const verifyURL = `${publicBaseUrl}/verify-email.html?token=${encodeURIComponent(verificationToken)}`;
+    const title = 'Verify your email address';
+    const html = createEmail({
+        publicBaseUrl,
+        variant: 'info',
+        eyebrow: 'ACCOUNT VERIFICATION',
+        title,
+        preview: 'Complete your ProQ Pilot account setup.',
+        intro: 'Welcome to ProQ Pilot. Confirm your email address to activate your account.',
+        body: notice('For your security, this verification link expires in 24 hours.', 'info'),
+        cta: { href: verifyURL, label: 'Verify email address', ariaLabel: 'Verify your ProQ Pilot email address' },
+        footerNote: 'If you did not create a ProQ Pilot account, you can safely ignore this email.'
+    });
 
     await sendNoReplyEmail({
         to: user.email,
-        subject: 'Email Verification - ProQ Pilot',
+        subject: 'Verify your email address — ProQ Pilot',
         html,
-        text: `Welcome to ProQ Pilot. Verify your email within 24 hours: ${verifyURL}`
+        text: createPlainText({
+            title,
+            intro: 'Welcome to ProQ Pilot. Confirm your email address to activate your account.',
+            lines: ['For your security, this verification link expires in 24 hours.', 'If you did not create a ProQ Pilot account, you can safely ignore this email.'],
+            cta: { href: verifyURL, label: 'Verify email address' }
+        })
     });
 }
 
@@ -108,20 +121,32 @@ exports.forgotPassword = catchAsync(async (req, res, next) => {
     const reset = await User.createPasswordResetToken(email);
 
     if (reset) {
-        const resetURL = `${getPublicBaseUrl(req)}/resetpassword.html?token=${encodeURIComponent(reset.resetToken)}`;
-        const html = `
-            <h1>Reset your ProQ Pilot password</h1>
-            <p>We received a request to reset the password for your account.</p>
-            <p><a href="${resetURL}" target="_blank">Choose a new password</a></p>
-            <p>This link expires in one hour. If you did not request it, you can ignore this email.</p>
-        `;
+        const publicBaseUrl = getPublicBaseUrl(req);
+        const resetURL = `${publicBaseUrl}/resetpassword.html?token=${encodeURIComponent(reset.resetToken)}`;
+        const title = 'Reset your password';
+        const html = createEmail({
+            publicBaseUrl,
+            variant: 'warning',
+            eyebrow: 'ACCOUNT SECURITY',
+            title,
+            preview: 'Choose a new password for your ProQ Pilot account.',
+            intro: 'We received a request to reset the password for your ProQ Pilot account.',
+            body: notice('This secure reset link expires in one hour. If you did not request it, no action is needed.', 'warning'),
+            cta: { href: resetURL, label: 'Choose a new password', ariaLabel: 'Choose a new ProQ Pilot password' },
+            footerNote: 'For your protection, never share this link with anyone.'
+        });
 
         try {
             await sendNoReplyEmail({
                 to: reset.user.email,
                 subject: 'Reset your ProQ Pilot password',
                 html,
-                text: `Reset your ProQ Pilot password within one hour: ${resetURL}`
+                text: createPlainText({
+                    title,
+                    intro: 'We received a request to reset the password for your ProQ Pilot account.',
+                    lines: ['This secure reset link expires in one hour.', 'If you did not request it, no action is needed.', 'For your protection, never share this link with anyone.'],
+                    cta: { href: resetURL, label: 'Choose a new password' }
+                })
             });
         } catch (error) {
             console.error('[AUTH] Password reset email failed:', error.message);
