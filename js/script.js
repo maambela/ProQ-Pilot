@@ -16,14 +16,14 @@ function isLocalhostDevelopment() {
 function enforceDevelopmentGate() {
     const currentPage = (window.location.pathname.split('/').pop() || 'index.html').toLowerCase();
     const publicPages = new Set([
-        'development.html',
+        'welcome.html',
         'signin.html',
         'signup.html',
         'resetpassword.html'
     ]);
 
     if (!publicPages.has(currentPage) && !hasDeveloperAccess()) {
-        window.location.replace('development.html');
+        window.location.replace('welcome.html');
     }
 }
 
