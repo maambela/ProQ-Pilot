@@ -27,7 +27,7 @@
 
 .signin-page .auth-card {
     position: relative;
-    width: min(438px, 100%);
+    width: min(390px, 100%);
     min-height: calc(100svh - 2cm);
     height: auto;
     padding: 22px 42px 18px;
