@@ -1,0 +1,285 @@
+.signin-page {
+    --signin-teal: #00d2be;
+    --signin-mint: #a3e9d9;
+    --signin-blue: #69d7ff;
+    --signin-pink: #ffadc8;
+    position: relative;
+    min-height: 100vh;
+    overflow-x: hidden;
+}
+
+.signin-page::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    background: rgba(0, 0, 0, 0.62);
+}
+
+.signin-page .auth-page {
+    position: relative;
+    z-index: 1;
+    min-height: 100svh;
+    padding: 1cm 18px;
+    align-items: stretch;
+}
+
+.signin-page .auth-card {
+    position: relative;
+    width: min(438px, 100%);
+    min-height: calc(100svh - 2cm);
+    height: auto;
+    padding: 22px 42px 18px;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.26);
+    border-radius: 24px;
+    background:
+        radial-gradient(circle at 0% 0%, rgba(255, 255, 255, 0.34), transparent 34%),
+        radial-gradient(circle at 100% 100%, rgba(255, 255, 255, 0.24), transparent 38%),
+        linear-gradient(145deg, rgba(255, 255, 255, 0.13), rgba(255, 255, 255, 0.035) 48%, rgba(0, 210, 190, 0.04));
+    box-shadow: 0 20px 70px rgba(0, 0, 0, 0.42), 0 0 12px rgba(255, 255, 255, 0.72), 0 0 28px rgba(255, 255, 255, 0.42), inset 0 1px 0 rgba(255, 255, 255, 0.24);
+    animation: signin-border-glow 3.2s ease-in-out infinite;
+    filter: none;
+    backdrop-filter: url("#glass-distortion") blur(26px) saturate(150%);
+    -webkit-backdrop-filter: url("#glass-distortion") blur(26px) saturate(150%);
+    display: flex;
+    flex-direction: column;
+    text-align: left;
+}
+
+.signin-page .auth-card::after {
+    content: "";
+    position: absolute;
+    inset: 1px;
+    z-index: -1;
+    border-radius: 23px;
+    background: rgba(5, 8, 9, 0.14);
+}
+
+.signin-glass-filter {
+    position: fixed;
+    width: 0;
+    height: 0;
+    pointer-events: none;
+}
+
+.signin-brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: rgba(255, 255, 255, 0.72);
+    font-size: 0.78rem;
+    letter-spacing: 0.04em;
+}
+
+.signin-logo {
+    display: grid;
+    place-items: center;
+    width: 132px;
+    height: 42px;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+}
+
+.signin-logo img {
+    display: block;
+    width: 132px;
+    height: auto;
+    object-fit: contain;
+}
+
+.signin-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    transform: translateY(-18px);
+}
+
+.signin-heading {
+    margin: 0 0 22px;
+}
+
+.signin-kicker {
+    color: var(--signin-teal);
+    font-size: 0.65rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+}
+
+.signin-heading p {
+    margin: 0;
+    color: rgba(255, 255, 255, 0.62);
+    font-size: 0.82rem;
+}
+
+.provider-button,
+.signin-page .auth-form .btn-primary {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    width: fit-content;
+    max-width: 100%;
+    align-self: center;
+    padding: 8px 30px;
+    box-sizing: border-box;
+    min-height: 46px;
+    border: 1px solid rgba(255, 255, 255, 0.28);
+    border-radius: 999px;
+    color: #fff;
+    background: rgba(255, 255, 255, 0.11);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18);
+    cursor: pointer;
+    font: inherit;
+    font-size: 0.78rem;
+    transition: border-color 0.25s ease, background 0.25s ease, transform 0.25s ease;
+}
+
+.provider-button:hover,
+.signin-page .auth-form .btn-primary:hover {
+    border-color: rgba(0, 210, 190, 0.7);
+    background: rgba(0, 210, 190, 0.15);
+    transform: translateY(-2px);
+}
+
+.provider-button > i,
+.signin-page .auth-form .btn-primary > i {
+    color: var(--signin-mint);
+    font-size: 1.1rem;
+}
+
+.provider-mark {
+    display: grid;
+    grid-template-columns: repeat(2, 7px);
+    gap: 2px;
+}
+
+.provider-mark i {
+    display: block;
+    width: 7px;
+    height: 7px;
+}
+
+.provider-mark i:nth-child(1) { background: #f35325; }
+.provider-mark i:nth-child(2) { background: #81bc06; }
+.provider-mark i:nth-child(3) { background: #05a6f0; }
+.provider-mark i:nth-child(4) { background: #ffba08; }
+
+.signin-divider {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 16px 0 12px;
+    color: rgba(255, 255, 255, 0.42);
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+}
+
+.signin-divider::before,
+.signin-divider::after {
+    content: "";
+    height: 1px;
+    flex: 1;
+    background: rgba(255, 255, 255, 0.14);
+}
+
+.signin-page .auth-form {
+    gap: 8px;
+}
+
+.signin-page .auth-form label {
+    margin-top: 5px;
+    color: rgba(255, 255, 255, 0.68);
+    font-size: 0.68rem;
+}
+
+.signin-page .auth-form input {
+    min-height: 44px;
+    padding: 11px 15px;
+    border-radius: 12px;
+    font-size: 0.78rem;
+}
+
+.signin-page .auth-form .btn-primary {
+    margin-top: 12px;
+    background: linear-gradient(100deg, rgba(0, 210, 190, 0.8), rgba(105, 215, 255, 0.42));
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.24);
+    animation: none;
+}
+
+.signin-page .auth-links {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 6px 10px;
+    margin-top: 18px;
+    font-size: 0.68rem;
+}
+
+.signin-page .auth-links span {
+    color: rgba(255, 255, 255, 0.46);
+}
+
+.signin-page .auth-links a {
+    color: var(--signin-mint);
+}
+
+.signin-trust {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    margin-top: 14px;
+    padding-top: 10px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.52);
+    font-size: 0.62rem;
+}
+
+.signin-trust i {
+    color: var(--signin-teal);
+    margin-right: 4px;
+}
+
+@keyframes signin-border-glow {
+    0%, 100% {
+        box-shadow: 0 20px 70px rgba(0, 0, 0, 0.42), 0 0 10px rgba(255, 255, 255, 0.58), 0 0 22px rgba(255, 255, 255, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.24);
+    }
+    50% {
+        box-shadow: 0 20px 70px rgba(0, 0, 0, 0.42), 0 0 16px rgba(255, 255, 255, 0.88), 0 0 36px rgba(255, 255, 255, 0.52), inset 0 1px 0 rgba(255, 255, 255, 0.34);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .signin-page .auth-card {
+        animation: none;
+    }
+}
+
+@media (max-width: 520px) {
+    .signin-page .auth-page {
+        padding: 1cm 12px;
+    }
+
+    .signin-page .auth-card {
+        min-height: calc(100svh - 2cm);
+        padding: 28px 22px 22px;
+        border-radius: 20px;
+    }
+
+    .signin-heading {
+        margin-top: 0;
+    }
+
+    .signin-content {
+        transform: translateY(-12px);
+    }
+
+    .signin-trust {
+        flex-direction: column;
+        gap: 5px;
+    }
+}

@@ -3,61 +3,143 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ProQ Pilot | Development</title>
+    <title>ProQ Pilot | Welcome</title>
     <link rel="stylesheet" href="css/style.css?v=cart-responsive-smart-recs-20260709">
-    <link rel="stylesheet" href="css/development.css?v=testing-bg-1">
     <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
 </head>
-<body class="development-page">
-    <header class="main-header dev-header">
+<body>
+    <header class="main-header">
         <div class="header-container">
             <div class="logo-area">
                 <span class="logo-icon" aria-label="ProQ Pilot"></span>
             </div>
-            <nav class="nav-links">
-                <a href="development.html" class="active">Development</a>
-                <a href="signin.html?redirect=index.html">Developer Access</a>
-            </nav>
 
+            <div class="header-actions">
+                <a href="signin.html?redirect=index.html" class="auth-wrapper" aria-label="Sign in">
+                    <span class="auth-icon"><i class='bx bx-user'></i></span>
+                </a>
+                <div class="hamburger" id="hamburger">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+            </div>
         </div>
     </header>
 
-    <main class="dev-gate">
-        <section class="dev-hero">
-            <div class="dev-hero-content">
-                <span class="badge-pill">Development Access</span>
-                <h3>ProQ Pilot is being prepared.</h3>
-                <p>
-                    Access is limited to the development team while the site is being finalized.
-                </p>
-
-                <div class="dev-actions">
-                    <a href="signin.html?redirect=index.html" class="btn btn-primary" id="devAccessButton">
-                        Developer sign in
-                    </a>
+    <main>
+        <section class="hero">
+            <div class="hero-content">
+                <span class="badge-pill">Welcome to ProQ Pilot</span>
+                <h1>Precision IT procurement <span class="accent-text">for modern businesses</span></h1>
+                <p>Welcome to ProQ Pilot. Sign in to equip your team with premium devices, licensing, security, and role-ready onboarding kits.</p>
+                <div class="hero-btns">
+                    <a href="signin.html?redirect=index.html" class="btn btn-primary">Sign in</a>
+                    <a href="signup.html" class="btn btn-primary">Create an account</a>
+                </div>
+                <div class="hero-stats">
+                    <div class="stat-item">4+ <span>Premium Brands</span></div>
+                    <div class="stat-item">50+ <span>Laptop Models</span></div>
+                    <div class="stat-item">24/7 <span>Support</span></div>
+                </div>
+            </div>
+            <div class="hero-visual animate-on-scroll slide-in-right">
+                <div class="slideshow-container">
+                    <div class="slide fade show">
+                        <img src="https://images.unsplash.com/photo-1517336714731-489689fd1ca8?q=80&w=1000&auto=format&fit=crop" alt="MacBook">
+                    </div>
+                    <div class="slide fade">
+                        <img src="https://images.unsplash.com/photo-1589561084283-930aa7b1ce50?q=80&w=1000&auto=format&fit=crop" alt="HP Spectre">
+                    </div>
+                    <div class="slide fade">
+                        <img src="https://images.unsplash.com/photo-1515378791036-0648a3ef77b2?q=80&w=1000&auto=format&fit=crop" alt="Microsoft Surface">
+                    </div>
+                    <div class="slide fade">
+                        <img src="https://images.unsplash.com/photo-1525547719571-a2d4ac8945e2?q=80&w=1000&auto=format&fit=crop" alt="Acer Swift">
+                    </div>
+                    <div class="dot-container">
+                        <span class="dot active"></span>
+                        <span class="dot"></span>
+                        <span class="dot"></span>
+                        <span class="dot"></span>
+                    </div>
                 </div>
             </div>
         </section>
+
+        <section class="features animate-on-scroll">
+            <div class="section-title">
+                <h2>Why teams onboard through ProQ Pilot</h2>
+                <p>One place to align hardware, licensing, security, and role-specific equipment.</p>
+            </div>
+            <div class="feature-grid">
+                <div class="feature-card animate-on-scroll slide-in-left">
+                    <div class="icon-box"><i class='bx bx-desktop'></i></div>
+                    <h3>Product View</h3>
+                    <p>Experience every angle with immersive models</p>
+                </div>
+                <div class="feature-card animate-on-scroll slide-in-bottom">
+                    <div class="icon-box"><i class='bx bx-cog'></i></div>
+                    <h3>Latest Hardware</h3>
+                    <p>Only the newest processors and graphics cards</p>
+                </div>
+                <div class="feature-card animate-on-scroll slide-in-right">
+                    <div class="icon-box"><i class='bx bx-run'></i></div>
+                    <h3>Fast Delivery</h3>
+                    <p>Get your device within a week</p>
+                </div>
+                <div class="feature-card animate-on-scroll slide-in-top">
+                    <div class="icon-box"><i class='bx bx-shield'></i></div>
+                    <h3>Extended Warranty</h3>
+                    <p>3-year warranty on all premium devices</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="brands-section animate-on-scroll">
+            <div class="section-title">
+                <h2>Brands We Sell</h2>
+                <p>Premium brands you can trust for quality and performance</p>
+            </div>
+            <div class="brands-grid">
+                <div class="brand-card animate-on-scroll fade-in-scale"><img src="Images/HP.png" alt="HP" class="brand-image"></div>
+                <div class="brand-card animate-on-scroll fade-in-scale"><img src="Images/DellLaptops.PNG" alt="Dell" class="brand-image"></div>
+                <div class="brand-card animate-on-scroll fade-in-scale"><img src="Images/Apple.png" alt="Apple" class="brand-image"></div>
+                <div class="brand-card animate-on-scroll fade-in-scale"><img src="Images/Microsoft.png" alt="Microsoft" class="brand-image"></div>
+                <div class="brand-card animate-on-scroll fade-in-scale"><img src="Images/AcerStick.png" alt="Acer" class="brand-image"></div>
+                <div class="brand-card animate-on-scroll fade-in-scale"><img src="Images/lenovo.PNG" alt="Lenovo" class="brand-image"></div>
+            </div>
+        </section>
+
+        <footer class="site-footer"></footer>
     </main>
 
+    <script src="js/site-footer.js?v=footer-mobile-bg-20260708"></script>
+    <script src="js/script.js?v=instant-product-cache-20260709"></script>
+    <script src="js/auth-ui.js"></script>
     <script>
-        (function () {
-            function hasDeveloperAccess() {
-                try {
-                    const token = localStorage.getItem('token');
-                    const user = JSON.parse(localStorage.getItem('user') || 'null');
-                    return Boolean(token && user && user.userID);
-                } catch (err) {
-                    return false;
-                }
-            }
+        const headerContainer = document.querySelector('.header-container');
+        headerContainer?.addEventListener('click', (event) => {
+            const link = event.target.closest('a');
+            if (!link || !headerContainer.contains(link)) return;
 
-            if (hasDeveloperAccess()) {
-                const button = document.getElementById('devAccessButton');
-                button.href = 'index.html';
-                button.textContent = 'Enter development area';
+            const isHoverMenuLink = link.closest('.nav-preview-panel');
+            const target = link.dataset.authTarget || (isHoverMenuLink && link.getAttribute('href'));
+            if (!target || link.getAttribute('href')?.startsWith('signin.html')) return;
+
+            let isAuthenticated = false;
+            try {
+                const token = localStorage.getItem('token');
+                const user = JSON.parse(localStorage.getItem('user') || 'null');
+                isAuthenticated = Boolean(token && user && user.userID);
+            } catch (error) {
+                isAuthenticated = false;
             }
-        })();
+            if (isAuthenticated) return;
+
+            event.preventDefault();
+            window.location.href = `signin.html?redirect=${encodeURIComponent(target)}`;
+        });
     </script>
 </body>
 </html>

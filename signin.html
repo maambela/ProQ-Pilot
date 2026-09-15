@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Sign In</title>
+    <title>ProQ Pilot | Sign In</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <!-- Google Font -->
@@ -10,38 +10,61 @@
 
     <!-- Main Styles -->
     <link rel="stylesheet" href="css/style.css?v=cart-responsive-smart-recs-20260709">
+    <link rel="stylesheet" href="css/signin.css?v=proq-portal-live-glow-20260915">
     <script src="js/auth-ui.js?v=admin-role-20260615"></script>
 </head>
-<body>
+<body class="signin-page">
 
-    <a href="index.html" class="back-shopping">
-        ← Continue shopping
-    </a>
-
+    <svg class="signin-glass-filter" aria-hidden="true" width="0" height="0">
+        <filter id="glass-distortion" x="-10%" y="-10%" width="120%" height="120%">
+            <feTurbulence type="fractalNoise" baseFrequency="0.012 0.018" numOctaves="2" seed="7" result="noise"></feTurbulence>
+            <feDisplacementMap in="SourceGraphic" in2="noise" scale="7" xChannelSelector="R" yChannelSelector="G"></feDisplacementMap>
+        </filter>
+    </svg>
 
     <section class="auth-page">
         <div class="auth-card">
-            <h2>Welcome Back</h2>
-            <p>Sign in with an approved developer account</p>
+            <div class="signin-brand">
+                <a href="development.html" class="signin-logo" aria-label="Return to ProQ Pilot welcome page">
+                    <img src="Images/Logos/Proq2.png" alt="ProQ Pilot">
+                </a>
+            </div>
 
-            <form class="auth-form" id="loginForm">
-                <input type="email" name="email" placeholder="Email address" required>
-                <input type="password" name="password" placeholder="Password" required>
-                <span class="error-text" id="apiError" style="color: #dc2626; display: none; font-size: 0.8rem; margin-top: 5px;"></span>
+            <div class="signin-content">
+                <div class="signin-heading">
+                    <span class="signin-kicker">Secure procurement portal</span>
+                    <p>Sign in to continue to your ProQ Pilot workspace.</p>
+                </div>
 
-                <button class="btn btn-primary" type="submit">
-                    Sign In
+                <button class="provider-button" type="button" id="microsoftSignInButton">
+                    <span class="provider-mark" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+                    <span>Sign in with Microsoft</span>
+                    <i class="bx bx-right-arrow-alt" aria-hidden="true"></i>
                 </button>
-            </form>
 
-            <div class="auth-links">
-                <p>
-                    <a href="resetpassword.html">Forgot password?</a>
-                </p>
-                <p>
-                    Need to create a tester account?
-                    <a href="signup.html">Sign up</a>
-                </p>
+                <div class="signin-divider"><span>or use email</span></div>
+
+                <form class="auth-form" id="loginForm">
+                    <label for="email">Email address</label>
+                    <input id="email" type="email" name="email" placeholder="you@company.com" autocomplete="email" required>
+                    <label for="password">Password</label>
+                    <input id="password" type="password" name="password" placeholder="Enter your password" autocomplete="current-password" required>
+                    <span class="error-text" id="apiError" style="color: #dc2626; display: none; font-size: 0.8rem; margin-top: 5px;"></span>
+
+                    <button class="btn btn-primary" type="submit">
+                        Sign in with email <i class="bx bx-right-arrow-alt" aria-hidden="true"></i>
+                    </button>
+                </form>
+
+                <div class="auth-links">
+                    <span>New to ProQ Pilot?</span>
+                    <a href="signup.html">Create an account</a>
+                </div>
+
+                <div class="signin-trust">
+                    <span><i class="bx bx-shield-quarter" aria-hidden="true"></i> Secure login</span>
+                    <span><i class="bx bx-check-circle" aria-hidden="true"></i> 24/7 portal access</span>
+                </div>
             </div>
         </div>
     </section>
@@ -101,6 +124,13 @@
                 apiError.textContent = 'An error occurred. Please try again later.';
                 apiError.style.display = 'block';
             }
+        });
+
+        document.getElementById('microsoftSignInButton').addEventListener('click', () => {
+            const apiError = document.getElementById('apiError');
+            apiError.textContent = 'Microsoft sign-in is not enabled for this portal yet. Use your email to continue.';
+            apiError.style.display = 'block';
+            document.getElementById('email').focus();
         });
     </script>
 </body>
