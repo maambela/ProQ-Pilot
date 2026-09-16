@@ -104,6 +104,8 @@ app.use('/product_images', express.static('product_images', {
     setHeaders: setLongLivedAssetCache
 }));
 
+app.get('/development.html', (req, res) => res.redirect(302, '/welcome.html'));
+
 // Serve static files from the root directory (to access HTML files and bundled assets).
 app.use(express.static('./', {
     maxAge: 0,
