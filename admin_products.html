@@ -1,9 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <script src="js/session.js?v=entra-access-20260917"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <script src="js/dev-access.js"></script>
+    <script src="js/dev-access.js?v=entra-access-20260917"></script>
     <title>Admin - Product Management</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -422,6 +423,8 @@
                 <a href="admin_dashboard.html">Dashboard</a>
                 <a href="admin_products.html" class="active">Manual Products</a>
                 <a href="admin_core_products.html">Core Products</a>
+                <a href="admin_companies.html">Companies</a>
+                <a href="admin_users.html">Users</a>
                 <a href="store.html">Store</a>
             </nav>
             <div class="header-actions">
@@ -447,6 +450,8 @@
             <a href="admin_dashboard.html" class="nav-link">Dashboard</a>
             <a href="admin_products.html" class="nav-link active">Manual Products</a>
             <a href="admin_core_products.html" class="nav-link">Core API Products</a>
+            <a href="admin_companies.html" class="nav-link">Companies</a>
+            <a href="admin_users.html" class="nav-link">Users</a>
             <a href="index.html" class="nav-link">View Store</a>
         </div>
 
@@ -637,7 +642,7 @@
 
             try {
                 // 1. Save products
-                const response = await fetch('http://localhost:3000/api/v1/products', {
+                const response = await fetch('/api/v1/products', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ products: productsData })
@@ -660,7 +665,7 @@
                         const formData = new FormData();
                         files.forEach(file => formData.append('photos', file));
 
-                        const imgResponse = await fetch(`http://localhost:3000/api/v1/products/${createdProduct.id}/images`, {
+                        const imgResponse = await fetch(`/api/v1/products/${createdProduct.id}/images`, {
                             method: 'POST',
                             body: formData
                         });
@@ -684,6 +689,6 @@
             }
         }
     </script>
-    <script src="js/auth-ui.js?v=admin-role-20260615"></script>
+    <script src="js/auth-ui.js?v=entra-access-20260917"></script>
 </body>
 </html>

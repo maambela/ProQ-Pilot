@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="js/session.js?v=entra-access-20260917"></script>
+    <script src="js/auth-ui.js?v=entra-access-20260917"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
+    <link href="css/style.css?v=cart-responsive-smart-recs-20260709" rel="stylesheet">
+    <link href="css/admin-clean.css" rel="stylesheet">
+    <link href="css/admin-access.css?v=entra-access-20260917" rel="stylesheet">
+    <title>Companies | ProQ Pilot Administration</title>
+</head>
+<body class="access-page" data-access-page="companies">
+    <a class="skip-link" href="#main">Skip to content</a>
+    <header class="main-header">
+        <div class="header-container">
+            <div class="logo-area"><span class="logo-icon" aria-label="ProQ Pilot"></span></div>
+            <nav class="nav-links" id="nav-links" aria-label="Administration">
+                <a href="admin_dashboard.html">Dashboard</a>
+                <a href="admin_products.html">Products</a>
+                <a href="admin_core_products.html">Core products</a>
+                <a href="admin_companies.html" class="active" aria-current="page">Companies</a>
+                <a href="admin_users.html" >Users</a>
+                <a href="store.html">Store</a>
+            </nav>
+            <div class="header-actions">
+                <button class="hamburger" id="hamburger" type="button" aria-label="Toggle navigation" aria-controls="nav-links" aria-expanded="false"><span></span><span></span><span></span></button>
+            </div>
+        </div>
+    </header>
+    <main class="access-main" id="main">
+        <div class="access-heading">
+            <div><span class="access-kicker">Platform administration</span><h1 class="page-title">Companies</h1><p class="access-description">Manage the organisations that can access ProQ Pilot. Approve their people and purchasing permissions in Users.</p></div>
+            <button class="access-button primary" type="button" id="addCompany" disabled><i class="bx bx-plus" aria-hidden="true"></i>Add company</button>
+        </div>
+        <div id="accessNotice" class="access-notice" role="status" aria-live="polite" hidden></div>
+        <div id="accessLoadState" class="access-load-state" role="status">Checking your access…</div>
+        <div id="accessContent" hidden>
+            <section class="access-overview" aria-label="Company overview">
+                <div class="access-metric"><span>Total companies</span><strong id="companyTotal">0</strong></div>
+                <div class="access-metric"><span>Active companies</span><strong id="companyActive">0</strong></div>
+                <div class="access-metric"><span>Approved users</span><strong id="companyUsers">0</strong></div>
+            </section>
+            <section class="access-panel" aria-labelledby="directoryTitle">
+                <div class="access-panel-heading"><div><h2 id="directoryTitle">Company directory</h2><p>Each company is linked to one Microsoft organisation.</p></div><button class="access-button" type="button" data-refresh aria-label="Refresh company directory"><i class="bx bx-refresh" aria-hidden="true"></i>Refresh</button></div>
+                <div class="access-filters">
+                    <div class="access-field search-field"><label for="companySearch">Find a company</label><input type="search" id="companySearch" placeholder="Company name, tenant ID or contact"></div>
+                    <div class="access-field"><label for="companyTypeFilter">Company type</label><select id="companyTypeFilter"><option value="">All types</option><option value="client">Client / customer</option><option value="admin">Admin / staff</option></select></div>
+                    <div class="access-field"><label for="companyStatusFilter">Status</label><select id="companyStatusFilter"><option value="">All statuses</option><option value="active">Active</option><option value="suspended">Suspended</option></select></div>
+                </div>
+                <div class="access-table-wrap" tabindex="0" role="region" aria-label="Companies table">
+                    <table class="access-table"><caption id="companyTableCount">Loading companies…</caption><thead><tr><th scope="col">Company</th><th scope="col">Type</th><th scope="col">Status</th><th scope="col">Users</th><th scope="col">Contact</th><th scope="col">Manage</th></tr></thead><tbody id="companyRows"></tbody></table>
+                </div>
+                <div id="companyEmpty" class="access-empty" hidden></div>
+            </section>
+            <aside class="access-note">Add the company's Microsoft tenant ID, then ask its users to sign in with Microsoft once. Their requests appear on the <a href="admin_users.html">Users page</a> for approval. An admin company can contain platform administrators; it does not grant admin rights to every employee. Suspending a company blocks access while preserving its purchases and records.</aside>
+
+        </div>
+    </main>
+    <dialog class="access-dialog" id="accessDialog" aria-labelledby="dialogTitle" aria-describedby="dialogDescription">
+        <div class="access-dialog-heading">
+            <div><h2 id="dialogTitle"></h2><p id="dialogDescription"></p></div>
+            <button class="access-dialog-close" type="button" id="dialogClose" aria-label="Close dialog">&times;</button>
+        </div>
+        <form id="accessForm">
+            <div class="access-form-body">
+                <div id="formIntro"></div>
+                <div class="access-form-grid" id="formFields"></div>
+                <p class="access-form-error" id="formError" role="alert" hidden></p>
+            </div>
+            <div class="access-dialog-footer">
+                <button class="access-button" type="button" id="dialogCancel">Cancel</button>
+                <button class="access-button primary" type="submit" id="dialogSave">Save changes</button>
+            </div>
+        </form>
+    </dialog>
+    <script src="js/admin-access.js?v=entra-access-20260917"></script>
+</body>
+</html>
+

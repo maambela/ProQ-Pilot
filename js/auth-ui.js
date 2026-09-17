@@ -1,9 +1,9 @@
-document.addEventListener('DOMContentLoaded', () => {
-    const user = JSON.parse(localStorage.getItem('user'));
+document.addEventListener('DOMContentLoaded', async () => {
+    const user = await window.ProQSession?.ready;
     const headerActions = document.querySelector('.header-actions');
     const logoArea = document.querySelector('.logo-area');
     const isAdminPage = window.location.pathname.includes('admin_');
-    const isLocalhostDevelopment = ['localhost', '127.0.0.1', '::1'].includes(window.location.hostname);
+
 
     initHeaderPreview();
 
@@ -57,7 +57,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (user) {
 
-        triggerCartSync(user.userID);
+        triggerCartSync(user.userID).catch(() => {});
 
         if (headerActions) {
             const authWrapper = headerActions.querySelector('.auth-wrapper');
@@ -132,20 +132,15 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         const isAdmin = String(user.role || '').trim().toLowerCase() === 'admin';
-        if (isAdminPage && !isAdmin && !isLocalhostDevelopment) {
+        if (isAdminPage && !isAdmin) {
             window.location.href = 'index.html';
             return;
         }
 
-        const logoutUser = (event) => {
+        const logoutUser = async (event) => {
             event?.preventDefault();
             if (confirm('Are you sure you want to logout?')) {
-                localStorage.removeItem('token');
-                localStorage.removeItem('user');
-                localStorage.removeItem('userID');
-                localStorage.removeItem('cart');
-                localStorage.removeItem('wishlist');
-                window.location.href = 'index.html';
+                try { await window.ProQSession.logout(); } catch (error) { alert(error.message); }
             }
         };
 
@@ -154,7 +149,7 @@ document.addEventListener('DOMContentLoaded', () => {
         document.querySelector('.mobile-nav-signout')?.addEventListener('click', logoutUser);
     } else {
         // If no user but on admin page, redirect
-        if (isAdminPage && !isLocalhostDevelopment) {
+        if (isAdminPage) {
             window.location.href = 'signin.html';
         }
     }
@@ -418,12 +413,12 @@ function initAuthOverlay() {
 async function triggerCartSync(userID) {
     const localCart = JSON.parse(localStorage.getItem('cart')) || [];
     if (localCart.length > 0) {
-        await fetch('/api/v1/cart/sync', {
+        const response = await fetch('/api/v1/cart/sync', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({ userID: userID, items: localCart })
         });
-        localStorage.removeItem('cart'); // Clear guest data
+        if (response.ok) localStorage.removeItem('cart');
     }
 }
 

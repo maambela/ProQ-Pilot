@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="referrer" content="no-referrer">
+    <title>Completing sign-in | ProQ Pilot</title>
+    <script src="js/session.js?v=entra-access-20260917"></script>
+    <script src="js/auth-ui.js?v=entra-access-20260917"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css?v=cart-responsive-smart-recs-20260709">
+    <link rel="stylesheet" href="css/signin.css?v=proq-portal-live-glow-20260915">
+    <style>
+        .signin-heading h1 { color: #fff; font-size: 25px; font-weight: 400; margin: 14px 0; }
+        .signin-page .signin-heading p { color: #d0dcdf; line-height: 1.7; }
+        .completion-retry { display: inline-block; margin-top: 24px; color: #a3e9d9; text-underline-offset: 4px; }
+        .completion-retry:focus-visible { outline: 3px solid #44ffe0; outline-offset: 5px; }
+        [hidden] { display: none !important; }
+    </style>
+</head>
+<body class="signin-page">
+    <main class="auth-page">
+        <div class="auth-card">
+            <div class="signin-brand"><a href="welcome.html" class="signin-logo" aria-label="ProQ Pilot welcome"><img src="Images/Logos/Proq2.png" alt="ProQ Pilot"></a></div>
+            <div class="signin-content">
+                <div class="signin-heading">
+                    <span class="signin-kicker">Secure procurement portal</span>
+                    <h1 id="completionTitle">Completing your sign-in</h1>
+                    <p id="completionStatus" role="status" aria-live="polite">Checking your account and opening your workspace…</p>
+                </div>
+                <a class="completion-retry" id="completionRetry" href="signin.html?error=failed" hidden>Return to sign-in and try again</a>
+            </div>
+        </div>
+    </main>
+    <script>
+        (async () => {
+            try {
+                const requestedRedirect = new URLSearchParams(window.location.search).get('redirect');
+                const completePath = '/api/auth/microsoft/complete' + (requestedRedirect ? '?redirect=' + encodeURIComponent(requestedRedirect) : '');
+                const response = await fetch(completePath, { credentials: 'same-origin', cache: 'no-store', headers: { Accept: 'application/json' } });
+                const result = await response.json();
+                if (!response.ok || result.status !== 'success' || !result.data?.user || !window.ProQSession) throw new Error('Unable to complete sign-in.');
+                const user = await window.ProQSession.refresh();
+                if (!user) throw new Error('No active session.');
+                let target = user.role === 'admin' ? '/admin_dashboard.html' : '/index.html';
+                try {
+                    const url = new URL(result.data.redirect || target, window.location.origin + '/');
+                    const excluded = ['/signin.html', '/microsoft-auth-complete.html', '/signup.html', '/resetpassword.html'];
+                    if (url.origin === window.location.origin && /^\/[a-z0-9_-]+\.html$/i.test(url.pathname) && !excluded.includes(url.pathname.toLowerCase()) && (user.role === 'admin' || !url.pathname.toLowerCase().startsWith('/admin_'))) target = url.pathname + url.search;
+                } catch (_) { /* Keep the safe role-based destination. */ }
+                window.location.replace(target);
+            } catch (_) {
+                document.getElementById('completionTitle').textContent = 'Let’s try that again';
+                document.getElementById('completionStatus').textContent = 'Your sign-in could not be completed. Return to sign-in to start a new Microsoft session.';
+                document.getElementById('completionRetry').hidden = false;
+            }
+        })();
+    </script>
+</body>
+</html>

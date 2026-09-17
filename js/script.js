@@ -1,6 +1,6 @@
 function hasDeveloperAccess() {
     try {
-        if (isLocalhostDevelopment()) return true;
+        if (window.ProQSession?.user) return true;
 
         const token = localStorage.getItem('token');
         const user = JSON.parse(localStorage.getItem('user') || 'null');
@@ -19,7 +19,9 @@ function enforceDevelopmentGate() {
         'welcome.html',
         'signin.html',
         'signup.html',
-        'resetpassword.html'
+        'resetpassword.html',
+        'contact.html',
+        'microsoft-auth-complete.html'
     ]);
 
     if (!publicPages.has(currentPage) && !hasDeveloperAccess()) {
@@ -27,7 +29,7 @@ function enforceDevelopmentGate() {
     }
 }
 
-enforceDevelopmentGate();
+window.ProQSession?.ready.then(enforceDevelopmentGate);
 
 // Helper function to extract clean laptop name (limit to 4 words max)
 function cleanProductName(fullName) {

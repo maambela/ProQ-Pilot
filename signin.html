@@ -4,134 +4,89 @@
     <meta charset="UTF-8">
     <title>ProQ Pilot | Sign In</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <!-- Google Font -->
+    <script src="js/session.js?v=entra-access-20260917"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400&display=swap" rel="stylesheet">
-
-    <!-- Main Styles -->
     <link rel="stylesheet" href="css/style.css?v=cart-responsive-smart-recs-20260709">
     <link rel="stylesheet" href="css/signin.css?v=proq-portal-live-glow-20260915">
-    <script src="js/auth-ui.js?v=admin-role-20260615"></script>
+    <script src="js/auth-ui.js?v=entra-access-20260917"></script>
+    <style>
+        .signin-page .signin-heading h1 { margin: 10px 0 12px; color: #fff; font-size: 26px; font-weight: 400; letter-spacing: -.035em; }
+        .signin-page .signin-heading p, .signin-page .signin-session-note { color: #d0dcdf; line-height: 1.7; }
+        .signin-page .signin-session-note { margin: 22px 0 0; font-size: 11px; }
+        .signin-page .signin-status { margin: 0 0 18px; padding: 12px 14px; border: 1px solid #ffc37c66; border-radius: 8px; background: #382a17; color: #ffe1bc; font-size: 12px; line-height: 1.6; }
+        .signin-page .signin-trust, .signin-page .auth-links span { color: #c4d2d7; }
+        .signin-page :is(button,a):focus-visible { outline: 3px solid #44ffe0; outline-offset: 4px; }
+        .signin-page .provider-button:disabled { opacity: .6; cursor: wait; }
+        .signin-page [hidden] { display: none !important; }
+    </style>
 </head>
 <body class="signin-page">
-
     <svg class="signin-glass-filter" aria-hidden="true" width="0" height="0">
         <filter id="glass-distortion" x="-10%" y="-10%" width="120%" height="120%">
             <feTurbulence type="fractalNoise" baseFrequency="0.012 0.018" numOctaves="2" seed="7" result="noise"></feTurbulence>
             <feDisplacementMap in="SourceGraphic" in2="noise" scale="7" xChannelSelector="R" yChannelSelector="G"></feDisplacementMap>
         </filter>
     </svg>
-
-    <section class="auth-page">
+    <main class="auth-page">
         <div class="auth-card">
             <div class="signin-brand">
-                <a href="welcome.html" class="signin-logo" aria-label="Return to ProQ Pilot welcome page">
-                    <img src="Images/Logos/Proq2.png" alt="ProQ Pilot">
-                </a>
+                <a href="welcome.html" class="signin-logo" aria-label="Return to ProQ Pilot welcome page"><img src="Images/Logos/Proq2.png" alt="ProQ Pilot"></a>
             </div>
-
             <div class="signin-content">
                 <div class="signin-heading">
                     <span class="signin-kicker">Secure procurement portal</span>
-                    <p>Sign in to continue to your ProQ Pilot workspace.</p>
+                    <h1>Your workspace awaits.</h1>
+                    <p>Use your Microsoft work account to access your company's ProQ Pilot workspace.</p>
                 </div>
-
+                <div id="signInStatus" class="signin-status" role="status" aria-live="polite" hidden></div>
                 <button class="provider-button" type="button" id="microsoftSignInButton">
                     <span class="provider-mark" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
                     <span>Sign in with Microsoft</span>
                     <i class="bx bx-right-arrow-alt" aria-hidden="true"></i>
                 </button>
-
-                <div class="signin-divider"><span>or use email</span></div>
-
-                <form class="auth-form" id="loginForm">
-                    <label for="email">Email address</label>
-                    <input id="email" type="email" name="email" placeholder="you@company.com" autocomplete="email" required>
-                    <label for="password">Password</label>
-                    <input id="password" type="password" name="password" placeholder="Enter your password" autocomplete="current-password" required>
-                    <span class="error-text" id="apiError" style="color: #dc2626; display: none; font-size: 0.8rem; margin-top: 5px;"></span>
-
-                    <button class="btn btn-primary" type="submit">
-                        Sign in with email <i class="bx bx-right-arrow-alt" aria-hidden="true"></i>
-                    </button>
-                </form>
-
                 <div class="auth-links">
-                    <span>New to ProQ Pilot?</span>
-                    <a href="signup.html">Create an account</a>
+                    <span>Need access?</span>
+                    <a href="contact.html">Contact the ProQ Pilot team</a>
                 </div>
-
+                <p class="signin-session-note">Your company and account must be approved before you can enter. Your session expires 10 minutes after closing all portal tabs. Browser sleep or going offline can also expire your session.</p>
                 <div class="signin-trust">
                     <span><i class="bx bx-shield-quarter" aria-hidden="true"></i> Secure login</span>
-                    <span><i class="bx bx-check-circle" aria-hidden="true"></i> 24/7 portal access</span>
+                    <span><i class="bx bx-check-circle" aria-hidden="true"></i> Microsoft work accounts</span>
                 </div>
             </div>
         </div>
-    </section>
-
+    </main>
     <script>
-        document.getElementById('loginForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const apiError = document.getElementById('apiError');
-            apiError.style.display = 'none';
-
-            const formData = new FormData(e.target);
-            const data = Object.fromEntries(formData.entries());
-
-            showLoading('Authenticating...');
-
-            try {
-                const response = await fetch('/api/v1/users/login', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(data)
-                });
-
-                const result = await response.json();
-
-                if (response.ok) {
-                    const user = result.data.user;
-                    const isAdmin = String(user.role || '').trim().toLowerCase() === 'admin';
-                    showStatus(
-                        isAdmin ? 'Admin Access Granted' : 'Access Granted',
-                        isAdmin ? 'Opening your admin dashboard...' : 'Welcome to ProQ Pilot!'
-                    );
-                    
-                    // Store token and user data
-                    localStorage.setItem('token', result.token);
-                    localStorage.setItem('user', JSON.stringify(user));
-
-                    // Short delay for the user to see the success message
-                    setTimeout(() => {
-                        if (isAdmin) {
-                            window.location.href = 'admin_dashboard.html';
-                            return;
-                        }
-
-                        const params = new URLSearchParams(window.location.search);
-                        const redirectTo = params.get('redirect') || 'index.html';
-                        window.location.href = redirectTo;
-                    }, 1500);
-                } else {
-                    hideOverlay();
-                    apiError.textContent = result.message || 'Login failed';
-                    apiError.style.display = 'block';
-                }
-            } catch (err) {
-                hideOverlay();
-                apiError.textContent = 'An error occurred. Please try again later.';
-                apiError.style.display = 'block';
+        (() => {
+            const params = new URLSearchParams(window.location.search);
+            const messages = {
+                pending_approval: 'Your Microsoft account was verified. An administrator needs to approve your access before you can enter. Try signing in again after approval.',
+                company_not_approved: 'Your company is not yet approved for ProQ Pilot. Contact the ProQ Pilot team to arrange access.',
+                access_disabled: 'Access for your account or company is currently disabled. Contact your ProQ Pilot administrator.',
+                cancelled: 'Microsoft sign-in was cancelled. You can try again when you are ready.',
+                invalid_request: 'This sign-in request has expired or is invalid. Start a new sign-in below.',
+                not_configured: 'Microsoft sign-in is being set up. Please contact the ProQ Pilot team for access.',
+                failed: 'We could not complete Microsoft sign-in. Please try again.',
+                session_expired: 'Your session has ended. Sign in with Microsoft to continue.'
+            };
+            const error = params.get('error');
+            if (error) {
+                document.getElementById('signInStatus').textContent = messages[error] || messages.failed;
+                document.getElementById('signInStatus').hidden = false;
             }
-        });
-
-        document.getElementById('microsoftSignInButton').addEventListener('click', () => {
-            const apiError = document.getElementById('apiError');
-            apiError.textContent = 'Microsoft sign-in is not enabled for this portal yet. Use your email to continue.';
-            apiError.style.display = 'block';
-            document.getElementById('email').focus();
-        });
+            let target = '/index.html';
+            try {
+                const url = new URL(params.get('redirect') || target, window.location.origin + '/');
+                if (url.origin === window.location.origin && /^\/[a-z0-9_-]+\.html$/i.test(url.pathname) && !['/signin.html', '/microsoft-auth-complete.html', '/signup.html', '/resetpassword.html'].includes(url.pathname.toLowerCase())) target = url.pathname + url.search;
+            } catch (_) { /* Use the safe local default. */ }
+            document.getElementById('microsoftSignInButton').addEventListener('click', event => {
+                event.currentTarget.disabled = true;
+                document.getElementById('signInStatus').textContent = 'Opening Microsoft sign-in…';
+                document.getElementById('signInStatus').hidden = false;
+                window.location.assign('/api/auth/microsoft/signin?redirect=' + encodeURIComponent(target));
+            });
+            window.addEventListener('pageshow', () => { document.getElementById('microsoftSignInButton').disabled = false; });
+        })();
     </script>
 </body>
 </html>

@@ -3,7 +3,7 @@ let currentUser = null;
 
 document.addEventListener('DOMContentLoaded', async () => {
     // Check if user is logged in
-    const user = JSON.parse(localStorage.getItem('user'));
+    const user = await window.ProQSession.ready;
     if (!user) {
         window.location.href = 'signin.html';
         return;
@@ -257,14 +257,9 @@ document.getElementById('helpForm')?.addEventListener('submit', (e) => {
 });
 
 // Logout function
-function logout() {
+async function logout() {
     if (confirm('Are you sure you want to logout?')) {
-        localStorage.removeItem('user');
-        localStorage.removeItem('userID');
-        localStorage.removeItem('token');
-        localStorage.removeItem('cart');
-        localStorage.removeItem('wishlist');
-        window.location.href = 'index.html';
+        try { await window.ProQSession.logout(); } catch (error) { showNotification(error.message, 'error'); }
     }
 }
 

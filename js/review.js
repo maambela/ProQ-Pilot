@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', async ()=>{
-    const user = JSON.parse(localStorage.getItem('user'));
+    const user = await window.ProQSession.ready;
     if (!user) { localStorage.setItem('redirectAfterLogin','/review.html'); return window.location.href = '/signin.html'; }
 
     const sel = sessionStorage.getItem('selectedAddress');

@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', async () => {
-    const user = JSON.parse(localStorage.getItem('user'));
+    const user = await window.ProQSession.ready;
     if (!user) {
         // redirect to signin and come back
         localStorage.setItem('redirectAfterLogin', '/checkout.html');

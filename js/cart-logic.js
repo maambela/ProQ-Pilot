@@ -3,7 +3,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const subtotalEl = document.getElementById('subtotal-price');
     const totalEl = document.getElementById('total-price');
     const deliveryEl = document.getElementById('delivery-cost');
-    const user = JSON.parse(localStorage.getItem('user'));
+    const user = await window.ProQSession.ready;
     let renderRequestId = 0;
     let cartMutationQueue = Promise.resolve();
 

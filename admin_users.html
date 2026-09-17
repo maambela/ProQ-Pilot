@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="js/session.js?v=entra-access-20260917"></script>
+    <script src="js/auth-ui.js?v=entra-access-20260917"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
+    <link href="css/style.css?v=cart-responsive-smart-recs-20260709" rel="stylesheet">
+    <link href="css/admin-clean.css" rel="stylesheet">
+    <link href="css/admin-access.css?v=entra-access-20260917" rel="stylesheet">
+    <title>Users &amp; Access | ProQ Pilot Administration</title>
+</head>
+<body class="access-page" data-access-page="users">
+    <a class="skip-link" href="#main">Skip to content</a>
+    <header class="main-header">
+        <div class="header-container">
+            <div class="logo-area"><span class="logo-icon" aria-label="ProQ Pilot"></span></div>
+            <nav class="nav-links" id="nav-links" aria-label="Administration">
+                <a href="admin_dashboard.html">Dashboard</a>
+                <a href="admin_products.html">Products</a>
+                <a href="admin_core_products.html">Core products</a>
+                <a href="admin_companies.html" >Companies</a>
+                <a href="admin_users.html" class="active" aria-current="page">Users</a>
+                <a href="store.html">Store</a>
+            </nav>
+            <div class="header-actions">
+                <button class="hamburger" id="hamburger" type="button" aria-label="Toggle navigation" aria-controls="nav-links" aria-expanded="false"><span></span><span></span><span></span></button>
+            </div>
+        </div>
+    </header>
+    <main class="access-main" id="main">
+        <div class="access-heading">
+            <div><span class="access-kicker">Platform administration</span><h1 class="page-title">Users &amp; access</h1><p class="access-description">Approve the right people, set their roles and control who can purchase across every company.</p></div>
+            <button class="access-button primary" type="button" id="addUser" disabled><i class="bx bx-plus" aria-hidden="true"></i>Add user</button>
+        </div>
+        <div id="accessNotice" class="access-notice" role="status" aria-live="polite" hidden></div>
+        <div id="accessLoadState" class="access-load-state" role="status">Checking your access…</div>
+        <div id="accessContent" hidden>
+            <section class="access-overview" aria-label="Access overview">
+                <div class="access-metric pending"><span>Awaiting approval</span><strong id="userPending">0</strong></div>
+                <div class="access-metric"><span>Approved users</span><strong id="userApproved">0</strong></div>
+                <div class="access-metric"><span>Can purchase</span><strong id="userPurchasing">0</strong></div>
+            </section>
+            <section class="access-panel pending-panel" aria-labelledby="requestsTitle">
+                <div class="access-panel-heading"><div><h2 id="requestsTitle">Pending approvals <span class="access-pending-count" id="pendingCount">0</span></h2><p>Ask your client to sign in with Microsoft once. Their request appears here for approval.</p></div><button class="access-button" type="button" data-refresh aria-label="Refresh access requests"><i class="bx bx-refresh" aria-hidden="true"></i>Refresh</button></div>
+                <div class="access-table-wrap" tabindex="0" role="region" aria-label="Pending requests table">
+                    <table class="access-table" id="requestTable"><thead><tr><th scope="col">Microsoft identity</th><th scope="col">Company</th><th scope="col">Requested</th><th scope="col">Action</th></tr></thead><tbody id="requestRows"></tbody></table>
+                </div>
+                <div id="requestEmpty" class="access-empty" hidden><strong>All requests are up to date</strong>New sign-ins from approved companies will appear here.</div>
+            </section>
+            <section class="access-panel" aria-labelledby="directoryTitle">
+                <div class="access-panel-heading"><div><h2 id="directoryTitle">User directory</h2><p>Approved users can browse. Purchasing is a separate permission.</p></div></div>
+                <div class="access-filters">
+                    <div class="access-field search-field"><label for="userSearch">Find a user</label><input type="search" id="userSearch" placeholder="Name, email or company"></div>
+                    <div class="access-field"><label for="userCompanyFilter">Company</label><select id="userCompanyFilter"><option value="">All companies</option></select></div>
+                    <div class="access-field"><label for="userStatusFilter">Access</label><select id="userStatusFilter"><option value="">All access</option><option value="pending">Pending</option><option value="approved">Approved</option><option value="suspended">Suspended</option></select></div>
+                    <div class="access-field"><label for="userRoleFilter">Role</label><select id="userRoleFilter"><option value="">All roles</option><option value="client">Client / customer</option><option value="admin">Platform admin</option></select></div>
+                </div>
+                <div class="access-table-wrap" tabindex="0" role="region" aria-label="Users table">
+                    <table class="access-table"><caption id="userTableCount">Loading users…</caption><thead><tr><th scope="col">User</th><th scope="col">Company</th><th scope="col">Role</th><th scope="col">Access</th><th scope="col">Purchasing</th><th scope="col">Manage</th></tr></thead><tbody id="userRows"></tbody></table>
+                </div>
+                <div id="userEmpty" class="access-empty" hidden></div>
+            </section>
+            <aside class="access-note">Sessions expire 10 minutes after all portal tabs close. Browser sleep or going offline can also expire a session. Use <strong>Sign out sessions</strong> to require a new Microsoft sign-in immediately; use <strong>Suspended</strong> to block a user's access.</aside>
+            <details class="access-panel access-audit">
+                <summary>Recent access activity</summary>
+                <div class="access-table-wrap" tabindex="0" role="region" aria-label="Access audit table"><table class="access-table"><thead><tr><th scope="col">Action</th><th scope="col">Changed by</th><th scope="col">Record</th><th scope="col">When</th></tr></thead><tbody id="auditRows"></tbody></table></div>
+                <div id="auditEmpty" class="access-empty" hidden>No access changes recorded yet.</div>
+            </details>
+
+        </div>
+    </main>
+    <dialog class="access-dialog" id="accessDialog" aria-labelledby="dialogTitle" aria-describedby="dialogDescription">
+        <div class="access-dialog-heading">
+            <div><h2 id="dialogTitle"></h2><p id="dialogDescription"></p></div>
+            <button class="access-dialog-close" type="button" id="dialogClose" aria-label="Close dialog">&times;</button>
+        </div>
+        <form id="accessForm">
+            <div class="access-form-body">
+                <div id="formIntro"></div>
+                <div class="access-form-grid" id="formFields"></div>
+                <p class="access-form-error" id="formError" role="alert" hidden></p>
+            </div>
+            <div class="access-dialog-footer">
+                <button class="access-button" type="button" id="dialogCancel">Cancel</button>
+                <button class="access-button primary" type="submit" id="dialogSave">Save changes</button>
+            </div>
+        </form>
+    </dialog>
+    <script src="js/admin-access.js?v=entra-access-20260917"></script>
+</body>
+</html>
+

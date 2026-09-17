@@ -1,21 +1,9 @@
 (function () {
-    const currentPage = (window.location.pathname.split('/').pop() || 'index.html').toLowerCase();
-    const publicPages = new Set([
-        'welcome.html',
-        'signin.html',
-        'signup.html',
-        'resetpassword.html'
-    ]);
-
-    if (publicPages.has(currentPage)) return;
-
-    try {
-        const token = localStorage.getItem('token');
-        const user = JSON.parse(localStorage.getItem('user') || 'null');
-        if (!(token && user && user.userID)) {
-            window.location.replace('welcome.html');
+    // Server access checks and the shared session replace the old browser-only gate.
+    window.ProQSession?.ready.then(user => {
+        const page = location.pathname.split('/').pop();
+        if (!user && !['welcome.html', 'signin.html', 'contact.html', 'microsoft-auth-complete.html'].includes(page)) {
+            location.replace('/signin.html?redirect=' + encodeURIComponent(location.pathname + location.search));
         }
-    } catch (err) {
-        window.location.replace('welcome.html');
-    }
+    });
 })();

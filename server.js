@@ -2,7 +2,7 @@ require('dotenv').config();
 
 const express = require('express');
 const multer = require('multer');
-const cors = require('cors');
+
 const crypto = require('crypto');
 const AppError = require('./utils/appError');
 const {
@@ -21,9 +21,14 @@ const duoRouter = require('./routers/duoRouter');
 const microsoftLicenseRouter = require('./routers/microsoftLicenseRouter');
 const catchAsync = require('./utils/catchAsync');
 const stitchApi = require('./utils/stitchApi');
+const portal = require('./utils/portalRuntime');
+const { createAuthRouter } = require('./routers/portalAuthRouter');
+const { createAdminRouter } = require('./routers/portalAdminRouter');
+const { createPortalGuard } = require('./utils/portalGuard');
+const { sameOrigin } = require('./utils/portalSessions');
 
 const app = express();
-app.use(cors());
+app.disable('x-powered-by');
 app.use(express.json({
     verify: (req, res, buf) => {
         req.rawBody = Buffer.from(buf);
@@ -32,14 +37,45 @@ app.use(express.json({
 app.use(express.urlencoded({ extended: true }));
 
 app.use((req, res, next) => {
-    const blockedStaticPath = /^\/(?:\.env(?:\..*)?|routers\/|controllers\/|models\/|utils\/|node_modules\/|server(?:\.js|-.*\.log|.*\.log)?|package(?:-lock)?\.json)/i;
-    if (blockedStaticPath.test(req.path)) {
+    let requestPath;
+    try { requestPath = decodeURIComponent(req.path).replace(/\\/g, '/'); } catch (_) { return res.sendStatus(400); }
+    const blockedStaticPath = /^\/(?:\.env(?:\..*)?|routers\/|controllers\/|models\/|utils\/|node_modules\/|scripts\/|tests\/|migrations\/|docs\/|[^/]+\.(?:js|json|ya?ml|sql|md|log)$|Dockerfile$)/i;
+    if (blockedStaticPath.test(requestPath) || requestPath.split('/').includes('..')) {
         return res.status(404).send('Not found');
     }
     next();
 });
 
 const ONE_DAY_MS = 24 * 60 * 60 * 1000;
+app.use('/api/auth', createAuthRouter(portal));
+app.use('/api/v1', createPortalGuard(db, portal.sessions));
+app.use('/api/v1/admin', createAdminRouter(portal.access));
+
+// Manual provisioning/payment simulation tools are never public customer endpoints.
+app.use(['/test', '/webhook/yoco-order-test'], sameOrigin, async (req, res, next) => {
+    try {
+        const user = await portal.sessions.authenticate(req);
+        if (user.role !== 'admin') return res.status(403).json({ status: 'error', message: 'Administrator access is required.' });
+        next();
+    } catch (error) { next(error); }
+});
+app.get(['/signup.html', '/resetpassword.html', '/verify-email.html'], (req, res) => res.redirect('/signin.html'));
+app.use(async (req, res, next) => {
+    if (!['GET', 'HEAD'].includes(req.method)) return next();
+    let page;
+    try { page = decodeURIComponent(req.path).toLowerCase(); } catch (_) { return res.sendStatus(400); }
+    if (page !== '/' && !page.endsWith('.html')) return next();
+    res.set('Cache-Control', 'no-store');
+    if (['/welcome.html', '/signin.html', '/microsoft-auth-complete.html', '/contact.html', '/development.html'].includes(page)) return next();
+    try {
+        const user = await portal.sessions.authenticate(req);
+        if (page.startsWith('/admin_') && user.role !== 'admin') return res.redirect('/index.html');
+        next();
+    } catch (error) {
+        if ([401, 403].includes(error.statusCode)) return res.redirect(`/signin.html?error=${error.statusCode === 401 ? 'session_expired' : 'access_disabled'}&redirect=${encodeURIComponent(req.originalUrl)}`);
+        next(error);
+    }
+});
 const ONE_YEAR_MS = 365 * ONE_DAY_MS;
 
 function getPublicBaseUrl(req) {
@@ -5281,7 +5317,8 @@ app.use((err, req, res, next) => {
 
     res.status(err.statusCode).json({
         status: err.status,
-        message: err.message
+        message: err.statusCode < 500 ? err.message : 'The request could not be completed. Please try again or contact support.',
+        ...(err.code && err.statusCode < 500 ? { code: err.code } : {})
     });
 });
 
@@ -5371,6 +5408,9 @@ app.get('/test/duo-provision', catchAsync(async (req, res) => {
 
 // Cloud Run injects PORT. Local development falls back to 3000.
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-    console.log(`Server is running on http://localhost:${PORT}`);
-});
+if (require.main === module) {
+    app.listen(PORT, () => {
+        console.log(`Server is running on http://localhost:${PORT}`);
+    });
+}
+module.exports = app;
