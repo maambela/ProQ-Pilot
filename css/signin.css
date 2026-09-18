@@ -431,3 +431,100 @@
         transform: translateY(-12px);
     }
 }
+
+/* Short laptop viewports: keep the whole sign-in composition visible and centered. */
+@media (min-width: 769px) and (max-width: 1600px) and (max-height: 760px) {
+    .signin-page .auth-page {
+        padding: 14px 16px;
+    }
+
+    .signin-page .auth-card {
+        width: min(350px, 100%);
+        min-height: calc(100svh - 28px);
+        padding: 12px 30px 14px;
+        border-radius: 20px;
+    }
+
+    .signin-page .auth-card::after {
+        border-radius: 19px;
+    }
+
+    .signin-logo,
+    .signin-logo img {
+        width: 104px;
+    }
+
+    .signin-logo {
+        height: 34px;
+    }
+
+    .signin-content {
+        transform: translateY(-4px);
+    }
+
+    .signin-heading {
+        margin-bottom: 10px;
+        padding-bottom: 10px;
+    }
+
+    .signin-title {
+        margin: 6px 0 8px;
+        font-size: 0.68rem;
+    }
+
+    .signin-action {
+        padding-bottom: 8px;
+    }
+
+    .provider-button {
+        min-height: 40px;
+        padding: 6px 22px;
+        font-size: 0.66rem;
+    }
+
+    .signin-secured {
+        margin: -2px 0 8px;
+        font-size: 0.58rem;
+    }
+
+    .signin-or {
+        margin: 1px 0 7px;
+    }
+
+    .signin-email-form {
+        gap: 3px;
+        margin-bottom: 8px;
+    }
+
+    .signin-email-form label {
+        font-size: 0.58rem;
+    }
+
+    .signin-email-form input {
+        min-height: 32px;
+        padding: 6px 10px;
+    }
+
+    .email-signin-button {
+        min-height: 34px;
+        margin-top: 5px;
+        font-size: 0.64rem;
+    }
+
+    .signin-home {
+        width: 36px;
+        height: 36px;
+        margin-bottom: 10px;
+        border-radius: 11px;
+    }
+
+    .signin-home i {
+        font-size: 1.05rem;
+    }
+
+    .signin-trust {
+        margin-top: 4px;
+        padding-top: 7px;
+        font-size: 0.5rem;
+    }
+}
