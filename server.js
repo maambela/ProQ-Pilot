@@ -537,9 +537,10 @@ app.post('/api/v1/stitch-checkout', async (req, res) => {
                     const price = Number(item.price) || 0;
 
                     if (!isDigitalLicenseType(itemType) && item.id !== 0 && item.id !== '0') {
+                        const productID = await resolveCheckoutProductID(connection, item);
                         await connection.query(
                             'INSERT INTO OrderItems (order_id, product_id, quantity, price) VALUES (?, ?, ?, ?)',
-                            [orderId, item.id, quantity, price]
+                            [orderId, productID, quantity, price]
                         );
                     }
 
@@ -767,9 +768,10 @@ app.post('/api/v1/payfast-checkout', async (req, res, next) => {
 
                     // Skip OrderItems insert for digital license items (they don't have real product IDs)
                     if (!isDigitalLicenseType(itemType)) {
+                        const productID = await resolveCheckoutProductID(connection, item);
                         await connection.query(
                             'INSERT INTO OrderItems (order_id, product_id, quantity, price) VALUES (?, ?, ?, ?)',
-                            [orderId, item.id, item.quantity, item.price]
+                            [orderId, productID, item.quantity, item.price]
                         );
                     }
 
@@ -1526,6 +1528,21 @@ async function ensureSupplierProductRow(connection, product) {
         if (!images.length) await connection.query('INSERT INTO product_images (product_id, image_url, is_primary, sort_order) VALUES (?, ?, ?, ?)', [productId, product.image_url, true, 0]);
     }
     return productId;
+}
+
+async function resolveCheckoutProductID(connection, item) {
+    const rawIdentifier = item.product_id || item.productID || item.id;
+    const numericIdentifier = Number(rawIdentifier);
+    if (Number.isSafeInteger(numericIdentifier) && numericIdentifier > 0) {
+        const [rows] = await connection.query('SELECT id FROM products WHERE id = ? LIMIT 1', [numericIdentifier]);
+        if (rows.length) return rows[0].id;
+    }
+
+    const supplierProduct = await findLiveSupplierProduct(rawIdentifier);
+    if (!supplierProduct) throw new AppError(`Product is no longer available: ${rawIdentifier}`, 409);
+    const productID = await ensureSupplierProductRow(connection, supplierProduct);
+    if (!productID) throw new AppError(`Product could not be prepared: ${rawIdentifier}`, 409);
+    return productID;
 }
 
 // Fetch products from Tarsus Online API with smart retry logic
@@ -4464,9 +4481,10 @@ app.post('/api/v1/checkout-payment', async (req, res, next) => {
 
                     // Skip inserting virtual digital license products into standard OrderItems
                     if (!isDigitalLicenseType(itemType) && item.id !== 0 && item.id !== '0') {
+                        const productID = await resolveCheckoutProductID(connection, item);
                         await connection.query(
                             'INSERT INTO OrderItems (order_id, product_id, quantity, price) VALUES (?, ?, ?, ?)',
-                            [orderId, item.id, item.quantity, item.price]
+                            [orderId, productID, item.quantity, item.price]
                         );
                     }
 
