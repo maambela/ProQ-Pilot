@@ -419,3 +419,15 @@
         gap: 5px;
     }
 }
+
+/* Preserve comfortable physical sizing when a laptop browser is set below 100%. */
+@media (min-width: 1601px) and (max-height: 1000px) {
+    .signin-page .auth-card {
+        width: min(470px, 100%);
+        padding-inline: 48px;
+    }
+
+    .signin-page .signin-content {
+        transform: translateY(-12px);
+    }
+}

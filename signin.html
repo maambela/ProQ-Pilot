@@ -73,6 +73,11 @@
                 session_expired: ''
             };
             const error = params.get('error');
+            if (error === 'session_expired') {
+                params.delete('error');
+                const cleanQuery = params.toString();
+                window.history.replaceState({}, document.title, window.location.pathname + (cleanQuery ? `?${cleanQuery}` : ''));
+            }
             if (error && messages[error]) {
                 document.getElementById('signInStatus').textContent = messages[error] || messages.failed;
                 document.getElementById('signInStatus').hidden = false;

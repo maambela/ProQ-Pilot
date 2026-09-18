@@ -5447,18 +5447,18 @@ color: #d8d8d8;
     .slide-tagline { font-size: 1.8rem; }
     h1 { font-size: 2.8rem; }
 
-    .store-layout { gap: 24px; padding: 16px 3% 44px 0; }
-    .sidebar { width: 270px; padding: 24px 18px; top: 112px; height: calc(100vh - 132px); gap: 20px; border-radius: 26px; }
+    .store-layout { gap: 18px; padding: 16px 2% 44px 0; }
+    .sidebar { width: 246px; padding: 20px 15px; top: 104px; height: calc(100vh - 120px); max-height: calc(100vh - 120px); gap: 16px; border-radius: 22px; overflow-y: auto; align-self: flex-start; }
     .filter-group { gap: 14px; }
     .category-section { gap: 10px; }
     .category-pills { gap: 7px; }
     .pill { padding: 6px 12px; font-size: 12px; }
     .brand-item { padding: 8px 12px; font-size: 12px; }
     .products-area { min-width: 0; }
-    .product-grid { gap: 18px; }
-    .product-card { border-radius: 20px; }
-    .card-head { height: 190px; padding: 18px; }
-    .card-head img { max-height: 112px; }
+    .product-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
+    .product-card { border-radius: 16px; }
+    .card-head { height: 164px; padding: 14px; }
+    .card-head img { max-width: 76%; max-height: 96px; }
     .floating-actions { top: 10px; right: 10px; gap: 6px; }
     .action-btn { width: 30px; height: 30px; }
 
