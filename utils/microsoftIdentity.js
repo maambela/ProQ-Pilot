@@ -3,9 +3,11 @@ const jwt = require('jsonwebtoken');
 const { GUID, fail } = require('./portalPolicy');
 
 function configuration() {
-    const clientId = String(process.env.ENTRA_PORTAL_CLIENT_ID || '').trim();
-    const clientSecret = String(process.env.ENTRA_PORTAL_CLIENT_SECRET || '').trim();
-    const redirectUri = String(process.env.ENTRA_PORTAL_REDIRECT_URI || '').trim();
+    const clientId = String(process.env.ENTRA_PORTAL_CLIENT_ID || process.env.AZURE_CLIENT_ID || process.env.MICROSOFT_CLIENT_ID || '').trim();
+    const clientSecret = String(process.env.ENTRA_PORTAL_CLIENT_SECRET || process.env.AZURE_CLIENT_SECRET || process.env.MICROSOFT_CLIENT_SECRET || '').trim();
+    const configuredRedirect = String(process.env.ENTRA_PORTAL_REDIRECT_URI || '').trim();
+    const baseUrl = String(process.env.PUBLIC_BASE_URL || '').trim().replace(/\/+$/, '');
+    const redirectUri = configuredRedirect || (baseUrl ? `${baseUrl}/api/auth/microsoft/callback` : '');
     if (!GUID.test(clientId) || !clientSecret || !redirectUri) fail('Microsoft sign-in is not configured.', 503, 'not_configured');
     let url;
     try { url = new URL(redirectUri); } catch (_) { fail('Invalid Microsoft callback URL.', 503, 'not_configured'); }
