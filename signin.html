@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="js/session.js?v=entra-access-20260917"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400&display=swap" rel="stylesheet">
+    <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
     <link rel="stylesheet" href="css/style.css?v=cart-responsive-smart-recs-20260709">
     <link rel="stylesheet" href="css/signin.css?v=proq-portal-live-glow-20260915">
     <script src="js/auth-ui.js?v=entra-access-20260917"></script>
@@ -34,24 +35,22 @@
             </div>
             <div class="signin-content">
                 <div class="signin-heading">
-                    <span class="signin-kicker">Secure procurement portal</span>
-                    <h1>Your workspace awaits.</h1>
-                    <p>Use your Microsoft work account to access your company's ProQ Pilot workspace.</p>
+                    <span class="signin-kicker">Secure access</span>
+                    <h1>Sign in to ProQ Pilot</h1>
                 </div>
                 <div id="signInStatus" class="signin-status" role="status" aria-live="polite" hidden></div>
-                <button class="provider-button" type="button" id="microsoftSignInButton">
-                    <span class="provider-mark" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
-                    <span>Sign in with Microsoft</span>
-                    <i class="bx bx-right-arrow-alt" aria-hidden="true"></i>
-                </button>
-                <div class="auth-links">
-                    <span>Need access?</span>
-                    <a href="contact.html">Contact the ProQ Pilot team</a>
+                <div class="signin-action">
+                    <button class="provider-button" type="button" id="microsoftSignInButton">
+                        <span class="provider-mark" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+                        <span>Sign in with Microsoft</span>
+                        <i class="bx bx-right-arrow-alt" aria-hidden="true"></i>
+                    </button>
                 </div>
-                <p class="signin-session-note">Your company and account must be approved before you can enter.</p>
+                <p class="signin-secured"><i class="bx bx-lock-alt" aria-hidden="true"></i> Secured by Microsoft</p>
+                <a class="signin-home" href="welcome.html" aria-label="Return to welcome page"><i class="bx bx-home-alt-2" aria-hidden="true"></i></a>
                 <div class="signin-trust">
-                    <span><i class="bx bx-shield-quarter" aria-hidden="true"></i> Secure login</span>
-                    <span><i class="bx bx-check-circle" aria-hidden="true"></i> Microsoft work accounts</span>
+                    <span><i class="bx bx-lock-alt" aria-hidden="true"></i> Secure login</span>
+                    <span><i class="bx bx-user" aria-hidden="true"></i> Microsoft work accounts</span>
                 </div>
             </div>
         </div>
