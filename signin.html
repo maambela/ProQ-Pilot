@@ -11,11 +11,7 @@
     <link rel="stylesheet" href="css/signin.css?v=proq-portal-live-glow-20260915">
     <script src="js/auth-ui.js?v=entra-access-20260917"></script>
     <style>
-        .signin-page .signin-heading h1 { margin: 10px 0 12px; color: #fff; font-size: 26px; font-weight: 400; letter-spacing: -.035em; }
-        .signin-page .signin-heading p, .signin-page .signin-session-note { color: #d0dcdf; line-height: 1.7; }
-        .signin-page .signin-session-note { margin: 22px 0 0; font-size: 11px; }
-        .signin-page .signin-status { margin: 0 0 18px; padding: 12px 14px; border: 1px solid #ffc37c66; border-radius: 8px; background: #382a17; color: #ffe1bc; font-size: 12px; line-height: 1.6; }
-        .signin-page .signin-trust, .signin-page .auth-links span { color: #c4d2d7; }
+        .signin-page .signin-status { margin: 0 0 18px; padding: 12px 14px; border: 1px solid rgba(255, 255, 255, 0.28); border-radius: 8px; background: rgba(255, 255, 255, 0.1); color: #fff; font-size: 12px; line-height: 1.6; }
         .signin-page :is(button,a):focus-visible { outline: 3px solid #44ffe0; outline-offset: 4px; }
         .signin-page .provider-button:disabled { opacity: .6; cursor: wait; }
         .signin-page [hidden] { display: none !important; }
@@ -36,7 +32,7 @@
             <div class="signin-content">
                 <div class="signin-heading">
                     <span class="signin-kicker">Secure access</span>
-                    <h1>Sign in to ProQ Pilot</h1>
+                    <p class="signin-title">Sign in to ProQ Pilot</p>
                 </div>
                 <div id="signInStatus" class="signin-status" role="status" aria-live="polite" hidden></div>
                 <div class="signin-action">
@@ -47,7 +43,15 @@
                     </button>
                 </div>
                 <p class="signin-secured"><i class="bx bx-lock-alt" aria-hidden="true"></i> Secured by Microsoft</p>
-                <a class="signin-home" href="welcome.html" aria-label="Return to welcome page"><i class="bx bx-home-alt-2" aria-hidden="true"></i></a>
+                <div class="signin-or"><span>OR</span></div>
+                <form class="signin-email-form" id="emailSignInForm" novalidate>
+                    <label for="signinEmail">Email</label>
+                    <input id="signinEmail" name="email" type="email" autocomplete="email" required>
+                    <label for="signinPassword">Password</label>
+                    <input id="signinPassword" name="password" type="password" autocomplete="current-password" required>
+                    <button class="email-signin-button" type="submit"><i class="bx bx-envelope" aria-hidden="true"></i><span>Sign in with email</span><i class="bx bx-right-arrow-alt" aria-hidden="true"></i></button>
+                </form>
+                <a class="signin-home" href="welcome.html" aria-label="Return to welcome page"><i class="bx bx-home" aria-hidden="true"></i></a>
                 <div class="signin-trust">
                     <span><i class="bx bx-lock-alt" aria-hidden="true"></i> Secure login</span>
                     <span><i class="bx bx-user" aria-hidden="true"></i> Microsoft work accounts</span>
@@ -66,10 +70,10 @@
                 invalid_request: 'This sign-in request has expired or is invalid. Start a new sign-in below.',
                 not_configured: 'Microsoft sign-in is being set up. Please contact the ProQ Pilot team for access.',
                 failed: 'We could not complete Microsoft sign-in. Please try again.',
-                session_expired: 'Your session has ended. Sign in with Microsoft to continue.'
+                session_expired: ''
             };
             const error = params.get('error');
-            if (error) {
+            if (error && messages[error]) {
                 document.getElementById('signInStatus').textContent = messages[error] || messages.failed;
                 document.getElementById('signInStatus').hidden = false;
             }
@@ -85,6 +89,32 @@
                 window.location.assign('/api/auth/microsoft/signin?redirect=' + encodeURIComponent(target));
             });
             window.addEventListener('pageshow', () => { document.getElementById('microsoftSignInButton').disabled = false; });
+
+            document.getElementById('emailSignInForm').addEventListener('submit', async event => {
+                event.preventDefault();
+                const form = event.currentTarget;
+                const button = form.querySelector('button');
+                const status = document.getElementById('signInStatus');
+                button.disabled = true;
+                status.textContent = 'Signing in…';
+                status.hidden = false;
+                try {
+                    const response = await fetch('/api/auth/email/login', {
+                        method: 'POST', credentials: 'same-origin',
+                        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+                        body: JSON.stringify({ email: form.email.value, password: form.password.value, redirect: target })
+                    });
+                    const result = await response.json().catch(() => ({}));
+                    if (!response.ok || result.status !== 'success') throw new Error(result.message || 'Unable to sign in.');
+                    const user = await window.ProQSession.refresh();
+                    if (!user) throw new Error('Unable to create a secure session.');
+                    window.location.replace(result.data.redirect || target);
+                } catch (error) {
+                    status.textContent = error.message;
+                    status.hidden = false;
+                    button.disabled = false;
+                }
+            });
         })();
     </script>
 </body>

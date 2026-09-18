@@ -1,5 +1,6 @@
 const express = require('express');
 const crypto = require('crypto');
+const bcrypt = require('bcryptjs');
 const { hash, safeRedirect, publicUser, fail } = require('../utils/portalPolicy');
 const { readCookie, cookieOptions, sameOrigin } = require('../utils/portalSessions');
 
@@ -33,6 +34,25 @@ function createAuthRouter({ db, access, sessions, provider }) {
             console.error('[Microsoft sign-in] Start failed:', error.code || error.name);
             res.redirect(`/signin.html?error=${error.code === 'not_configured' ? 'not_configured' : 'failed'}`);
         }
+    }));
+
+    router.post('/email/login', wrap(async (req, res) => {
+        const email = String(req.body?.email || '').trim().toLowerCase();
+        const password = String(req.body?.password || '');
+        if (!email || !password) fail('Enter your email and password.', 400, 'invalid_credentials');
+
+        const [rows] = await db.query('SELECT userID, password_hash FROM users WHERE LOWER(email) = ? LIMIT 1', [email]);
+        const candidate = rows[0];
+        if (!candidate || !candidate.password_hash || !(await bcrypt.compare(password, candidate.password_hash))) {
+            fail('Incorrect email or password.', 401, 'invalid_credentials');
+        }
+
+        const user = await access.getUser(candidate.userID);
+        if (!user) fail('This account is not available.', 401, 'access_disabled');
+        try { require('../utils/portalPolicy').assertAccess(user); }
+        catch (error) { fail('This account is not approved for portal access.', 403, 'access_disabled'); }
+        await sessions.create(req, res, user);
+        res.json({ status: 'success', data: { user: publicUser(user), redirect: user.role === 'admin' ? '/admin_dashboard.html' : safeRedirect(req.body?.redirect) } });
     }));
 
     router.get('/microsoft/callback', wrap(async (req, res) => {

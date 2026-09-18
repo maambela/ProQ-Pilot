@@ -1,8 +1,8 @@
 .signin-page {
-    --signin-teal: #00d2be;
-    --signin-mint: #a3e9d9;
-    --signin-blue: #69d7ff;
-    --signin-pink: #ffadc8;
+    --signin-teal: #fff;
+    --signin-mint: #fff;
+    --signin-blue: #fff;
+    --signin-pink: #fff;
     position: relative;
     min-height: 100vh;
     overflow-x: hidden;
@@ -94,22 +94,29 @@
     flex: 1;
     display: flex;
     flex-direction: column;
-    justify-content: flex-start;
-    padding-top: clamp(120px, 23vh, 220px);
+    justify-content: center;
+    padding-top: 0;
+    transform: translateY(-18px);
 }
 
 .signin-heading {
-    margin: 0 0 22px;
-    padding-bottom: 22px;
+    margin: 0 0 14px;
+    padding-bottom: 14px;
+    text-align: center;
 }
 
-.signin-heading h1 {
-    max-width: 260px;
+.signin-title {
+    margin: 10px 0 12px;
+    color: #fff;
+    font-size: 0.72rem;
+    font-weight: 300;
+    line-height: 1.4;
 }
 
 .signin-kicker {
     color: var(--signin-teal);
-    font-size: 0.65rem;
+    font-size: 0.58rem;
+    font-weight: 300;
     letter-spacing: 0.14em;
     text-transform: uppercase;
 }
@@ -139,7 +146,8 @@
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18);
     cursor: pointer;
     font: inherit;
-    font-size: 0.78rem;
+    font-size: 0.72rem;
+    font-weight: 300;
     transition: border-color 0.25s ease, background 0.25s ease, transform 0.25s ease;
 }
 
@@ -176,7 +184,7 @@
 .signin-action {
     display: flex;
     justify-content: center;
-    padding-bottom: 20px;
+    padding-bottom: 12px;
 }
 
 .signin-secured {
@@ -184,13 +192,14 @@
     justify-content: center;
     align-items: center;
     gap: 6px;
-    margin: -4px 0 18px;
+    margin: -2px 0 12px;
     color: rgba(255, 255, 255, 0.58);
-    font-size: 0.68rem;
+    font-size: 0.62rem;
+    font-weight: 300;
 }
 
 .signin-secured i {
-    color: #e87917;
+    color: #fff;
     font-size: 0.9rem;
 }
 
@@ -200,7 +209,7 @@
     width: 42px;
     height: 42px;
     align-self: center;
-    margin-bottom: 28px;
+    margin-bottom: 18px;
     border: 1px solid rgba(255, 255, 255, 0.28);
     border-radius: 13px;
     color: rgba(255, 255, 255, 0.9);
@@ -210,13 +219,87 @@
 }
 
 .signin-home:hover {
-    border-color: rgba(0, 210, 190, 0.7);
-    background: rgba(0, 210, 190, 0.15);
+    border-color: rgba(255, 255, 255, 0.7);
+    background: rgba(255, 255, 255, 0.18);
     transform: translateY(-2px);
 }
 
 .signin-home i {
+    display: block;
     font-size: 1.25rem;
+    line-height: 1;
+    clip-path: inset(0 0 0.14em 0);
+}
+
+.signin-or {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 2px 0 11px;
+    color: rgba(255, 255, 255, 0.62);
+    font-size: 0.58rem;
+}
+
+.signin-or::before,
+.signin-or::after {
+    content: "";
+    height: 1px;
+    flex: 1;
+    background: rgba(255, 255, 255, 0.18);
+}
+
+.signin-email-form {
+    display: grid;
+    gap: 5px;
+    margin-bottom: 12px;
+}
+
+.signin-email-form label {
+    color: rgba(255, 255, 255, 0.72);
+    font-size: 0.62rem;
+    font-weight: 300;
+}
+
+.signin-email-form input {
+    width: 100%;
+    min-height: 40px;
+    box-sizing: border-box;
+    padding: 9px 12px;
+    border: 1px solid rgba(255, 255, 255, 0.24);
+    border-radius: 10px;
+    color: #fff;
+    background: rgba(255, 255, 255, 0.08);
+    outline: none;
+}
+
+.signin-email-form input:focus {
+    border-color: rgba(255, 255, 255, 0.7);
+}
+
+.email-signin-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 42px;
+    margin-top: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.28);
+    border-radius: 999px;
+    color: #fff;
+    background: rgba(255, 255, 255, 0.1);
+    cursor: pointer;
+    font: inherit;
+    font-size: 0.7rem;
+    font-weight: 300;
+}
+
+.email-signin-button:hover {
+    background: rgba(255, 255, 255, 0.18);
+}
+
+.email-signin-button:disabled {
+    opacity: 0.6;
+    cursor: wait;
 }
 
 .signin-divider {
@@ -283,11 +366,12 @@
     display: flex;
     justify-content: space-between;
     gap: 12px;
-    margin-top: 14px;
+    margin-top: 8px;
     padding-top: 10px;
     border-top: 1px solid rgba(255, 255, 255, 0.1);
     color: rgba(255, 255, 255, 0.52);
-    font-size: 0.62rem;
+    font-size: 0.56rem;
+    font-weight: 300;
 }
 
 .signin-trust i {
@@ -326,7 +410,8 @@
     }
 
     .signin-content {
-        padding-top: 120px;
+        padding-top: 0;
+        transform: translateY(-12px);
     }
 
     .signin-trust {
