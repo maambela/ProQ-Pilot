@@ -2183,9 +2183,30 @@ setInterval(() => {
 getLiveSupplierStoreProducts().catch(err => console.error('[Supplier Catalog] Initial refresh failed:', err.message));
 // Route: Manual sync Core products
 app.post('/api/v1/sync-core', async (req, res, next) => {
+    let connection;
     try {
         const products = await getLiveSupplierStoreProducts({ force: true });
         const coreProducts = products.filter(product => product.supplier_source === 'Core');
+
+        try {
+            connection = await db.getConnection();
+            await ensureSupplierTrackingSchema(connection);
+            const inStockCount = coreProducts.filter(product => Number(product.quantity) > 0).length;
+            await connection.query(
+                `INSERT INTO supplier_sync_status
+                    (supplier, last_success_at, fetched_count, in_stock_count, added_count, updated_count, skipped_count, last_error)
+                 VALUES ('Core', NOW(), ?, ?, 0, 0, 0, NULL)
+                 ON DUPLICATE KEY UPDATE
+                    last_success_at = VALUES(last_success_at),
+                    fetched_count = VALUES(fetched_count),
+                    in_stock_count = VALUES(in_stock_count),
+                    last_error = NULL`,
+                [coreProducts.length, inStockCount]
+            );
+        } catch (trackingError) {
+            console.error('[CORE API] Failed to record sync status:', trackingError.message);
+        }
+
         res.status(200).json({
             status: 'success',
             message: `Core catalogue refreshed in memory: ${coreProducts.length} products available. No bulk SQL write was performed.`,
@@ -2193,6 +2214,8 @@ app.post('/api/v1/sync-core', async (req, res, next) => {
         });
     } catch (error) {
         next(new AppError(`Core refresh failed: ${error.message}`, 502));
+    } finally {
+        if (connection) connection.release();
     }
 });
 
@@ -2256,7 +2279,7 @@ app.get('/api/v1/core-products/pending', async (req, res, next) => {
     try {
         await getLiveSupplierStoreProducts({ force: true });
         const products = Array.from(coreReviewCache.values())
-            .filter(product => product.status === 'pending' && isStoreReadySupplierProduct(product))
+            .filter(product => product.status === 'pending' && isStoreReadySupplierProduct({ ...product, status: 'approved', is_active: 1 }))
             .map(product => ({
                 ...product,
                 image_count: (coreReviewImages.get(String(product.id)) || []).length
@@ -3683,7 +3706,7 @@ app.get('/api/v1/core-status', async (req, res, next) => {
         `);
 
             await getLiveSupplierStoreProducts({ force: true });
-            const liveCoreProducts = Array.from(coreReviewCache.values()).filter(product => isStoreReadySupplierProduct(product));
+            const liveCoreProducts = Array.from(coreReviewCache.values()).filter(product => isStoreReadySupplierProduct({ ...product, status: 'approved', is_active: 1 }));
             const livePendingCount = liveCoreProducts.filter(product => product.status === 'pending').length;
             const liveRejectedCount = liveCoreProducts.filter(product => product.status === 'rejected').length;
             inventory.pending_count = livePendingCount;
