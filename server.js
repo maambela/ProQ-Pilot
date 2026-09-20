@@ -1502,6 +1502,16 @@ async function getLiveSupplierStoreProducts({ force = false } = {}) {
     return liveSupplierProductsCache.promise;
 }
 
+// Cloud Run can route requests for the same admin session to different instances,
+// and coreReviewCache/coreReviewImages are per-instance memory. If this instance's
+// cache doesn't know about a Core review product yet, force a resync (which repopulates
+// the cache for every currently-live Core item) before treating it as missing.
+async function ensureCoreReviewCached(productId) {
+    const id = String(productId);
+    if (!id.includes(':') || coreReviewCache.has(id)) return;
+    await getLiveSupplierStoreProducts({ force: true }).catch(() => {});
+}
+
 async function findLiveSupplierProduct(identifier) {
     const id = String(identifier || '');
     if (!id.includes(':')) return null;
@@ -2392,6 +2402,7 @@ app.post('/api/v1/core-products/:productId/images', upload.array('images', 10), 
             return next(new AppError('No files uploaded', 400));
         }
 
+        await ensureCoreReviewCached(productId);
         if (coreReviewCache.has(String(productId))) {
             const existingImages = coreReviewImages.get(String(productId)) || [];
             const uploadedImages = files.map((file, index) => ({
@@ -2466,6 +2477,7 @@ app.patch('/api/v1/core-products/:productId/approve', async (req, res, next) => 
     let connection;
     try {
         const productId = req.params.productId;
+        await ensureCoreReviewCached(productId);
         const cachedProduct = coreReviewCache.get(String(productId));
         const cachedImages = coreReviewImages.get(String(productId)) || [];
 
@@ -2560,6 +2572,7 @@ app.patch('/api/v1/core-products/:productId/reject', async (req, res, next) => {
         const productId = req.params.productId;
         const { reason } = req.body;
 
+        await ensureCoreReviewCached(productId);
         const cachedProduct = coreReviewCache.get(String(productId));
         if (cachedProduct) {
             coreReviewCache.set(String(productId), {
