@@ -8841,6 +8841,43 @@ body.cart-is-empty .recommendation-slot {
         max-width: 62px !important;
     }
 }
+
+/* Acer's logo file has a lot of empty horizontal space, so at any shared height it renders
+   much bigger than other brand logos. Scale it down specifically, on every page and screen size. */
+.brand-logo-tag[src*="acer" i] {
+    height: 26px !important;
+    max-width: 60px !important;
+}
+
+.featured-products .featured-carousel-card .brand-logo-tag[src*="acer" i] {
+    height: 14px !important;
+    max-width: 34px !important;
+}
+
+body.store-page .product-grid .product-card .brand-logo-tag[src*="acer" i] {
+    height: 16px !important;
+    max-width: 42px !important;
+}
+
+@media (max-width: 420px) {
+    .featured-products .featured-carousel-card .brand-logo-tag[src*="acer" i] {
+        height: 12px !important;
+        max-width: 28px !important;
+    }
+
+    body.store-page .product-grid .product-card .brand-logo-tag[src*="acer" i] {
+        height: 13px !important;
+        max-width: 36px !important;
+    }
+}
+
+@media (min-width: 969px) and (max-width: 1880px) {
+    body.store-page .product-grid .product-card .card-body .product-meta img.brand-logo-tag[src*="acer" i] {
+        height: 20px !important;
+        max-width: 48px !important;
+    }
+}
+
 /* Glass rendering cleanup: clips sub-pixel backdrop seams at rounded edges. */
 .glass-card,
 .liquid-glass-card,
