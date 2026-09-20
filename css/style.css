@@ -5475,7 +5475,7 @@ color: #d8d8d8;
 /* Compact index promo grid for short laptop screens. */
 @media (min-width: 969px) and (max-width: 1920px) and (max-height: 950px) {
     .promo-grid-section {
-        padding: 34px 3% 42px;
+        padding: 30px 3% 64px;
     }
 
     .promo-container {
@@ -5484,7 +5484,7 @@ color: #d8d8d8;
     }
 
     .promo-box {
-        height: 218px;
+        height: 202px;
         min-height: 0;
         padding: 22px;
         border-radius: 18px;
@@ -7401,7 +7401,7 @@ color: #d8d8d8;
 /* Cleaner sticky procurement stage */
 .procurement-scroll-stage {
     --category-image-height: clamp(350px, 42vh, 480px);
-    --procurement-image-height: clamp(740px, 88vh, 530px);
+    --procurement-image-height: clamp(260px, 36vh, 400px);
     width: min(1720px, 94vw);
     margin-top: 34px;
     grid-template-columns: minmax(360px, 0.72fr) minmax(720px, 1.28fr);
