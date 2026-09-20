@@ -7408,11 +7408,12 @@ color: #d8d8d8;
     gap: clamp(38px, 4.6vw, 78px);
 }
 
-/* Balanced, unzoomed sizing for short laptop screens only (14"-16" range). Desktop monitors keep the values above. */
-@media (min-width: 969px) and (max-width: 1880px) and (max-height: 850px) {
+/* Balanced, unzoomed sizing for laptop screens only (14"-16" range, any height). Desktop monitors (>=1920px wide) keep the values above. */
+@media (min-width: 969px) and (max-width: 1880px) {
     .procurement-scroll-stage {
         --category-image-height: clamp(320px, 40vh, 440px);
-        --procurement-image-height: clamp(320px, 40vh, 440px);
+        /* Fills the remaining space below the copy block down to a small ~0.4cm gap from the bottom of the screen, on any laptop height. */
+        --procurement-image-height: clamp(220px, calc(100vh - 500px), 620px);
     }
 }
 

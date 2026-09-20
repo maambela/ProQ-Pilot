@@ -486,38 +486,94 @@
 
         .image-thumbnail {
             position: relative;
-            width: 60px;
-            height: 60px;
+            width: 72px;
+            height: 72px;
             border-radius: 12px;
             overflow: hidden;
-            border: 1px solid rgba(255, 255, 255, 0.35);
+            border: 2px solid rgba(255, 255, 255, 0.35);
             background: rgba(255, 255, 255, 0.5);
+            cursor: grab;
+            transition: border-color 0.2s, opacity 0.2s, transform 0.15s;
         }
 
         .image-thumbnail img {
             width: 100%;
             height: 100%;
             object-fit: cover;
+            pointer-events: none;
         }
 
-        .image-delete-btn {
+        .image-thumbnail.is-primary {
+            border-color: var(--accent-blue, #00bcd4);
+        }
+
+        .image-thumbnail.dragging {
+            opacity: 0.35;
+            cursor: grabbing;
+        }
+
+        .image-thumbnail.drag-over {
+            border-color: var(--accent-blue, #00bcd4);
+            transform: scale(1.05);
+        }
+
+        .image-primary-badge {
+            position: absolute;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            padding: 2px 0;
+            background: rgba(0, 188, 212, 0.85);
+            color: #04222a;
+            font-size: 0.55rem;
+            font-weight: 600;
+            letter-spacing: 0.02em;
+            text-align: center;
+            text-transform: uppercase;
+        }
+
+        .image-thumbnail-actions {
             position: absolute;
             top: 0;
             left: 0;
-            width: 100%;
-            height: 100%;
+            right: 0;
+            display: flex;
+            justify-content: space-between;
+            padding: 3px;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+
+        .image-thumbnail:hover .image-thumbnail-actions {
+            opacity: 1;
+        }
+
+        .image-star-btn,
+        .image-delete-btn {
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            background: rgba(0, 0, 0, 0.6);
-            opacity: 0;
-            transition: opacity 0.2s;
+            background: rgba(0, 0, 0, 0.65);
+            color: #fff;
             cursor: pointer;
-            border-radius: 12px;
+            font-size: 0.75rem;
+            flex-shrink: 0;
         }
 
-        .image-thumbnail:hover .image-delete-btn {
-            opacity: 1;
+        .image-star-btn:hover {
+            background: rgba(0, 188, 212, 0.85);
+            color: #04222a;
+        }
+
+        .image-delete-btn:hover {
+            background: rgba(220, 38, 38, 0.9);
+        }
+
+        .image-star-btn.is-hidden {
+            visibility: hidden;
         }
 
         .add-image-box {
@@ -1526,14 +1582,25 @@
                     const imageUrl = getCoreProductImageUrl(image);
                     if (!imageUrl) return;
 
+                    const isPrimary = index === 0;
                     const thumb = document.createElement('div');
-                    thumb.className = 'image-thumbnail';
+                    thumb.className = `image-thumbnail${isPrimary ? ' is-primary' : ''}`;
+                    thumb.draggable = true;
+                    thumb.dataset.imageId = String(image.id);
+                    thumb.title = isPrimary ? 'Cover photo — drag to reorder' : 'Drag to reorder, or click the star to make this the cover photo';
                     thumb.innerHTML = `
                         <img src="${imageUrl}" alt="Product image ${index + 1}" loading="lazy">
-                        <div class="image-delete-btn" onclick="deleteProductImage('${productId}', '${image.id}')">
-                            <i class='bx bx-trash'></i>
+                        <div class="image-thumbnail-actions">
+                            <div class="image-star-btn${isPrimary ? ' is-hidden' : ''}" title="Set as cover photo" onclick="event.stopPropagation(); setPrimaryImage('${productId}', '${image.id}')">
+                                <i class='bx bx-star'></i>
+                            </div>
+                            <div class="image-delete-btn" title="Delete image" onclick="event.stopPropagation(); deleteProductImage('${productId}', '${image.id}')">
+                                <i class='bx bx-trash'></i>
+                            </div>
                         </div>
+                        ${isPrimary ? '<span class="image-primary-badge">Cover</span>' : ''}
                     `;
+                    attachImageDragHandlers(thumb, productId, grid);
                     grid.insertBefore(thumb, uploadButton);
                 });
 
@@ -1574,6 +1641,73 @@
                 }
             } catch (error) {
                 console.error('[Admin] Error loading images:', error);
+            }
+        }
+
+        function attachImageDragHandlers(thumb, productId, grid) {
+            thumb.addEventListener('dragstart', (event) => {
+                event.dataTransfer.setData('text/plain', thumb.dataset.imageId);
+                event.dataTransfer.effectAllowed = 'move';
+                thumb.classList.add('dragging');
+            });
+            thumb.addEventListener('dragend', () => {
+                thumb.classList.remove('dragging');
+                grid.querySelectorAll('.image-thumbnail.drag-over').forEach(el => el.classList.remove('drag-over'));
+            });
+            thumb.addEventListener('dragover', (event) => {
+                event.preventDefault();
+                event.dataTransfer.dropEffect = 'move';
+                thumb.classList.add('drag-over');
+            });
+            thumb.addEventListener('dragleave', () => {
+                thumb.classList.remove('drag-over');
+            });
+            thumb.addEventListener('drop', (event) => {
+                event.preventDefault();
+                thumb.classList.remove('drag-over');
+                const draggedId = event.dataTransfer.getData('text/plain');
+                const targetId = thumb.dataset.imageId;
+                if (!draggedId || draggedId === targetId) return;
+
+                const order = Array.from(grid.querySelectorAll('.image-thumbnail')).map(el => el.dataset.imageId);
+                const fromIndex = order.indexOf(draggedId);
+                const toIndex = order.indexOf(targetId);
+                if (fromIndex === -1 || toIndex === -1) return;
+                order.splice(fromIndex, 1);
+                order.splice(toIndex, 0, draggedId);
+                reorderProductImages(productId, order);
+            });
+        }
+
+        async function reorderProductImages(productId, order) {
+            try {
+                const response = await fetch(`/api/v1/core-products/${productId}/images/reorder`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ order })
+                });
+                const data = await response.json();
+                if (data.status !== 'success') {
+                    alert('✗ Error reordering images: ' + (data.message || 'Unknown error'));
+                }
+            } catch (error) {
+                console.error('[Admin] Reorder error:', error);
+                alert('✗ Error reordering images: ' + error.message);
+            } finally {
+                loadProductImages(productId);
+            }
+        }
+
+        async function setPrimaryImage(productId, imageId) {
+            try {
+                const grid = document.getElementById(`image-grid-${productId}`);
+                const order = grid
+                    ? Array.from(grid.querySelectorAll('.image-thumbnail')).map(el => el.dataset.imageId)
+                    : [];
+                const withoutTarget = order.filter(id => id !== imageId);
+                await reorderProductImages(productId, [imageId, ...withoutTarget]);
+            } catch (error) {
+                console.error('[Admin] Set primary error:', error);
             }
         }
 

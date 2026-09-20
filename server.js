@@ -2626,7 +2626,9 @@ app.delete('/api/v1/core-products/:productId/images/:imageId', async (req, res, 
     try {
         const cachedImages = coreReviewImages.get(String(req.params.productId));
         if (cachedImages) {
-            const remainingImages = cachedImages.filter(image => String(image.id) !== String(req.params.imageId));
+            const remainingImages = cachedImages
+                .filter(image => String(image.id) !== String(req.params.imageId))
+                .map((image, index) => ({ ...image, sort_order: index, is_primary: index === 0 ? 1 : 0 }));
             coreReviewImages.set(String(req.params.productId), remainingImages);
             return res.status(200).json({ status: 'success', message: 'Image deleted' });
         }
@@ -2649,6 +2651,18 @@ app.delete('/api/v1/core-products/:productId/images/:imageId', async (req, res, 
         // Delete from database
         await connection.query('DELETE FROM product_images WHERE id = ?', [req.params.imageId]);
 
+        // Re-sequence the remaining images so sort_order has no gaps and one image is primary
+        const [remaining] = await connection.query(
+            'SELECT id FROM product_images WHERE product_id = ? ORDER BY sort_order',
+            [image.product_id]
+        );
+        for (let index = 0; index < remaining.length; index++) {
+            await connection.query(
+                'UPDATE product_images SET sort_order = ?, is_primary = ? WHERE id = ?',
+                [index, index === 0 ? 1 : 0, remaining[index].id]
+            );
+        }
+
         connection.release();
 
         res.status(200).json({
@@ -2656,6 +2670,46 @@ app.delete('/api/v1/core-products/:productId/images/:imageId', async (req, res, 
             message: 'Image deleted'
         });
 
+    } catch (err) {
+        if (connection) connection.release();
+        next(err);
+    }
+});
+
+// Route: Reorder Core product images (also updates which image is primary)
+app.patch('/api/v1/core-products/:productId/images/reorder', async (req, res, next) => {
+    let connection;
+    try {
+        const productId = req.params.productId;
+        const order = Array.isArray(req.body?.order) ? req.body.order.map(String) : null;
+        if (!order || order.length === 0) {
+            return next(new AppError('An "order" array of image IDs is required', 400));
+        }
+
+        const cachedImages = coreReviewImages.get(String(productId));
+        if (cachedImages) {
+            const byId = new Map(cachedImages.map(image => [String(image.id), image]));
+            const reordered = order
+                .filter(id => byId.has(id))
+                .map(id => byId.get(id));
+            // Keep any images the client didn't include (defensive) at the end, unchanged relative order
+            cachedImages.forEach(image => {
+                if (!order.includes(String(image.id))) reordered.push(image);
+            });
+            const updated = reordered.map((image, index) => ({ ...image, sort_order: index, is_primary: index === 0 ? 1 : 0 }));
+            coreReviewImages.set(String(productId), updated);
+            return res.status(200).json({ status: 'success', message: 'Image order updated', data: { images: updated } });
+        }
+
+        connection = await db.getConnection();
+        for (let index = 0; index < order.length; index++) {
+            await connection.query(
+                'UPDATE product_images SET sort_order = ?, is_primary = ? WHERE id = ? AND product_id = ?',
+                [index, index === 0 ? 1 : 0, order[index], productId]
+            );
+        }
+        connection.release();
+        res.status(200).json({ status: 'success', message: 'Image order updated' });
     } catch (err) {
         if (connection) connection.release();
         next(err);
