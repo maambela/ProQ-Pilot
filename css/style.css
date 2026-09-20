@@ -5473,9 +5473,9 @@ color: #d8d8d8;
 }
 
 /* Compact index promo grid for short laptop screens. */
-@media (min-width: 969px) and (max-width: 1920px) and (max-height: 950px) {
+@media (min-width: 969px) and (max-width: 1880px) and (max-height: 850px) {
     .promo-grid-section {
-        padding: 30px 3% 64px;
+        padding: 34px 3% 56px;
     }
 
     .promo-container {
@@ -5484,7 +5484,7 @@ color: #d8d8d8;
     }
 
     .promo-box {
-        height: 202px;
+        height: 218px;
         min-height: 0;
         padding: 22px;
         border-radius: 18px;
@@ -7401,11 +7401,19 @@ color: #d8d8d8;
 /* Cleaner sticky procurement stage */
 .procurement-scroll-stage {
     --category-image-height: clamp(350px, 42vh, 480px);
-    --procurement-image-height: clamp(260px, 36vh, 400px);
+    --procurement-image-height: clamp(430px, 88vh, 740px);
     width: min(1720px, 94vw);
     margin-top: 34px;
     grid-template-columns: minmax(360px, 0.72fr) minmax(720px, 1.28fr);
     gap: clamp(38px, 4.6vw, 78px);
+}
+
+/* Balanced, unzoomed sizing for short laptop screens only (14"-16" range). Desktop monitors keep the values above. */
+@media (min-width: 969px) and (max-width: 1880px) and (max-height: 850px) {
+    .procurement-scroll-stage {
+        --category-image-height: clamp(320px, 40vh, 440px);
+        --procurement-image-height: clamp(320px, 40vh, 440px);
+    }
 }
 
 .procurement-scroll-stage,

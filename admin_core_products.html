@@ -1448,10 +1448,10 @@
                             <span class="image-label">Images</span>
                             <div class="image-grid image-summary" id="image-grid-${product.id}">
                                 <span class="image-count" id="image-count-${product.id}">${product.image_count || 0} image(s)</span>
-                                <button class="add-image-box" onclick="triggerImageUpload(${product.id})">
+                                <button class="add-image-box" onclick="triggerImageUpload('${product.id}')">
                                     <i class='bx bx-upload'></i>
                                     <span>Upload</span>
-                                    <input type="file" class="file-input" id="file-${product.id}" multiple accept="image/*" onchange="handleImageUpload(event, ${product.id})">
+                                    <input type="file" class="file-input" id="file-${product.id}" multiple accept="image/*" onchange="handleImageUpload(event, '${product.id}')">
                                 </button>
                             </div>
                         </div>
@@ -1460,10 +1460,10 @@
                             <button
                                 class="btn btn-success"
                                 id="approve-${product.id}"
-                                onclick="approveProduct(${product.id})"
+                                onclick="approveProduct('${product.id}')"
                                 ${Number(product.image_count || 0) === 0 ? 'disabled title="Upload at least one image before approval"' : ''}
                             >✓ Approve</button>
-                            <button class="btn btn-danger" onclick="openRejectionModal(${product.id})">✗ Reject</button>
+                            <button class="btn btn-danger" onclick="openRejectionModal('${product.id}')">✗ Reject</button>
                         </div>
                     </div>
                 `).join('');
@@ -1530,7 +1530,7 @@
                     thumb.className = 'image-thumbnail';
                     thumb.innerHTML = `
                         <img src="${imageUrl}" alt="Product image ${index + 1}" loading="lazy">
-                        <div class="image-delete-btn" onclick="deleteProductImage(${productId}, ${image.id})">
+                        <div class="image-delete-btn" onclick="deleteProductImage('${productId}', '${image.id}')">
                             <i class='bx bx-trash'></i>
                         </div>
                     `;
@@ -1620,17 +1620,11 @@
             if (!confirm('Delete this image?')) return;
 
             try {
-                // Ensure IDs are numbers
-                const prodId = Number(productId);
-                const imgId = Number(imageId);
-                
-                // Validate IDs
-                if (!Number.isInteger(prodId) || !Number.isInteger(imgId)) {
-                    console.error(`[Admin] Invalid IDs - prodId: ${prodId}, imgId: ${imgId}`);
-                    alert('✗ Invalid image ID. Please refresh and try again.');
-                    return;
-                }
-                
+                // Core pending-review products use string IDs (e.g. "core:xxxx"); approved
+                // products use numeric DB IDs. Both are valid here, so pass them through as-is.
+                const prodId = productId;
+                const imgId = imageId;
+
                 console.log(`[Admin] Deleting image ${imgId} from product ${prodId}`);
                 const url = `/api/v1/core-products/${prodId}/images/${imgId}`;
                 console.log(`[Admin] DELETE URL: ${url}`);
