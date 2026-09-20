@@ -7415,6 +7415,66 @@ color: #d8d8d8;
         /* Fills the remaining space below the copy block down to a small ~0.4cm gap from the bottom of the screen, on any laptop height. */
         --procurement-image-height: clamp(220px, calc(100vh - 500px), 620px);
     }
+
+    /* Compact store product cards for laptop screens only, so more rows fit before a row is cut by the fold. */
+    body.store-page .product-grid {
+        gap: 12px !important;
+    }
+
+    body.store-page .product-grid .product-card .card-head {
+        height: 110px !important;
+        padding: 12px !important;
+    }
+
+    body.store-page .product-grid .product-card .card-head img {
+        max-height: 78px !important;
+    }
+
+    body.store-page .product-grid .product-card .card-body {
+        padding: 14px !important;
+    }
+
+    body.store-page .product-grid .product-card .card-body .product-meta img.brand-logo-tag {
+        height: 22px !important;
+    }
+
+    body.store-page .product-grid .product-card .card-body .brand-tag {
+        font-size: 0.62rem !important;
+        padding: 3px 8px !important;
+    }
+
+    body.store-page .product-grid .product-card .card-body h3.product-title {
+        font-size: 0.92rem !important;
+        margin: 6px 0 !important;
+        min-height: 2.3em !important;
+    }
+
+    body.store-page .product-grid .product-card .card-body p.product-summary {
+        font-size: 0.68rem !important;
+        margin: 0 0 8px !important;
+    }
+
+    body.store-page .product-grid .product-card .card-body .price-box {
+        margin: 2px 0 !important;
+    }
+
+    body.store-page .product-grid .product-card .card-body .current-price {
+        font-size: 1.05rem !important;
+    }
+
+    body.store-page .product-grid .product-card .card-body .btn-view-details {
+        padding: 6px 14px !important;
+        font-size: 0.72rem !important;
+    }
+
+    body.store-page .product-grid .product-card .card-head .action-btn {
+        width: 28px !important;
+        height: 28px !important;
+    }
+
+    body.store-page .product-grid .product-card .card-head .action-btn i {
+        font-size: 0.85rem !important;
+    }
 }
 
 .procurement-scroll-stage,
