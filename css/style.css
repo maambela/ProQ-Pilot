@@ -5484,7 +5484,7 @@ color: #d8d8d8;
     }
 
     .promo-box {
-        height: 260px;
+        height: 300px;
         min-height: 0;
         padding: 22px;
         border-radius: 18px;
@@ -7422,54 +7422,54 @@ color: #d8d8d8;
     }
 
     body.store-page .product-grid .product-card .card-head {
-        height: 110px !important;
-        padding: 12px !important;
+        height: 170px !important;
+        padding: 18px !important;
     }
 
     body.store-page .product-grid .product-card .card-head img {
-        max-height: 78px !important;
+        max-height: 130px !important;
     }
 
     body.store-page .product-grid .product-card .card-body {
-        padding: 14px !important;
+        padding: 20px !important;
     }
 
     body.store-page .product-grid .product-card .card-body .product-meta img.brand-logo-tag {
-        height: 22px !important;
+        height: 32px !important;
     }
 
     body.store-page .product-grid .product-card .card-body .brand-tag {
-        font-size: 0.62rem !important;
-        padding: 3px 8px !important;
+        font-size: 0.7rem !important;
+        padding: 4px 10px !important;
     }
 
     body.store-page .product-grid .product-card .card-body h3.product-title {
-        font-size: 0.92rem !important;
-        margin: 6px 0 !important;
-        min-height: 2.3em !important;
+        font-size: 1.05rem !important;
+        margin: 8px 0 !important;
+        min-height: 2.4em !important;
     }
 
     body.store-page .product-grid .product-card .card-body p.product-summary {
-        font-size: 0.68rem !important;
-        margin: 0 0 8px !important;
+        font-size: 0.76rem !important;
+        margin: 0 0 12px !important;
     }
 
     body.store-page .product-grid .product-card .card-body .price-box {
-        margin: 2px 0 !important;
+        margin: 4px 0 !important;
     }
 
     body.store-page .product-grid .product-card .card-body .current-price {
-        font-size: 1.05rem !important;
+        font-size: 1.2rem !important;
     }
 
     body.store-page .product-grid .product-card .card-body .btn-view-details {
-        padding: 6px 14px !important;
-        font-size: 0.72rem !important;
+        padding: 8px 18px !important;
+        font-size: 0.8rem !important;
     }
 
     body.store-page .product-grid .product-card .card-head .action-btn {
-        width: 28px !important;
-        height: 28px !important;
+        width: 32px !important;
+        height: 32px !important;
     }
 
     body.store-page .product-grid .product-card .card-head .action-btn i {
