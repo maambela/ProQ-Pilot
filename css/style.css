@@ -7422,36 +7422,36 @@ color: #d8d8d8;
     }
 
     body.store-page .product-grid .product-card .card-head {
-        height: 92px !important;
-        padding: 10px !important;
+        height: 110px !important;
+        padding: 12px !important;
     }
 
     body.store-page .product-grid .product-card .card-head img {
-        max-height: 64px !important;
+        max-height: 78px !important;
     }
 
     body.store-page .product-grid .product-card .card-body {
-        padding: 11px !important;
+        padding: 14px !important;
     }
 
     body.store-page .product-grid .product-card .card-body .product-meta img.brand-logo-tag {
-        height: 19px !important;
+        height: 22px !important;
     }
 
     body.store-page .product-grid .product-card .card-body .brand-tag {
-        font-size: 0.58rem !important;
-        padding: 2px 7px !important;
+        font-size: 0.62rem !important;
+        padding: 3px 8px !important;
     }
 
     body.store-page .product-grid .product-card .card-body h3.product-title {
-        font-size: 0.86rem !important;
-        margin: 5px 0 !important;
-        min-height: 2.2em !important;
+        font-size: 0.92rem !important;
+        margin: 6px 0 !important;
+        min-height: 2.3em !important;
     }
 
     body.store-page .product-grid .product-card .card-body p.product-summary {
-        font-size: 0.65rem !important;
-        margin: 0 0 6px !important;
+        font-size: 0.68rem !important;
+        margin: 0 0 8px !important;
     }
 
     body.store-page .product-grid .product-card .card-body .price-box {
@@ -7459,17 +7459,17 @@ color: #d8d8d8;
     }
 
     body.store-page .product-grid .product-card .card-body .current-price {
-        font-size: 0.95rem !important;
+        font-size: 1.05rem !important;
     }
 
     body.store-page .product-grid .product-card .card-body .btn-view-details {
-        padding: 5px 12px !important;
-        font-size: 0.68rem !important;
+        padding: 6px 14px !important;
+        font-size: 0.72rem !important;
     }
 
     body.store-page .product-grid .product-card .card-head .action-btn {
-        width: 25px !important;
-        height: 25px !important;
+        width: 28px !important;
+        height: 28px !important;
     }
 
     body.store-page .product-grid .product-card .card-head .action-btn i {
