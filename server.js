@@ -60,6 +60,7 @@ app.use(['/test', '/webhook/yoco-order-test'], sameOrigin, async (req, res, next
     } catch (error) { next(error); }
 });
 app.get(['/signup.html', '/resetpassword.html', '/verify-email.html'], (req, res) => res.redirect('/signin.html'));
+app.get('/', (req, res) => res.redirect(302, '/welcome.html'));
 app.use(async (req, res, next) => {
     if (!['GET', 'HEAD'].includes(req.method)) return next();
     let page;

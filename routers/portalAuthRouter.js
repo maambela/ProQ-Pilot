@@ -3,6 +3,56 @@ const crypto = require('crypto');
 const bcrypt = require('bcryptjs');
 const { hash, safeRedirect, publicUser, fail } = require('../utils/portalPolicy');
 const { readCookie, cookieOptions, sameOrigin } = require('../utils/portalSessions');
+const { sendSupportEmail } = require('../utils/email');
+const { createEmail, createPlainText, detailsTable, section, notice } = require('../utils/emailTemplates');
+
+const ACCESS_REQUEST_RECIPIENT = process.env.PORTAL_ACCESS_REQUEST_EMAIL || 'maambelanduni@stackopsit.co.za';
+
+function publicBaseUrl(req) {
+    return (process.env.PUBLIC_BASE_URL || `${req.protocol}://${req.get('host')}`).replace(/\/+$/, '');
+}
+
+async function notifyAccessRequest(req, accessRequest) {
+    if (!accessRequest) return;
+    const adminUrl = `${publicBaseUrl(req)}/admin_users.html`;
+    const title = 'New access request';
+    const intro = 'A new Microsoft account is waiting for approval to access ProQ Pilot.';
+    const body = section('Request details', detailsTable([
+        { label: 'Name', value: accessRequest.displayName || 'Not provided' },
+        { label: 'Email', value: accessRequest.email || 'Not provided' },
+        { label: 'Company', value: accessRequest.companyName },
+        { label: 'Microsoft ID', value: accessRequest.objectId }
+    ])) + notice('Review the request in ProQ Pilot and approve it when the client has been verified.', 'warning');
+    const html = createEmail({
+        publicBaseUrl: publicBaseUrl(req),
+        variant: 'warning',
+        eyebrow: 'ACCESS REVIEW',
+        title,
+        preview: `${accessRequest.displayName || 'A client'} is waiting for ProQ Pilot access.`,
+        intro,
+        body,
+        cta: { href: adminUrl, label: 'Review access request', ariaLabel: 'Review the new ProQ Pilot access request' },
+        footerNote: 'This notification was sent because a new Microsoft sign-in request was received.'
+    });
+    await sendSupportEmail({
+        to: ACCESS_REQUEST_RECIPIENT,
+        subject: `New ProQ Pilot access request${accessRequest.companyName ? ` — ${accessRequest.companyName}` : ''}`,
+        html,
+        text: createPlainText({
+            title,
+            intro,
+            lines: [
+                `Name: ${accessRequest.displayName || 'Not provided'}`,
+                `Email: ${accessRequest.email || 'Not provided'}`,
+                `Company: ${accessRequest.companyName}`,
+                `Microsoft ID: ${accessRequest.objectId}`,
+                'Review the request in ProQ Pilot and approve it when the client has been verified.'
+            ],
+            cta: { href: adminUrl, label: 'Review access request' },
+            footerNote: 'This notification was sent because a new Microsoft sign-in request was received.'
+        })
+    });
+}
 
 function createAuthRouter({ db, access, sessions, provider }) {
     const router = express.Router();
@@ -78,7 +128,14 @@ function createAuthRouter({ db, access, sessions, provider }) {
             if (typeof req.query.code !== 'string' || !req.query.code || req.query.code.length > 12000) fail('Invalid sign-in code.', 400, 'invalid_request');
             const identity = await provider.exchange(req.query.code, stateRecord.verifier, stateRecord.nonce);
             const resolved = await access.resolveIdentity(identity);
-            if (resolved.error) return res.redirect(`/signin.html?error=${resolved.error}`);
+            if (resolved.error) {
+                if (resolved.accessRequest) {
+                    notifyAccessRequest(req, resolved.accessRequest).catch(error => {
+                        console.error('[Microsoft sign-in] Access request email failed:', error.message);
+                    });
+                }
+                return res.redirect(`/signin.html?error=${resolved.error}`);
+            }
             await sessions.create(req, res, resolved.user);
             const target = resolved.user.role === 'admin' ? '/admin_dashboard.html' : safeRedirect(stateRecord.redirect_path);
             res.redirect(`/microsoft-auth-complete.html?redirect=${encodeURIComponent(target.startsWith('/admin_') && resolved.user.role !== 'admin' ? '/index.html' : target)}`);

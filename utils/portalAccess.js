@@ -211,11 +211,20 @@ function createAccessService(db) {
                 return { user: users[0] };
             }
             const suggestedEmail = String(identity.email || identity.preferred_username || '').trim().toLowerCase();
+            const [existingRequests] = await connection.query('SELECT id FROM portal_access_requests WHERE company_id = ? AND object_id = ?', [targetCompany.id, objectId]);
             await connection.query(`INSERT INTO portal_access_requests (company_id, object_id, email, display_name)
                 VALUES (?, ?, ?, ?) ON DUPLICATE KEY UPDATE updated_at = CURRENT_TIMESTAMP(3)`,
             [targetCompany.id, objectId, validator.isEmail(suggestedEmail) ? suggestedEmail.slice(0, 254) : '', String(identity.name || '').slice(0, 200)]);
             const [requests] = await connection.query('SELECT status FROM portal_access_requests WHERE company_id = ? AND object_id = ?', [targetCompany.id, objectId]);
-            return { error: requests[0].status === 'rejected' ? 'access_disabled' : 'pending_approval' };
+            return {
+                error: requests[0].status === 'rejected' ? 'access_disabled' : 'pending_approval',
+                accessRequest: !existingRequests.length ? {
+                    companyName: targetCompany.name,
+                    email: validator.isEmail(suggestedEmail) ? suggestedEmail.slice(0, 254) : '',
+                    displayName: String(identity.name || '').slice(0, 200),
+                    objectId
+                } : null
+            };
         });
     }
 

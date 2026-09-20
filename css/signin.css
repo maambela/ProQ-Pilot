@@ -435,96 +435,97 @@
 /* Short laptop viewports: keep the whole sign-in composition visible and centered. */
 @media (min-width: 769px) and (max-width: 1600px) and (max-height: 760px) {
     .signin-page .auth-page {
-        padding: 14px 16px;
+        padding: 24px 20px;
+        align-items: center;
     }
 
     .signin-page .auth-card {
-        width: min(350px, 100%);
-        min-height: calc(100svh - 28px);
-        padding: 12px 30px 14px;
-        border-radius: 20px;
+        width: min(430px, 100%);
+        min-height: min(620px, calc(100svh - 48px));
+        padding: 24px 42px 20px;
+        border-radius: 24px;
     }
 
     .signin-page .auth-card::after {
-        border-radius: 19px;
+        border-radius: 23px;
     }
 
     .signin-logo,
     .signin-logo img {
-        width: 104px;
+        width: 132px;
     }
 
     .signin-logo {
-        height: 34px;
+        height: 42px;
     }
 
     .signin-content {
-        transform: translateY(-4px);
+        transform: none;
     }
 
     .signin-heading {
-        margin-bottom: 10px;
-        padding-bottom: 10px;
+        margin-bottom: 14px;
+        padding-bottom: 14px;
     }
 
     .signin-title {
-        margin: 6px 0 8px;
-        font-size: 0.68rem;
+        margin: 10px 0 12px;
+        font-size: 0.82rem;
     }
 
     .signin-action {
-        padding-bottom: 8px;
+        padding-bottom: 12px;
     }
 
     .provider-button {
-        min-height: 40px;
-        padding: 6px 22px;
-        font-size: 0.66rem;
+        min-height: 46px;
+        padding: 8px 30px;
+        font-size: 0.72rem;
     }
 
     .signin-secured {
-        margin: -2px 0 8px;
-        font-size: 0.58rem;
+        margin: -2px 0 12px;
+        font-size: 0.62rem;
     }
 
     .signin-or {
-        margin: 1px 0 7px;
+        margin: 2px 0 11px;
     }
 
     .signin-email-form {
-        gap: 3px;
-        margin-bottom: 8px;
+        gap: 5px;
+        margin-bottom: 12px;
     }
 
     .signin-email-form label {
-        font-size: 0.58rem;
+        font-size: 0.62rem;
     }
 
     .signin-email-form input {
-        min-height: 32px;
-        padding: 6px 10px;
+        min-height: 40px;
+        padding: 9px 12px;
     }
 
     .email-signin-button {
-        min-height: 34px;
-        margin-top: 5px;
-        font-size: 0.64rem;
+        min-height: 42px;
+        margin-top: 8px;
+        font-size: 0.7rem;
     }
 
     .signin-home {
-        width: 36px;
-        height: 36px;
-        margin-bottom: 10px;
-        border-radius: 11px;
+        width: 42px;
+        height: 42px;
+        margin-bottom: 18px;
+        border-radius: 13px;
     }
 
     .signin-home i {
-        font-size: 1.05rem;
+        font-size: 1.25rem;
     }
 
     .signin-trust {
-        margin-top: 4px;
-        padding-top: 7px;
-        font-size: 0.5rem;
+        margin-top: 8px;
+        padding-top: 10px;
+        font-size: 0.56rem;
     }
 }
