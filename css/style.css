@@ -7412,8 +7412,8 @@ color: #d8d8d8;
 @media (min-width: 969px) and (max-width: 1880px) {
     .procurement-scroll-stage {
         --category-image-height: clamp(320px, 40vh, 440px);
-        /* 50% taller than the previous fit-to-bottom sizing, per explicit request. This will re-introduce some bottom overflow/scroll on shorter laptops. */
-        --procurement-image-height: clamp(330px, calc((100vh - 500px) * 1.5), 930px);
+        /* Increased again per request: now 2x the original fit-to-bottom sizing. Expect more scroll on shorter laptops. */
+        --procurement-image-height: clamp(440px, calc((100vh - 500px) * 2), 1100px);
     }
 
     /* Compact store product cards for laptop screens only, so more rows fit before a row is cut by the fold. */
