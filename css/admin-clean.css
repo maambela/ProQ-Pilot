@@ -1344,11 +1344,19 @@ header.main-header .header-container,
 
 .image-summary {
     display: flex !important;
+    flex-wrap: wrap !important;
     align-items: center !important;
-    justify-content: space-between !important;
+    justify-content: flex-start !important;
     gap: 10px !important;
     margin-top: 6px !important;
     grid-template-columns: none !important;
+}
+
+.image-summary .image-thumbnail {
+    flex: 0 0 auto !important;
+    width: 60px !important;
+    height: 60px !important;
+    aspect-ratio: auto !important;
 }
 
 .image-count {
