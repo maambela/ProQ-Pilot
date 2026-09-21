@@ -625,6 +625,10 @@ function initFAQAccordion() {
 // ===== DEMO MODAL =====
 function initDemoModal() {
     const demoModal = document.getElementById('demoModal');
+    // This script runs on pages (like store.html) that don't have the demo modal in their DOM —
+    // only wire it up where it actually exists.
+    if (!demoModal) return;
+
     const demoCloseBtn = document.getElementById('demoClose');
     const viewDemoBtn = document.getElementById('btnViewDemo');
 

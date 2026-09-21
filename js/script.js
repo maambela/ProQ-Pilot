@@ -77,10 +77,41 @@ function tryNextBrandLogo(img) {
     img.replaceWith(fallback);
 }
 
+// Cloud Run's local filesystem is ephemeral, so uploaded product photos can vanish whenever the
+// container restarts (the file is gone; the database still references its old filename). Before
+// this fell back to silently deleting the whole product card, which shrinks the visible catalogue
+// every time storage loses a file. Try a representative category photo first instead.
+function getCategoryFallbackImage(name, description, brand) {
+    const text = `${name || ''} ${description || ''} ${brand || ''}`.toLowerCase();
+    const looksLikeComputerSpec =
+        /\b(i[3579]|core|intel|ryzen|amd|celeron|pentium|snapdragon|ultra\s?[3579]|apple m[1-4]|\bm[1-4]\b|n100|n200)\b/.test(text) &&
+        /\b(4|8|12|16|18|24|32|36|48|64)\s?gb\b/.test(text) &&
+        /\b((128|256|512|1024|2048)\s?gb|[1248]\s?tb)\b/.test(text);
+    const explicitLaptopModel = /\b(laptop|notebook|macbook|thinkpad|ideapad|latitude|xps|elitebook|probook|swift|aspire|legion|vivobook|tmp\d|exo\d|nitro|predator|alienware)\b/.test(text);
+    const isTower = /\b(tower|desktop pc|optiplex|thinkcentre|prodesk|elitedesk|mini pc|workstation|precision|zbook)\b/.test(text);
+    const isLaptopText = (explicitLaptopModel || looksLikeComputerSpec) && !isTower;
+
+    if (/\b(apple|macbook|\bmba\b|\bmbp\b)\b/.test(text) && isLaptopText) return 'Images/Macbook.webp';
+    if (/\b(gaming|gamer|alienware|nitro|predator|\brog\b|rtx|geforce)\b/.test(text) && isLaptopText) return 'Images/gaming.avif';
+    if (isLaptopText) return 'Images/Laptopsforbusiness.avif';
+    if (isTower) return 'Images/workstation0.png';
+    if (/\b(monitor|display|\bfhd\b|\bqhd\b|\buhd\b)\b/.test(text)) return 'Images/monitors.jpg';
+    if (/\b(watch|smartwatch)\b/.test(text)) return 'Images/watch.webp';
+    if (/\b(duo|mfa|multi.?factor|authentication)\b/.test(text)) return 'Images/DUO.png';
+    if (/\b(microsoft 365|office 365|\bm365\b)\b/.test(text)) return 'Images/Microsoft.png';
+    return '';
+}
+
 function handleProductImageError(img) {
     const fallback = img.dataset.fallbackImage;
     if (fallback && img.src.indexOf(fallback) === -1) {
         img.src = fallback;
+        return;
+    }
+
+    const categoryFallback = img.dataset.categoryFallback;
+    if (categoryFallback && img.src.indexOf(categoryFallback) === -1) {
+        img.src = categoryFallback;
         return;
     }
 
@@ -842,6 +873,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const imageLoading = index < 4 ? 'eager' : 'lazy';
             const imagePriority = index < 4 ? 'high' : 'low';
             const fallbackImage = isAppleLaptopProduct(product) ? 'Images/Macbook.webp' : '';
+            const categoryFallback = getCategoryFallbackImage(product.product_name, product.description, brand);
 
             card.innerHTML = `
                 <div class="card-head">
@@ -849,7 +881,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         <button class="action-btn wishlist-btn" style="background: black; color: white;"><i class='bx bx-heart'></i></button>
                         <button class="action-btn add-to-cart-btn" style="background: black; color: white;"><i class='bx bx-cart'></i></button>
                     </div>
-                    <img src="${getStoreProductImageSrc(product)}" data-fallback-image="${fallbackImage}" alt="${cleanName}" width="320" height="240" sizes="(max-width: 640px) 46vw, (max-width: 1100px) 30vw, 260px" loading="${imageLoading}" decoding="async" fetchpriority="${imagePriority}" onerror="handleProductImageError(this)">
+                    <img src="${getStoreProductImageSrc(product)}" data-fallback-image="${fallbackImage}" data-category-fallback="${categoryFallback}" alt="${cleanName}" width="320" height="240" sizes="(max-width: 640px) 46vw, (max-width: 1100px) 30vw, 260px" loading="${imageLoading}" decoding="async" fetchpriority="${imagePriority}" onerror="handleProductImageError(this)">
                 </div>
                 <div class="card-body">
                     <div class="product-meta" style="display: flex; gap: 8px; margin-bottom: 8px;">
