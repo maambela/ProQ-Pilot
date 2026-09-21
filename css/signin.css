@@ -529,3 +529,60 @@
         font-size: 0.56rem;
     }
 }
+
+/* Keep the sign-in card consistently tall and narrow across every laptop size (14"-16" range),
+   regardless of the exact width/height combination. Wins over the two rules above for width/height
+   since it's declared later. Desktop monitors (>=1920px wide) are unaffected. */
+@media (min-width: 769px) and (max-width: 1880px) {
+    .signin-page .auth-card {
+        width: min(250px, 100%);
+        min-height: calc(100svh - 48px);
+        padding: 20px 24px 18px;
+    }
+
+    .signin-page .signin-content {
+        transform: none;
+    }
+
+    .signin-logo,
+    .signin-logo img {
+        width: 92px;
+    }
+
+    .signin-logo {
+        height: 30px;
+    }
+
+    .signin-title {
+        font-size: 0.7rem;
+    }
+
+    .signin-kicker {
+        font-size: 0.54rem;
+    }
+
+    .provider-button {
+        min-height: 40px;
+        padding: 7px 14px;
+        font-size: 0.62rem;
+    }
+
+    .signin-email-form input {
+        min-height: 36px;
+        padding: 7px 10px;
+        font-size: 0.72rem;
+    }
+
+    .signin-email-form label {
+        font-size: 0.58rem;
+    }
+
+    .email-signin-button {
+        min-height: 38px;
+        font-size: 0.62rem;
+    }
+
+    .signin-trust {
+        font-size: 0.52rem;
+    }
+}
