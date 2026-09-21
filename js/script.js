@@ -115,8 +115,8 @@ function handleProductImageError(img) {
         return;
     }
 
-    const card = img.closest('.product-card');
-    if (card) card.remove();
+    img.onerror = null;
+    img.src = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMjAiIGhlaWdodD0iMjQwIiB2aWV3Qm94PSIwIDAgMzIwIDI0MCI+PHJlY3Qgd2lkdGg9IjMyMCIgaGVpZ2h0PSIyNDAiIGZpbGw9IiMxYTIxMjgiLz48dGV4dCB4PSIxNjAiIHk9IjEyNSIgZmlsbD0iI2E3YjBiOCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjE2Ij5JbWFnZSB1bmF2YWlsYWJsZTwvdGV4dD48L3N2Zz4=';
 }
 
 // Custom dropdown functionality
