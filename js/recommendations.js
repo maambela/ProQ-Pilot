@@ -300,7 +300,7 @@
         container.innerHTML = `
             <div class="recommendation-heading">
                 <div>
-                    <span class="recommendation-kicker">AI picks</span>
+                    <span class="recommendation-kicker">Recommendations</span>
                     <h3>${safeText(options.title || 'Recommended add-ons')}</h3>
                 </div>
             </div>
@@ -357,7 +357,7 @@
         container.innerHTML = `
             <div class="recommendation-heading">
                 <div>
-                    <span class="recommendation-kicker">AI picks</span>
+                    <span class="recommendation-kicker">Recommendations</span>
                     <h3>${safeText(options.title || 'Recommended add-ons')}</h3>
                 </div>
                 ${options.bundleReady ? '<small>Bundle-ready</small>' : ''}

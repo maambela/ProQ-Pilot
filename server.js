@@ -3131,12 +3131,36 @@ function isGamingRecommendationProduct(input) {
 // likely to still need, so they outrank generic "related" items.
 const COMPLETION_CATEGORIES = new Set(['laptop_bag', 'mouse', 'keyboard', 'combo', 'duo_license', 'microsoft_license', 'monitor', 'webcam', 'charger', 'support']);
 
+// The single most important add-on for each device type. It is pinned into the top of the
+// "Complete the package" results even when normal scoring would rank it lower, so a laptop buyer
+// is never shown a page without a Duo licence, a tower buyer without a monitor, and so on.
+const GUARANTEED_ESSENTIAL_CATEGORY = {
+    laptop: 'duo_license',
+    desktop: 'monitor',
+    monitor: 'combo',
+    keyboard: 'mouse',
+    mouse: 'keyboard',
+    phone: 'phone_accessory',
+    watch: 'charger'
+};
+
 function getRecommendationPriceTier(price) {
     const value = Number(price) || 0;
     if (value >= 35000) return 'enterprise';
     if (value >= 18000) return 'premium';
     if (value >= 7000) return 'mid';
     return 'entry';
+}
+
+// Core-sourced products very often have no image_url at all — the Core API feed rarely supplies
+// one. A recommendation card without a real photo looks unfinished, so these are excluded from the
+// pool entirely rather than shown with a placeholder.
+function hasUsableRecommendationImage(candidate) {
+    const url = String(candidate?.image_url || '').trim();
+    if (!url) return false;
+    // Never treat the Cisco Duo logo as a stand-in photo for an unrelated product.
+    if (/duo\.png$/i.test(url) && !/(duo|mfa|multi.?factor|authentication)/i.test(`${candidate.product_name || ''} ${candidate.description || ''}`)) return false;
+    return true;
 }
 
 // getStoreProductCategory()/shouldHideStoreApiProduct() default to hiding anything they don't
@@ -3407,6 +3431,7 @@ async function getPreparedRecommendationCandidates(connection) {
 
         const prepared = [...dbCandidates, ...liveCandidates]
             .filter(candidate => !isRecommendationJunkCandidate(candidate))
+            .filter(hasUsableRecommendationImage)
             .map(candidate => ({ candidate, profile: inferRecommendationProduct(candidate) }));
 
         preparedCandidateCache.data = prepared;
@@ -3452,10 +3477,6 @@ function scoreRecommendationCandidate(candidate, sourceProfiles, cartCategories,
 
     const stock = Number(candidate.quantity) || 0;
     score += Math.min(stock, 50) * 0.35;
-
-    // Prefer products with a real photo, but don't hard-exclude the rest — the frontend
-    // already falls back to a clean placeholder image when one isn't available.
-    if (candidate.image_url) score += 10;
 
     const price = Number(candidate.price) || 0;
     const warehousePrice = Number(candidate.warehouse_price) || 0;
@@ -3632,7 +3653,6 @@ app.post('/api/v1/recommendations', async (req, res, next) => {
                             // Stepping up from a gaming machine means more gaming machine.
                             score += isGamingRecommendationProduct(profile.text) ? 60 : -45;
                         }
-                        if (candidate.image_url) score += 10;
                         score += Math.min(Number(candidate.quantity) || 0, 40) * 0.2;
                         return {
                             ...candidate,
@@ -3664,8 +3684,41 @@ app.post('/api/v1/recommendations', async (req, res, next) => {
                 return res.status(200).json(upgradePayload);
             }
 
-            const ranked = candidates
+            // "You might also like": a genuine wildcard section for discovery. No scoring, no
+            // category logic — the whole point is that it isn't trying to be smart. Cheap enough
+            // that this is effectively instant even without the prepared-pool cache.
+            if (context === 'random') {
+                const pool = candidates.filter(({ candidate }) => !cartProductIds.has(String(candidate.id).trim()));
+                const shuffled = [...pool].sort(() => Math.random() - 0.5).slice(0, safeLimit);
+                const randomPayload = {
+                    status: 'success',
+                    results: shuffled.length,
+                    data: {
+                        recommendations: shuffled.map(({ candidate, profile }) => ({
+                            id: candidate.id,
+                            product_name: candidate.product_name,
+                            description: candidate.description,
+                            price: Number(candidate.price),
+                            quantity: Number(candidate.quantity),
+                            brand: candidate.brand,
+                            image_url: candidate.image_url,
+                            category: profile.category,
+                            reason: 'Something else worth a look.',
+                            bundle_ready: false
+                        }))
+                    }
+                };
+                return res.status(200).json(randomPayload);
+            }
+
+            // "Complete the package": the add-ons for the device being viewed. Never another
+            // machine — the point of this section is to complete a purchase, not repeat it.
+            const sourceIsMachine = sourceCategories.some(c => ['laptop', 'desktop'].includes(c));
+            const essentialCategory = GUARANTEED_ESSENTIAL_CATEGORY[sourceProfiles[0]?.category];
+
+            const scoredPool = candidates
                 .filter(({ candidate }) => !cartProductIds.has(String(candidate.id).trim()))
+                .filter(({ profile }) => !(sourceIsMachine && ['laptop', 'desktop'].includes(profile.category)))
                 .map(({ candidate, profile }) => {
                     const rankedCandidate = scoreRecommendationCandidate(candidate, sourceProfiles, cartCategories, recentCategories, context, profile);
                     return {
@@ -3677,22 +3730,36 @@ app.post('/api/v1/recommendations', async (req, res, next) => {
                     };
                 })
                 .filter(candidate => candidate.recommendation_score > -45)
-                .sort((a, b) => b.recommendation_score - a.recommendation_score)
+                .sort((a, b) => b.recommendation_score - a.recommendation_score);
+
+            let ranked = scoredPool
                 .slice(0, Math.max(safeLimit * 6, 32))
                 .sort((a, b) => b.recommendation_random - a.recommendation_random)
-                .slice(0, safeLimit)
-                .map(candidate => ({
-                    id: candidate.id,
-                    product_name: candidate.product_name,
-                    description: candidate.description,
-                    price: Number(candidate.price),
-                    quantity: Number(candidate.quantity),
-                    brand: candidate.brand,
-                    image_url: candidate.image_url,
-                    category: candidate.recommendation_category,
-                    reason: candidate.reason,
-                    bundle_ready: context === 'cart' || context === 'checkout'
-                }));
+                .slice(0, safeLimit);
+
+            // Pin the one essential add-on for this device type into the result — a laptop buyer
+            // must always see a Duo licence among the top picks, a tower buyer a monitor, etc.
+            if (essentialCategory && !ranked.some(item => item.recommendation_category === essentialCategory)) {
+                const essentialPick = scoredPool.find(item => item.recommendation_category === essentialCategory);
+                if (essentialPick) {
+                    const guaranteedSlot = Math.min(2, ranked.length - 1);
+                    if (guaranteedSlot >= 0) ranked.splice(guaranteedSlot, 1, essentialPick);
+                    else ranked = [essentialPick];
+                }
+            }
+
+            ranked = ranked.map(candidate => ({
+                id: candidate.id,
+                product_name: candidate.product_name,
+                description: candidate.description,
+                price: Number(candidate.price),
+                quantity: Number(candidate.quantity),
+                brand: candidate.brand,
+                image_url: candidate.image_url,
+                category: candidate.recommendation_category,
+                reason: candidate.reason,
+                bundle_ready: context === 'cart' || context === 'checkout'
+            }));
 
             const payload = {
                 status: 'success',

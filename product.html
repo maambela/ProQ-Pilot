@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="js/dev-access.js?v=entra-access-20260917"></script>
     <title>ProQ Pilot | Legion Pro 7i Details</title>
-    <link rel="stylesheet" href="css/style.css?v=recs-smart-v2-20260921">
+    <link rel="stylesheet" href="css/style.css?v=recs-restructure-20260921">
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
     <style>
         /* Square Image Constraints */
@@ -688,7 +688,7 @@
 
     <script src="js/site-footer.js?v=footer-mobile-bg-20260708"></script>
     <script src="js/auth-ui.js?v=entra-access-20260917"></script>
-    <script src="js/recommendations.js?v=recs-smart-v2-20260921"></script>
+    <script src="js/recommendations.js?v=recs-restructure-20260921"></script>
     <script>
 
         // Helper function to limit product name to 4 words max
@@ -724,6 +724,38 @@
             return `/product_images/${url}`;
         }
 
+        // Core-sourced products very often have no image_url at all (the Core API feed doesn't
+        // supply one for most items). Rather than show a generic "Image unavailable" placeholder,
+        // fall back to a representative stock photo for the product's category/brand — the same
+        // approach the store grid already uses for Apple laptops (js/script.js), extended to the
+        // other device types Core actually sells.
+        function getCategoryFallbackImage(product) {
+            const text = [product?.product_name, product?.description, product?.brand, product?.product_number]
+                .filter(Boolean).join(' ').toLowerCase();
+
+            // Real listings ("Dell Pro 15 Essential i7 16GB 512GB FHD", "Acer Nitro V 15 Core 7
+            // RTX 4050") rarely say "laptop" outright and don't always match a known model-line
+            // keyword, so a processor+RAM+storage spec signature is the reliable fallback signal —
+            // same approach used for recommendation categorisation in server.js.
+            const looksLikeComputerSpec =
+                /\b(i[3579]|core|intel|ryzen|amd|celeron|pentium|snapdragon|ultra\s?[3579]|apple m[1-4]|\bm[1-4]\b|n100|n200)\b/.test(text) &&
+                /\b(4|8|12|16|18|24|32|36|48|64)\s?gb\b/.test(text) &&
+                /\b((128|256|512|1024|2048)\s?gb|[1248]\s?tb)\b/.test(text);
+            const explicitLaptopModel = /\b(laptop|notebook|macbook|thinkpad|ideapad|latitude|xps|elitebook|probook|swift|aspire|legion|vivobook|tmp\d|exo\d|nitro|predator|alienware)\b/.test(text);
+            const isTower = /\b(tower|desktop pc|optiplex|thinkcentre|prodesk|elitedesk|mini pc|workstation|precision|zbook)\b/.test(text);
+            const isLaptopText = (explicitLaptopModel || looksLikeComputerSpec) && !isTower;
+
+            if (/\b(apple|macbook|\bmba\b|\bmbp\b)\b/.test(text) && isLaptopText) return 'Images/Macbook.webp';
+            if (/\b(gaming|gamer|alienware|nitro|predator|\brog\b|rtx|geforce)\b/.test(text) && isLaptopText) return 'Images/gaming.avif';
+            if (isLaptopText) return 'Images/Laptopsforbusiness.avif';
+            if (isTower) return 'Images/workstation0.png';
+            if (/\b(monitor|display|\bfhd\b|\bqhd\b|\buhd\b)\b/.test(text)) return 'Images/monitors.jpg';
+            if (/\b(watch|smartwatch)\b/.test(text)) return 'Images/watch.webp';
+            if (/\b(duo|mfa|multi.?factor|authentication)\b/.test(text)) return 'Images/DUO.png';
+            if (/\b(microsoft 365|office 365|\bm365\b)\b/.test(text)) return 'Images/Microsoft.png';
+            return '';
+        }
+
         function collectProductImageUrls(product, images) {
             const candidates = [];
             (Array.isArray(images) ? images : []).forEach((image) => candidates.push(image));
@@ -732,7 +764,7 @@
             });
 
             const seen = new Set();
-            return candidates
+            const urls = candidates
                 .map(normalizeProductImageUrl)
                 .filter(Boolean)
                 .filter((url) => {
@@ -740,6 +772,13 @@
                     seen.add(url);
                     return true;
                 });
+
+            if (urls.length === 0) {
+                const fallback = getCategoryFallbackImage(product);
+                if (fallback) return [fallback];
+            }
+
+            return urls;
         }
 
         function getProductSpecSource(product) {
@@ -875,17 +914,20 @@
             
             const brandLower = brand.toLowerCase();
             const logos = {
-                'hp': 'Images/HP.PNG',
+                'hp': 'Images/HP.png',
                 'dell': 'Images/DellLaptops.PNG',
-                'apple': 'Images/Apple.PNG',
-                'macbook': 'Images/Apple.PNG',
-                'microsoft': 'Images/Microsoft.PNG',
+                'apple': 'Images/Apple.png',
+                'macbook': 'Images/Apple.png',
+                'microsoft': 'Images/Microsoft.png',
                 'acer': 'Images/AcerStick.png',
                 'lenovo': 'Images/lenovo.PNG'
             };
 
             if (logos[brandLower]) {
-                return `<img src="${logos[brandLower]}" alt="${brand}" class="brand-logo-tag" style="height: 50px; width: auto; display: block; object-fit: contain;">`;
+                // onerror guards against any future filename/casing drift between this map and
+                // what's actually on disk (Linux deployments are case-sensitive; Windows dev isn't,
+                // so a mismatch here silently passes local testing and only breaks once deployed).
+                return `<img src="${logos[brandLower]}" alt="${brand}" class="brand-logo-tag" style="height: 50px; width: auto; display: block; object-fit: contain;" onerror="this.replaceWith(Object.assign(document.createElement('span'), {className: 'brand-tag', textContent: '${brand.toUpperCase()}', style: 'background:#00d2be;color:white;padding:4px 10px;border-radius:4px;font-size:11px;font-weight:200;'}))">`;
             }
 
             return `<span class="brand-tag" style="background: #00d2be; color: white; padding: 4px 10px; border-radius: 4px; font-size: 11px; font-weight: 200;">${brand.toUpperCase()}</span>`;
@@ -1358,9 +1400,12 @@
                     category: getProductProcurementType(product, specsToShow)
                 };
 
+                // 1. Complete the package: the add-ons for this exact device (never another
+                // laptop/desktop). Duo, or the equivalent essential for this device type, is
+                // guaranteed a spot server-side — see GUARANTEED_ESSENTIAL_CATEGORY in server.js.
                 window.StackRecommendations.init({
                     container: '#productSmartAddons',
-                    title: 'Software, security & setup picks',
+                    title: 'Complete the package',
                     context: 'product',
                     product: recommendationProduct,
                     productId,
@@ -1373,10 +1418,11 @@
                     noCache: true
                 });
 
+                // 2. Similar Products: the same kind of product, but a stronger spec.
                 window.StackRecommendations.init({
                     container: '#productCompleteSetup',
-                    title: 'Complete the package',
-                    context: 'product',
+                    title: 'Similar Products',
+                    context: 'upgrade',
                     product: recommendationProduct,
                     productId,
                     category: recommendationProduct.category,
@@ -1384,14 +1430,15 @@
                     limit: 4,
                     fetchLimit: 16,
                     randomize: true,
-                    noCache: true
+                    noCache: true,
+                    skipClientRerank: true
                 });
 
-                // Same kind of product, stronger spec.
+                // 3. You might also like: a genuine wildcard, deliberately not smart.
                 window.StackRecommendations.init({
                     container: '#productStepUp',
-                    title: 'Step up the spec',
-                    context: 'upgrade',
+                    title: 'You might also like',
+                    context: 'random',
                     product: recommendationProduct,
                     productId,
                     category: recommendationProduct.category,
