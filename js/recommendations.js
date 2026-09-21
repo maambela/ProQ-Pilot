@@ -33,7 +33,9 @@
 
     function normalizeImage(url) {
         const value = String(url || '').trim();
-        if (!value) return DEFAULT_IMAGE;
+        // hasUsableImage also rejects the Cisco Duo logo, which is used as a generic
+        // fallback elsewhere and must never stand in for an unrelated product.
+        if (!hasUsableImage(value)) return DEFAULT_IMAGE;
         if (/^(data:|blob:)/i.test(value)) return value;
         if (/^https?:\/\//i.test(value) || value.startsWith('/')) return value;
         if (/^Images\//i.test(value)) return `/${value}`;
@@ -47,7 +49,7 @@
 
     function normalizeCartItem(item) {
         return {
-            id: Number(item.id || item.productID || item.product_id) || 0,
+            id: item.id || item.productID || item.product_id || 0,
             product_name: item.product_name || item.name || '',
             description: item.description || '',
             price: Number(item.price) || 0,
@@ -98,7 +100,7 @@
     function rememberProduct(product) {
         if (!product?.id) return;
 
-        const recent = getRecentlyViewed().filter((item) => Number(item.id) !== Number(product.id));
+        const recent = getRecentlyViewed().filter((item) => String(item.id) !== String(product.id));
         recent.push({
             id: product.id,
             product_name: product.product_name,
@@ -139,17 +141,27 @@
             item?.type
         ].filter(Boolean).join(' ').toLowerCase();
 
-        if (/\b(iphone|galaxy|pixel|smartphone|cellphone|mobile phone|phone)\b/.test(text)) return 'phone';
+        // Must stay in step with normalizeRecommendationCategory() in server.js. Display keywords
+        // only win after a product has been ruled out as a computer, otherwise laptops (whose specs
+        // always mention FHD/display) register as monitors and pull other laptops back as "add-ons".
+        const looksLikeComputer =
+            /\b(i[3579]|core|intel|ryzen|amd|celeron|pentium|snapdragon|ultra\s?[3579]|apple m[1-4]|\bm[1-4]\b|n100|n200)\b/.test(text) &&
+            /\b(4|8|12|16|18|24|32|36|48|64)\s?gb\b/.test(text) &&
+            /\b((128|256|512|1024|2048)\s?gb|[1248]\s?tb)\b/.test(text);
+        const explicitLaptop = /(laptop|notebook|macbook|thinkpad|ideapad|latitude|xps|elitebook|probook|surface|swift|aspire|legion|vivobook|mba\b|mbp\b)/.test(text);
+
+        if (/(warranty|care pack|carepack|onsite|service plan|support plan|extended service)/.test(text)) return 'support';
+        if (/(charger|power adapter|power supply|ac adapter|charging cable|power brick)/.test(text)) return 'charger';
         if (/(phone case|screen protector|phone cover)/.test(text)) return 'phone_accessory';
+        if (/\b(iphone|galaxy|pixel|smartphone|cellphone|mobile phone|phone)\b/.test(text) && !looksLikeComputer && !explicitLaptop) return 'phone';
         if (/(duo|mfa|multi.?factor|2fa|authentication|security license)/.test(text)) return 'duo_license';
-        if (/(microsoft|office|365|windows|teams|sharepoint|outlook|license|licence|software)/.test(text)) return 'microsoft_license';
-        if (/(laptop bag|notebook bag|backpack|sleeve|carry case|bag)/.test(text)) return 'laptop_bag';
-        if (/(keyboard|keys|keychron|wireless keyboard)/.test(text)) return 'keyboard';
-        if (/(mouse|mice|mx master|wireless mouse|mouse set|combo)/.test(text)) return 'mouse';
-        if (/(laptop|notebook|macbook|thinkpad|ideapad|latitude|xps|elitebook|probook|surface|swift|aspire|legion|vivobook)/.test(text)) return 'laptop';
+        if (/(microsoft 365|office 365|\bm365\b|\boffice\b|teams|sharepoint|outlook|licen[cs]e|subscription|software)/.test(text) && !looksLikeComputer && !explicitLaptop) return 'microsoft_license';
+        if (/(laptop bag|notebook bag|backpack|sleeve|carry case|\bbag\b)/.test(text)) return 'laptop_bag';
+        if (/(keyboard|keychron|wireless keyboard)/.test(text)) return 'keyboard';
+        if (/(mouse|mice|mx master|wireless mouse|mouse set)/.test(text)) return 'mouse';
+        if (explicitLaptop || looksLikeComputer) return 'laptop';
         if (/(monitor|display|screen|lcd|led|uhd|fhd|qhd)/.test(text)) return 'monitor';
         if (/(charger|adapter|power supply|usb.?c|type.?c|dock|hub|charging)/.test(text)) return 'charger';
-        if (/(warranty|support|care pack|onsite|service plan)/.test(text)) return 'support';
         if (/(stand|riser|wrist rest|accessor|cable|headset|speaker|webcam)/.test(text)) return 'accessory';
         return 'hardware';
     }
@@ -221,9 +233,9 @@
         const sourceItems = [options.product, ...(cartItems || []), ...getRecentlyViewed().slice(-4)].filter(Boolean);
         if (!sourceItems.length || !recommendations.length) return recommendations.sort(() => Math.random() - 0.5);
 
-        const cartIds = new Set((cartItems || []).map(item => Number(item.id)).filter(Boolean));
+        const cartIds = new Set((cartItems || []).map(item => String(item.id)).filter(Boolean));
         const scored = recommendations
-            .filter(item => item && !cartIds.has(Number(item.id)))
+            .filter(item => item && !cartIds.has(String(item.id)))
             .map(item => {
                 const scoredItem = scoreRecommendation(item, sourceItems, options);
                 const category = item.category || scoredItem.targetCategory;
@@ -328,10 +340,12 @@
             ${hasMore ? '<button type="button" class="recommendation-see-more">See more picks</button>' : ''}
         `;
 
+        // Ids are matched as strings: live supplier products use virtual ids such as
+        // "tarsus:AB12", which Number() turns into NaN and would never match.
         container.querySelectorAll('[data-product-link]').forEach((link) => {
             link.addEventListener('click', () => {
-                const id = Number(link.dataset.productLink);
-                const product = recommendations.find((item) => Number(item.id) === id);
+                const id = String(link.dataset.productLink);
+                const product = recommendations.find((item) => String(item.id) === id);
                 if (!product) return;
                 try {
                     localStorage.setItem('proqPilotSelectedProduct:v1', JSON.stringify({
@@ -344,8 +358,8 @@
         });
         container.querySelectorAll('[data-add-recommendation]').forEach((button) => {
             button.addEventListener('click', async () => {
-                const id = Number(button.dataset.addRecommendation);
-                const product = recommendations.find((item) => Number(item.id) === id);
+                const id = String(button.dataset.addRecommendation);
+                const product = recommendations.find((item) => String(item.id) === id);
                 if (!product) return;
                 await addToCart(product, button);
             });
@@ -415,7 +429,7 @@
                 cartCache = null;
             } else {
                 const cart = JSON.parse(localStorage.getItem('cart')) || [];
-                const index = cart.findIndex((item) => Number(item.id) === Number(product.id));
+                const index = cart.findIndex((item) => String(item.id) === String(product.id));
                 if (index >= 0) {
                     cart[index].quantity = Number(cart[index].quantity || 1) + 1;
                 } else {

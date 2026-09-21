@@ -3070,22 +3070,38 @@ app.get('/api/v1/products', async (req, res, next) => {
 const recommendationCache = new Map();
 const RECOMMENDATION_CACHE_TTL = 5 * 60 * 1000;
 
+// Real laptop listings are usually model + spec strings ("Dell Pro 15 Essential i7 16GB 512GB
+// FHD") that never contain the word "laptop", while almost every one of them mentions a display
+// spec. Matching on display keywords first made laptops register as monitors, which then made the
+// engine recommend another laptop back. Order here is deliberate: the most specific intent
+// (a warranty for a device, a licence, a bag for a laptop) is resolved before the device itself,
+// and display keywords only win once a product has been ruled out as a computer.
 function normalizeRecommendationCategory(input) {
     const text = String(input || '').toLowerCase();
 
-    
-    if (/\b(iphone|galaxy|pixel|smartphone|cellphone|mobile phone|phone)\b/i.test(text)) return 'phone';
+    const looksLikeComputer =
+        /\b(i[3579]|core|intel|ryzen|amd|celeron|pentium|snapdragon|ultra\s?[3579]|apple m[1-4]|\bm[1-4]\b|n100|n200)\b/.test(text) &&
+        /\b(4|8|12|16|18|24|32|36|48|64)\s?gb\b/.test(text) &&
+        /\b((128|256|512|1024|2048)\s?gb|[1248]\s?tb)\b/.test(text);
+    const explicitLaptop = /(laptop|notebook|macbook|thinkpad|ideapad|latitude|xps|elitebook|probook|surface|swift|aspire|legion|vivobook|mba\b|mbp\b)/i.test(text);
+
+    // A warranty, charger or bag names the device it is *for*, so these are resolved before the
+    // device itself — otherwise "Charger for laptops" classifies as a laptop.
+    if (/(warranty|care pack|carepack|onsite|service plan|support plan|extended service)/i.test(text)) return 'support';
+    if (/(charger|power adapter|power supply|ac adapter|charging cable|power brick)/i.test(text)) return 'charger';
     if (/(phone case|screen protector|phone cover)/i.test(text)) return 'phone_accessory';
-if (/(duo|mfa|multi.?factor|2fa|two.?factor|authentication|security license)/i.test(text)) return 'duo_license';
-    if (/(microsoft|office|365|windows|teams|sharepoint|outlook|license|licence|software)/i.test(text)) return 'microsoft_license';
-    if (/(laptop bag|notebook bag|backpack|sleeve|carry case|bag)/i.test(text)) return 'laptop_bag';
-    if (/(keyboard|keys|keychron|logitech k|wireless keyboard)/i.test(text)) return 'keyboard';
-    if (/(mouse|mice|mx master|wireless mouse|mouse set|combo)/i.test(text)) return 'mouse';
-    if (/(laptop|notebook|macbook|thinkpad|ideapad|latitude|xps|elitebook|probook|surface|swift|aspire|legion|vivobook)/i.test(text)) return 'laptop';
+    if (/\b(iphone|galaxy|pixel|smartphone|cellphone|mobile phone|phone)\b/i.test(text) && !looksLikeComputer && !explicitLaptop) return 'phone';
+    if (/(duo|mfa|multi.?factor|2fa|two.?factor|authentication|security license)/i.test(text)) return 'duo_license';
+    // "Windows 11" appears in most laptop descriptions, so a licence needs a licence-like signal
+    // and must not look like an actual machine.
+    if (/(microsoft 365|office 365|\bm365\b|\boffice\b|teams|sharepoint|outlook|licen[cs]e|subscription|software)/i.test(text) && !looksLikeComputer && !explicitLaptop) return 'microsoft_license';
+    if (/(laptop bag|notebook bag|backpack|sleeve|carry case|\bbag\b)/i.test(text)) return 'laptop_bag';
+    if (/(keyboard|keychron|wireless keyboard)/i.test(text)) return 'keyboard';
+    if (/(mouse|mice|mx master|wireless mouse|mouse set)/i.test(text)) return 'mouse';
+    if (explicitLaptop || looksLikeComputer) return 'laptop';
     if (/(monitor|display|screen|lcd|led|uhd|fhd|qhd)/i.test(text)) return 'monitor';
     if (/(watch|smartwatch|smart watch|wearable)/i.test(text)) return 'watch';
     if (/(charger|adapter|power supply|usb.?c|type.?c|dock|hub)/i.test(text)) return 'charger';
-    if (/(warranty|support|care pack|onsite|service plan)/i.test(text)) return 'support';
     if (/(stand|riser|wrist rest|accessor|cable|headset|speaker|webcam)/i.test(text)) return 'accessory';
 
     return 'hardware';
@@ -3353,18 +3369,20 @@ app.post('/api/v1/recommendations', async (req, res, next) => {
             } = req.body || {};
 
         const safeLimit = Math.max(4, Math.min(Number(limit) || 8, 16));
+        // Kept as strings so virtual supplier ids ("core:AB12", "tarsus:AB12") compare correctly
+        // alongside numeric database ids.
         const cartProductIds = new Set(
             (Array.isArray(cartItems) ? cartItems : [])
-                .map(item => Number(item.id || item.productID || item.product_id))
+                .map(item => String(item.id || item.productID || item.product_id || '').trim())
                 .filter(Boolean)
         );
-        if (productId) cartProductIds.add(Number(productId));
+        if (productId) cartProductIds.add(String(productId).trim());
 
         const cacheKey = JSON.stringify({
             productId: productId || null,
             category: category || null,
             price: price || null,
-            cartIds: [...cartProductIds].sort((a, b) => a - b),
+            cartIds: [...cartProductIds].sort(),
             recent: (Array.isArray(recentlyViewed) ? recentlyViewed : []).slice(-8).map(item => item.id || item.productId || item.category).join('|'),
             context,
             limit: safeLimit,
@@ -3429,7 +3447,7 @@ app.post('/api/v1/recommendations', async (req, res, next) => {
                 .slice(-8)
                 .map(item => normalizeRecommendationCategory(item.category || `${item.product_name || item.name || ''} ${item.description || ''}`));
 
-            const [candidates] = await connection.query(`
+            const [dbCandidates] = await connection.query(`
                 SELECT
                     p.id,
                     p.product_number,
@@ -3451,6 +3469,15 @@ app.post('/api/v1/recommendations', async (req, res, next) => {
                 LIMIT 500
             `);
 
+            // The storefront catalogue is the database table PLUS the live Core/Tarsus supplier
+            // feed. Recommendations used to read the table alone, which on a catalogue where most
+            // stock is supplier-fed left only a couple of candidates to choose from.
+            const liveCandidates = (await getLiveSupplierStoreProducts().catch(() => []))
+                .filter(product => product.supplier_source !== 'Core' || product.status === 'approved')
+                .filter(product => Number(product.quantity) > 0 && Number(product.price) > 0);
+
+            const candidates = [...dbCandidates, ...liveCandidates];
+
             const sourceCategories = sourceProfiles.map(item => item.category);
             const recommendationSeed = String(randomSeed || `${Date.now()}-${Math.random()}`);
             const randomRank = (candidate) => {
@@ -3464,7 +3491,7 @@ app.post('/api/v1/recommendations', async (req, res, next) => {
             };
 
             const ranked = candidates
-                .filter(candidate => !cartProductIds.has(Number(candidate.id)))
+                .filter(candidate => !cartProductIds.has(String(candidate.id).trim()))
                 .filter(candidate => !isRecommendationJunkCandidate(candidate))
                 .map(candidate => {
                     const rankedCandidate = scoreRecommendationCandidate(candidate, sourceProfiles, cartCategories, recentCategories, context);

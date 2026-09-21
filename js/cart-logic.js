@@ -390,7 +390,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             return `
                 <div class="cart-item-card">
                     <div class="item-img-container">
-                        <img src="${imgSrc}" alt="${cleanName}" style="width: 60px; height: 60px; object-fit: contain;" onerror="this.src='/Images/DUO.png'">
+                        <img src="${imgSrc}" alt="${cleanName}" style="width: 60px; height: 60px; object-fit: contain;" onerror="this.onerror=null;this.src='/Images/product-placeholder.svg'">
                     </div>
                     
                     <div class="cart-item-details">

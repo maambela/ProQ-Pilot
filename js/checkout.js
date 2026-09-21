@@ -239,7 +239,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         let html = '<div class="summary-items">';
         for (const it of itemsWithPrices) {
             const specs = parseSpecs(it);
-            let imgUrl = it.image_url ? (it.image_url.startsWith('http') ? it.image_url : `/product_images/${it.image_url}`) : '/Images/placeholder.png';
+            let imgUrl = it.image_url ? (it.image_url.startsWith('http') ? it.image_url : `/product_images/${it.image_url}`) : '/Images/product-placeholder.svg';
             
             // Digital license special rendering in summary
             let displayName = it.product_name;
@@ -264,7 +264,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             html += `
                 <div class="summary-item">
-                    <img src="${imgUrl}" alt="${displayName}" class="summary-thumb" onerror="this.src='/Images/DUO.png'"/>
+                    <img src="${imgUrl}" alt="${displayName}" class="summary-thumb" onerror="this.onerror=null;this.src='/Images/product-placeholder.svg'"/>
                     <div class="summary-meta">
                         <div class="summary-name">${shortName(displayName)}</div>
                         <div class="summary-specs">

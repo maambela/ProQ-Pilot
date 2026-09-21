@@ -70,7 +70,7 @@ document.addEventListener('DOMContentLoaded', async ()=>{
             const row = document.createElement('div'); row.className = 'order-item';
             
             // Digital license special logic
-            let imgSrc = it.image_url ? (it.image_url.startsWith('http') ? it.image_url : `/product_images/${it.image_url}`) : '/Images/placeholder.png';
+            let imgSrc = it.image_url ? (it.image_url.startsWith('http') ? it.image_url : `/product_images/${it.image_url}`) : '/Images/product-placeholder.svg';
             let displayName = it.product_name;
             let duoDetails = '';
             
@@ -117,7 +117,7 @@ document.addEventListener('DOMContentLoaded', async ()=>{
             const imgContainer = document.createElement('div'); imgContainer.className = 'item-thumb-container';
             const img = document.createElement('img'); img.className = 'item-thumb';
             img.src = imgSrc;
-            img.onerror = () => { img.src = '/Images/DUO.png'; };
+            img.onerror = () => { img.onerror = null; img.src = '/Images/product-placeholder.svg'; };
             imgContainer.appendChild(img);
 
             // Details container (liquid glass)
