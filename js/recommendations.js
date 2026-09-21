@@ -284,7 +284,7 @@
         return `
             <article class="recommendation-card${compact ? ' recommendation-card--compact' : ''}" data-product-id="${item.id}">
                 <a class="recommendation-image" href="/product.html?id=${item.id}" data-product-link="${item.id}" aria-label="View ${safeText(item.product_name)}">
-                    <img src="${normalizeImage(item.image_url)}" alt="${safeText(item.product_name)}" width="220" height="160" loading="lazy" decoding="async" onerror="this.src='${DEFAULT_IMAGE}'">
+                    <img src="${normalizeImage(item.image_url)}" alt="" width="220" height="160" loading="lazy" decoding="async" onerror="this.onerror=null;this.src='${DEFAULT_IMAGE}';">
                 </a>
                 <div class="recommendation-copy">
                     <span>${safeText(item.brand || item.category || 'Add-on')}</span>
@@ -300,13 +300,17 @@
     }
 
     function render(container, recommendations, options) {
-        const offset = Number(options.offset) || 0;
-        const visible = recommendations.slice(offset, offset + (Number(options.limit) || 3));
+        const step = Number(options.limit) || 3;
+        const shownCount = Math.min(Number(container._recShownCount) || step, recommendations.length) || step;
+        const visible = recommendations.slice(0, shownCount);
 
         if (!visible.length) {
             container.hidden = true;
             return;
         }
+
+        container._recShownCount = visible.length;
+        const hasMore = visible.length < recommendations.length;
 
         container.hidden = false;
         container.classList.add('recommendation-section', options.compact ? 'recommendation-section--compact' : 'recommendation-section--standard');
@@ -321,6 +325,7 @@
             <div class="recommendation-grid">
                 ${visible.map((item) => cardTemplate(item, options.compact)).join('')}
             </div>
+            ${hasMore ? '<button type="button" class="recommendation-see-more">See more picks</button>' : ''}
         `;
 
         container.querySelectorAll('[data-product-link]').forEach((link) => {
@@ -345,6 +350,13 @@
                 await addToCart(product, button);
             });
         });
+        const seeMoreButton = container.querySelector('.recommendation-see-more');
+        if (seeMoreButton) {
+            seeMoreButton.addEventListener('click', () => {
+                container._recShownCount = shownCount + step;
+                render(container, recommendations, options);
+            });
+        }
     }
 
     async function requestRecommendations(options) {

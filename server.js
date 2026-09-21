@@ -3074,7 +3074,7 @@ function normalizeRecommendationCategory(input) {
     const text = String(input || '').toLowerCase();
 
     
-    if (/\\b(iphone|galaxy|pixel|smartphone|cellphone|mobile phone|phone)\\b/i.test(text)) return 'phone';
+    if (/\b(iphone|galaxy|pixel|smartphone|cellphone|mobile phone|phone)\b/i.test(text)) return 'phone';
     if (/(phone case|screen protector|phone cover)/i.test(text)) return 'phone_accessory';
 if (/(duo|mfa|multi.?factor|2fa|two.?factor|authentication|security license)/i.test(text)) return 'duo_license';
     if (/(microsoft|office|365|windows|teams|sharepoint|outlook|license|licence|software)/i.test(text)) return 'microsoft_license';
@@ -3097,6 +3097,22 @@ function getRecommendationPriceTier(price) {
     if (value >= 18000) return 'premium';
     if (value >= 7000) return 'mid';
     return 'entry';
+}
+
+// getStoreProductCategory()/shouldHideStoreApiProduct() default to hiding anything they don't
+// explicitly recognize (laptops/desktops/monitors/mice/keyboards/bags only) — fine for curating the
+// main store grid, but it silently excluded every license, charger, warranty, and generic accessory
+// from recommendations. This is a narrower list of genuinely bad recommendation candidates only.
+function isRecommendationJunkCandidate(candidate) {
+    const text = `${candidate.product_name || ''} ${candidate.description || ''} ${candidate.brand || ''}`.toLowerCase();
+    return /\b(racing|trueforce|driving force|racing wheel|wheel for xbox|wheel for ps|shifter|sim racing)\b/.test(text) ||
+        /\b(speaker|speakers|stereo|bluetooth speaker|soundbar|subwoofer)\b/.test(text) ||
+        /\b(usb receiver|wireless receiver|mini receiver|presentation remote|presenter|laser pointer|red laser)\b/.test(text) ||
+        /\b(windows server|server cal|device cal|client access license)\b/.test(text) ||
+        /\b(kensington|nano combination|combination lock|notebook lock|wedge lock|key lock|cable lock|keyed lock)\b/.test(text) ||
+        /\b(ups|smart ups|back ups|pdu|power distribution|surge protector|\bapc\b)\b/.test(text) ||
+        /\b(printer|printhead|laserjet|toner|ink cartridge|fuser|imaging drum)\b/.test(text) ||
+        /\bscrews?\b/.test(text);
 }
 
 function inferRecommendationProduct(product) {
@@ -3294,6 +3310,10 @@ function scoreRecommendationCandidate(candidate, sourceProfiles, cartCategories,
     const stock = Number(candidate.quantity) || 0;
     score += Math.min(stock, 50) * 0.35;
 
+    // Prefer products with a real photo, but don't hard-exclude the rest — the frontend
+    // already falls back to a clean placeholder image when one isn't available.
+    if (candidate.image_url) score += 10;
+
     const price = Number(candidate.price) || 0;
     const warehousePrice = Number(candidate.warehouse_price) || 0;
     if (price > 0 && warehousePrice > 0 && price > warehousePrice) {
@@ -3445,9 +3465,7 @@ app.post('/api/v1/recommendations', async (req, res, next) => {
 
             const ranked = candidates
                 .filter(candidate => !cartProductIds.has(Number(candidate.id)))
-                .filter(candidate => !shouldHideStoreApiProduct(candidate))
-                .filter(candidate => getStoreProductCategory(candidate) !== 'hidden-unwanted')
-                .filter(candidate => candidate.image_url)
+                .filter(candidate => !isRecommendationJunkCandidate(candidate))
                 .map(candidate => {
                     const rankedCandidate = scoreRecommendationCandidate(candidate, sourceProfiles, cartCategories, recentCategories, context);
                     return {
