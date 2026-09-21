@@ -156,31 +156,46 @@
         if (/\b(iphone|galaxy|pixel|smartphone|cellphone|mobile phone|phone)\b/.test(text) && !looksLikeComputer && !explicitLaptop) return 'phone';
         if (/(duo|mfa|multi.?factor|2fa|authentication|security license)/.test(text)) return 'duo_license';
         if (/(microsoft 365|office 365|\bm365\b|\boffice\b|teams|sharepoint|outlook|licen[cs]e|subscription|software)/.test(text) && !looksLikeComputer && !explicitLaptop) return 'microsoft_license';
-        if (/(laptop bag|notebook bag|backpack|sleeve|carry case|\bbag\b)/.test(text)) return 'laptop_bag';
+        if (/(laptop bag|notebook bag|backpack|sleeve|carry case|\bbag\b|messenger|topload|briefcase)/.test(text)) return 'laptop_bag';
+        if (/(webcam|web cam|conference camera|video bar)/.test(text)) return 'webcam';
+        if (/(keyboard (and|&|\+) mouse|mouse (and|&|\+) keyboard|desktop combo|wireless combo|combo set|keyboard mouse set)/.test(text)) return 'combo';
         if (/(keyboard|keychron|wireless keyboard)/.test(text)) return 'keyboard';
         if (/(mouse|mice|mx master|wireless mouse|mouse set)/.test(text)) return 'mouse';
+        if (/(tower|desktop pc|\bsff\b|small form factor|optiplex|thinkcentre|prodesk|elitedesk|mini pc|micro form factor|\baio\b|all.in.one)/.test(text)) return 'desktop';
         if (explicitLaptop || looksLikeComputer) return 'laptop';
         if (/(monitor|display|screen|lcd|led|uhd|fhd|qhd)/.test(text)) return 'monitor';
         if (/(charger|adapter|power supply|usb.?c|type.?c|dock|hub|charging)/.test(text)) return 'charger';
-        if (/(stand|riser|wrist rest|accessor|cable|headset|speaker|webcam)/.test(text)) return 'accessory';
+        if (/(stand|riser|wrist rest|accessor|cable|headset|speaker)/.test(text)) return 'accessory';
         return 'hardware';
     }
 
+    function isGamingProduct(item) {
+        const text = [item?.product_name, item?.name, item?.description, item?.brand]
+            .filter(Boolean).join(' ').toLowerCase();
+        return /\b(gaming|gamer|alienware|nitro|predator|rog|republic of gamers|tuf|omen|victus|legion|raider|katana|rtx|geforce|radeon rx|rgb|165hz|144hz|240hz|mechanical)\b/.test(text);
+    }
+
+    // Mirrors relatedCategoryWeights in server.js.
     const relatedCategoryWeights = {
         phone: { phone_accessory: 100, charger: 92, support: 72, duo_license: 58, microsoft_license: 48, accessory: 42 },
         phone_accessory: { phone: 90, charger: 76, support: 42 },
-        laptop: { microsoft_license: 96, duo_license: 94, laptop_bag: 88, monitor: 82, charger: 76, support: 72, keyboard: 58, mouse: 52, accessory: 46 },
-        monitor: { laptop: 76, keyboard: 70, mouse: 64, charger: 34, support: 30 },
+        laptop: { laptop_bag: 100, combo: 96, microsoft_license: 94, duo_license: 92, mouse: 90, keyboard: 88, monitor: 80, support: 78, charger: 74, webcam: 66, accessory: 58 },
+        desktop: { monitor: 100, combo: 96, keyboard: 90, mouse: 90, webcam: 86, duo_license: 84, microsoft_license: 82, support: 72, accessory: 56, charger: 30 },
+        monitor: { combo: 84, keyboard: 76, mouse: 74, webcam: 70, accessory: 56, support: 36 },
         microsoft_license: { duo_license: 98, support: 80, laptop: 62, phone: 28 },
         duo_license: { microsoft_license: 92, support: 82, laptop: 54, phone: 44 },
         laptop_bag: { laptop: 88, charger: 58, support: 34 },
-        keyboard: { mouse: 82, monitor: 64, laptop: 42, accessory: 36 },
-        mouse: { keyboard: 78, laptop: 34, monitor: 28 },
+        keyboard: { mouse: 92, monitor: 75, accessory: 72, laptop: 58, desktop: 52, support: 30 },
+        mouse: { keyboard: 88, laptop_bag: 68, monitor: 64, accessory: 60, laptop: 45, desktop: 45 },
+        combo: { monitor: 88, webcam: 70, desktop: 64, laptop: 58, accessory: 56, support: 34 },
+        webcam: { combo: 72, monitor: 68, keyboard: 60, mouse: 60, desktop: 58, laptop: 52, accessory: 50 },
         charger: { laptop: 70, phone: 86, phone_accessory: 72, laptop_bag: 42 },
         support: { laptop: 62, phone: 60, microsoft_license: 40, duo_license: 42 },
         accessory: { laptop: 48, phone: 38, keyboard: 34, mouse: 34 },
         hardware: { laptop: 34, support: 28, accessory: 24 }
     };
+
+    const COMPLETION_CATEGORIES = ['laptop_bag', 'mouse', 'keyboard', 'combo', 'duo_license', 'microsoft_license', 'monitor', 'webcam', 'charger', 'support'];
 
     function getRecommendationReasonForMatch(sourceCategories, targetCategory, context) {
         const sourceSet = new Set(sourceCategories);
@@ -208,10 +223,23 @@
             score += relatedCategoryWeights[sourceCategory]?.[targetCategory] || 0;
         });
 
-        if (sourceSet.has(targetCategory)) score -= 34;
+        // Never answer "I'm looking at a laptop" with another laptop.
+        if (sourceSet.has(targetCategory)) score -= 130;
+        if ((sourceSet.has('laptop') || sourceSet.has('desktop')) && ['laptop', 'desktop'].includes(targetCategory)) score -= 130;
         if (sourceSet.has('phone') && ['mouse', 'keyboard', 'monitor', 'laptop_bag'].includes(targetCategory)) score -= 120;
         if (sourceSet.has('laptop') && targetCategory === 'phone_accessory') score -= 90;
         if (sourceSet.has('microsoft_license') && ['mouse', 'keyboard'].includes(targetCategory) && !sourceSet.has('laptop')) score -= 55;
+
+        // The add-ons that complete a machine come first; a bag always applies to a laptop.
+        if ((sourceSet.has('laptop') || sourceSet.has('desktop')) && COMPLETION_CATEGORIES.includes(targetCategory)) score += 45;
+        if (sourceSet.has('laptop') && targetCategory === 'laptop_bag') score += 30;
+        if (sourceSet.has('desktop') && ['monitor', 'combo', 'webcam'].includes(targetCategory)) score += 30;
+
+        // Gaming machines pair with gaming peripherals.
+        if (sourceItems.some(isGamingProduct)) {
+            if (isGamingProduct(item) && !['laptop', 'desktop'].includes(targetCategory)) score += 55;
+            else if (['keyboard', 'mouse', 'combo', 'accessory', 'webcam'].includes(targetCategory)) score -= 12;
+        }
 
         const sourceMaxPrice = Math.max(...sourceItems.map(item => Number(item.price) || 0), Number(options.price) || 0, 0);
         const candidatePrice = Number(item.price) || 0;
@@ -405,7 +433,12 @@
 
         if (!response.ok) throw new Error('Recommendation request failed');
         const result = await response.json();
-        const recommendations = weightedRandomize((result?.data?.recommendations || []), options, cartItems);
+        const serverRecommendations = result?.data?.recommendations || [];
+        // Upgrade picks are intentionally the *same* category as the source product, which the
+        // client re-ranker penalises heavily — so its ordering is used as-is.
+        const recommendations = options.skipClientRerank
+            ? serverRecommendations
+            : weightedRandomize(serverRecommendations, options, cartItems);
         if (!options.noCache && !randomize) writeCache(cacheKey, recommendations);
         return recommendations;
     }

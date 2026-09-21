@@ -3070,6 +3070,13 @@ app.get('/api/v1/products', async (req, res, next) => {
 const recommendationCache = new Map();
 const RECOMMENDATION_CACHE_TTL = 5 * 60 * 1000;
 
+// Every recommendation request used to re-query the database, re-merge the supplier feed and
+// re-run a dozen classification regexes over several hundred products. That work is identical for
+// all callers, so it is prepared once and reused; only the (cheap) scoring and shuffling is
+// per-request, which keeps randomised results while making responses effectively instant.
+const preparedCandidateCache = { data: null, createdAt: 0, promise: null };
+const PREPARED_CANDIDATE_TTL = 2 * 60 * 1000;
+
 // Real laptop listings are usually model + spec strings ("Dell Pro 15 Essential i7 16GB 512GB
 // FHD") that never contain the word "laptop", while almost every one of them mentions a display
 // spec. Matching on display keywords first made laptops register as monitors, which then made the
@@ -3095,17 +3102,34 @@ function normalizeRecommendationCategory(input) {
     // "Windows 11" appears in most laptop descriptions, so a licence needs a licence-like signal
     // and must not look like an actual machine.
     if (/(microsoft 365|office 365|\bm365\b|\boffice\b|teams|sharepoint|outlook|licen[cs]e|subscription|software)/i.test(text) && !looksLikeComputer && !explicitLaptop) return 'microsoft_license';
-    if (/(laptop bag|notebook bag|backpack|sleeve|carry case|\bbag\b)/i.test(text)) return 'laptop_bag';
+    if (/(laptop bag|notebook bag|backpack|sleeve|carry case|\bbag\b|messenger|topload|briefcase)/i.test(text)) return 'laptop_bag';
+    if (/(webcam|web cam|conference camera|video bar|\bcam\b.*(usb|wireless|hd|1080|4k))/i.test(text)) return 'webcam';
+    // A keyboard-and-mouse set is its own thing and must be matched before either half.
+    if (/(keyboard (and|&|\+) mouse|mouse (and|&|\+) keyboard|desktop combo|wireless combo|combo set|keyboard mouse set|\bkm\s?combo\b)/i.test(text)) return 'combo';
     if (/(keyboard|keychron|wireless keyboard)/i.test(text)) return 'keyboard';
     if (/(mouse|mice|mx master|wireless mouse|mouse set)/i.test(text)) return 'mouse';
+    // Towers/SFF machines share the processor+RAM+storage signature with laptops, so they are
+    // separated before the laptop check.
+    if (/(tower|desktop pc|\bsff\b|small form factor|optiplex|thinkcentre|prodesk|elitedesk|mini pc|micro form factor|\baio\b|all.in.one)/i.test(text)) return 'desktop';
     if (explicitLaptop || looksLikeComputer) return 'laptop';
     if (/(monitor|display|screen|lcd|led|uhd|fhd|qhd)/i.test(text)) return 'monitor';
     if (/(watch|smartwatch|smart watch|wearable)/i.test(text)) return 'watch';
     if (/(charger|adapter|power supply|usb.?c|type.?c|dock|hub)/i.test(text)) return 'charger';
-    if (/(stand|riser|wrist rest|accessor|cable|headset|speaker|webcam)/i.test(text)) return 'accessory';
+    if (/(stand|riser|wrist rest|accessor|cable|headset|speaker)/i.test(text)) return 'accessory';
 
     return 'hardware';
 }
+
+// Gaming gear should pair with gaming gear: an Alienware/Nitro/ROG machine wants an RGB
+// mechanical keyboard and a gaming mouse, not a plain office set.
+function isGamingRecommendationProduct(input) {
+    const text = String(input || '').toLowerCase();
+    return /\b(gaming|gamer|alienware|nitro|predator|rog|republic of gamers|tuf|omen|victus|legion|raider|katana|rtx|geforce|radeon rx|rgb|165hz|144hz|240hz|mechanical)\b/.test(text);
+}
+
+// The add-ons that actually complete a machine purchase. These are the picks the buyer is most
+// likely to still need, so they outrank generic "related" items.
+const COMPLETION_CATEGORIES = new Set(['laptop_bag', 'mouse', 'keyboard', 'combo', 'duo_license', 'microsoft_license', 'monitor', 'webcam', 'charger', 'support']);
 
 function getRecommendationPriceTier(price) {
     const value = Number(price) || 0;
@@ -3142,7 +3166,8 @@ function inferRecommendationProduct(product) {
     return {
         category: normalizeRecommendationCategory(text),
         price: Number(product?.price) || 0,
-        tier: getRecommendationPriceTier(product?.price)
+        tier: getRecommendationPriceTier(product?.price),
+        text
     };
 }
 
@@ -3161,21 +3186,37 @@ const relatedCategoryWeights = {
         support: 42
     },
     laptop: {
-        laptop_bag: 95,
-        microsoft_license: 92,
-        duo_license: 90,
-        mouse: 86,
-        keyboard: 82,
+        laptop_bag: 100,
+        combo: 96,
+        microsoft_license: 94,
+        duo_license: 92,
+        mouse: 90,
+        keyboard: 88,
         monitor: 80,
         support: 78,
-        charger: 70,
+        charger: 74,
+        webcam: 66,
         accessory: 58
+    },
+    // A tower ships without a screen or input devices, so those are the essentials.
+    desktop: {
+        monitor: 100,
+        combo: 96,
+        keyboard: 90,
+        mouse: 90,
+        webcam: 86,
+        duo_license: 84,
+        microsoft_license: 82,
+        support: 72,
+        accessory: 56,
+        charger: 30
     },
     keyboard: {
         mouse: 92,
         monitor: 75,
         accessory: 72,
         laptop: 58,
+        desktop: 52,
         support: 30
     },
     mouse: {
@@ -3183,7 +3224,25 @@ const relatedCategoryWeights = {
         laptop_bag: 68,
         monitor: 64,
         accessory: 60,
-        laptop: 45
+        laptop: 45,
+        desktop: 45
+    },
+    combo: {
+        monitor: 88,
+        webcam: 70,
+        desktop: 64,
+        laptop: 58,
+        accessory: 56,
+        support: 34
+    },
+    webcam: {
+        combo: 72,
+        monitor: 68,
+        keyboard: 60,
+        mouse: 60,
+        desktop: 58,
+        laptop: 52,
+        accessory: 50
     },
     microsoft_license: {
         duo_license: 98,
@@ -3209,9 +3268,10 @@ const relatedCategoryWeights = {
         duo_license: 50
     },
     monitor: {
+        combo: 84,
         keyboard: 76,
         mouse: 74,
-        laptop: 72,
+        webcam: 70,
         accessory: 56,
         support: 36
     },
@@ -3241,7 +3301,24 @@ const relatedCategoryWeights = {
 function getRecommendationReason(sourceCategories, targetCategory, context) {
     const sourceSet = new Set(sourceCategories);
 
-    
+    if (sourceSet.has('desktop') && targetCategory === 'monitor') {
+        return 'A tower needs a screen — this pairs well with it.';
+    }
+    if (sourceSet.has('desktop') && targetCategory === 'combo') {
+        return 'Keyboard and mouse set to go with the tower.';
+    }
+    if (sourceSet.has('desktop') && targetCategory === 'webcam') {
+        return 'Adds camera and calls to a desktop setup.';
+    }
+    if (sourceSet.has('desktop') && targetCategory === 'duo_license') {
+        return 'Secures sign-ins on the new machine.';
+    }
+    if (targetCategory === 'combo') {
+        return 'Keyboard and mouse in one set for the new setup.';
+    }
+    if (targetCategory === 'webcam') {
+        return 'Camera for meetings and calls on the new setup.';
+    }
     if (sourceSet.has('phone') && targetCategory === 'charger') {
         return 'Power and charging match for the phone in your cart.';
     }
@@ -3291,8 +3368,58 @@ if (sourceSet.has('laptop') && targetCategory === 'microsoft_license') {
     return 'Smart add-on based on your selected product.';
 }
 
-function scoreRecommendationCandidate(candidate, sourceProfiles, cartCategories, recentCategories, context) {
-    const candidateProfile = inferRecommendationProduct(candidate);
+// Builds (and caches) the pool every recommendation request scores against: the database
+// catalogue merged with the live supplier feed, junk removed, and each product classified once.
+async function getPreparedRecommendationCandidates(connection) {
+    if (preparedCandidateCache.data && Date.now() - preparedCandidateCache.createdAt < PREPARED_CANDIDATE_TTL) {
+        return preparedCandidateCache.data;
+    }
+    if (preparedCandidateCache.promise) return preparedCandidateCache.promise;
+
+    preparedCandidateCache.promise = (async () => {
+        const [dbCandidates] = await connection.query(`
+            SELECT
+                p.id,
+                p.product_number,
+                p.product_name,
+                p.description,
+                p.price,
+                p.warehouse_price,
+                p.quantity,
+                p.brand,
+                (SELECT image_url FROM product_images
+                 WHERE product_id = p.id
+                 ORDER BY is_primary DESC, id ASC
+                 LIMIT 1) as image_url
+            FROM products p
+            WHERE (p.status IS NULL OR p.status = 'approved')
+              AND (p.is_active = 1 OR p.is_active IS NULL)
+              AND COALESCE(p.quantity, 0) > 0
+            ORDER BY p.updated_at DESC
+            LIMIT 500
+        `);
+
+        // The storefront catalogue is the database table PLUS the live Core/Tarsus supplier feed.
+        // Reading the table alone left only a couple of candidates on a supplier-fed catalogue.
+        const liveCandidates = (await getLiveSupplierStoreProducts().catch(() => []))
+            .filter(product => product.supplier_source !== 'Core' || product.status === 'approved')
+            .filter(product => Number(product.quantity) > 0 && Number(product.price) > 0);
+
+        const prepared = [...dbCandidates, ...liveCandidates]
+            .filter(candidate => !isRecommendationJunkCandidate(candidate))
+            .map(candidate => ({ candidate, profile: inferRecommendationProduct(candidate) }));
+
+        preparedCandidateCache.data = prepared;
+        preparedCandidateCache.createdAt = Date.now();
+        console.log(`[Recommendations] Prepared candidate pool: ${prepared.length} products`);
+        return prepared;
+    })().finally(() => { preparedCandidateCache.promise = null; });
+
+    return preparedCandidateCache.promise;
+}
+
+function scoreRecommendationCandidate(candidate, sourceProfiles, cartCategories, recentCategories, context, precomputedProfile) {
+    const candidateProfile = precomputedProfile || inferRecommendationProduct(candidate);
     const candidateCategory = candidateProfile.category;
     const sourceCategories = sourceProfiles.map(item => item.category);
     let score = 0;
@@ -3336,7 +3463,7 @@ function scoreRecommendationCandidate(candidate, sourceProfiles, cartCategories,
         score += Math.min(((price - warehousePrice) / price) * 30, 12);
     }
 
-    const text = `${candidate.product_name || ''} ${candidate.description || ''}`.toLowerCase();
+    const text = (candidateProfile.text || `${candidate.product_name || ''} ${candidate.description || ''}`).toLowerCase();
     if (sourceCategories.includes('laptop') && /(office|365|microsoft|duo|mfa|bag|mouse|keyboard|monitor|warranty|support)/.test(text)) score += 16;
     if (sourceCategories.includes('phone') && /(charger|usb|type.?c|case|cover|screen protector|warranty|support|duo|mfa)/.test(text)) score += 20;
     if (sourceCategories.includes('phone') && /(mouse|keyboard|monitor|laptop bag|backpack)/.test(text)) score -= 80;
@@ -3345,6 +3472,25 @@ function scoreRecommendationCandidate(candidate, sourceProfiles, cartCategories,
 
     if (candidateProfile.tier === 'entry' && sourceProfiles.some(item => item.tier === 'enterprise')) score -= 4;
     if (candidateProfile.tier === 'enterprise' && sourceProfiles.some(item => item.tier === 'entry')) score -= 10;
+
+    const sourceSet = new Set(sourceCategories);
+    const sourceText = sourceProfiles.map(item => item.text || '').join(' ');
+
+    // Someone looking at a machine wants the things that complete it, not another machine.
+    // Suggesting a second laptop alongside a laptop is the single most common failure here.
+    if (sourceSet.has(candidateCategory)) score -= 130;
+    if ((sourceSet.has('laptop') || sourceSet.has('desktop')) && ['laptop', 'desktop'].includes(candidateCategory)) score -= 130;
+
+    // Completion add-ons are the priority for any machine purchase; a bag always applies to a laptop.
+    if ((sourceSet.has('laptop') || sourceSet.has('desktop')) && COMPLETION_CATEGORIES.has(candidateCategory)) score += 45;
+    if (sourceSet.has('laptop') && candidateCategory === 'laptop_bag') score += 30;
+    if (sourceSet.has('desktop') && ['monitor', 'combo', 'webcam'].includes(candidateCategory)) score += 30;
+
+    // Gaming rigs pair with gaming peripherals, and office gear should not be pushed at them.
+    if (isGamingRecommendationProduct(sourceText)) {
+        if (isGamingRecommendationProduct(text) && candidateCategory !== 'laptop' && candidateCategory !== 'desktop') score += 55;
+        if (['keyboard', 'mouse', 'combo', 'accessory', 'webcam'].includes(candidateCategory) && !isGamingRecommendationProduct(text)) score -= 12;
+    }
 
     return {
         score,
@@ -3447,36 +3593,7 @@ app.post('/api/v1/recommendations', async (req, res, next) => {
                 .slice(-8)
                 .map(item => normalizeRecommendationCategory(item.category || `${item.product_name || item.name || ''} ${item.description || ''}`));
 
-            const [dbCandidates] = await connection.query(`
-                SELECT
-                    p.id,
-                    p.product_number,
-                    p.product_name,
-                    p.description,
-                    p.price,
-                    p.warehouse_price,
-                    p.quantity,
-                    p.brand,
-                    (SELECT image_url FROM product_images
-                     WHERE product_id = p.id
-                     ORDER BY is_primary DESC, id ASC
-                     LIMIT 1) as image_url
-                FROM products p
-                WHERE (p.status IS NULL OR p.status = 'approved')
-                  AND (p.is_active = 1 OR p.is_active IS NULL)
-                  AND COALESCE(p.quantity, 0) > 0
-                ORDER BY p.updated_at DESC
-                LIMIT 500
-            `);
-
-            // The storefront catalogue is the database table PLUS the live Core/Tarsus supplier
-            // feed. Recommendations used to read the table alone, which on a catalogue where most
-            // stock is supplier-fed left only a couple of candidates to choose from.
-            const liveCandidates = (await getLiveSupplierStoreProducts().catch(() => []))
-                .filter(product => product.supplier_source !== 'Core' || product.status === 'approved')
-                .filter(product => Number(product.quantity) > 0 && Number(product.price) > 0);
-
-            const candidates = [...dbCandidates, ...liveCandidates];
+            const candidates = await getPreparedRecommendationCandidates(connection);
 
             const sourceCategories = sourceProfiles.map(item => item.category);
             const recommendationSeed = String(randomSeed || `${Date.now()}-${Math.random()}`);
@@ -3490,11 +3607,67 @@ app.post('/api/v1/recommendations', async (req, res, next) => {
                 return Math.abs(hash % 1000) / 1000;
             };
 
+            // "Step up the spec": same kind of product as the one being viewed, but a stronger
+            // (more expensive) version of it. Handled separately because every other mode is
+            // deliberately steering *away* from the source category.
+            if (context === 'upgrade') {
+                const sourceCategory = sourceProfiles[0]?.category || 'hardware';
+                const sourcePrice = Number(sourceProfiles[0]?.price) || 0;
+                const sourceIsGaming = isGamingRecommendationProduct(sourceProfiles[0]?.text || '');
+
+                const upgrades = candidates
+                    .filter(({ candidate }) => !cartProductIds.has(String(candidate.id).trim()))
+                    .filter(({ profile }) => profile.category === sourceCategory)
+                    .filter(({ candidate }) => {
+                        const price = Number(candidate.price) || 0;
+                        // A meaningful step up, not a rounding difference or a different tier
+                        // entirely. Gaming spec climbs steeply, so that ceiling is more generous.
+                        const ceiling = sourcePrice * (sourceIsGaming ? 3.6 : 2.6);
+                        return sourcePrice > 0 ? price > sourcePrice * 1.05 && price <= ceiling : price > 0;
+                    })
+                    .map(({ candidate, profile }) => {
+                        const price = Number(candidate.price) || 0;
+                        let score = 100 - Math.abs((price / (sourcePrice || price)) - 1.35) * 40;
+                        if (sourceIsGaming) {
+                            // Stepping up from a gaming machine means more gaming machine.
+                            score += isGamingRecommendationProduct(profile.text) ? 60 : -45;
+                        }
+                        if (candidate.image_url) score += 10;
+                        score += Math.min(Number(candidate.quantity) || 0, 40) * 0.2;
+                        return {
+                            ...candidate,
+                            recommendation_category: profile.category,
+                            recommendation_score: score + randomRank(candidate),
+                            recommendation_random: randomRank(candidate),
+                            reason: 'A higher-performance option in the same range.'
+                        };
+                    })
+                    .sort((a, b) => b.recommendation_score - a.recommendation_score)
+                    .slice(0, Math.max(safeLimit * 4, 24))
+                    .sort((a, b) => b.recommendation_random - a.recommendation_random)
+                    .slice(0, safeLimit)
+                    .map(candidate => ({
+                        id: candidate.id,
+                        product_name: candidate.product_name,
+                        description: candidate.description,
+                        price: Number(candidate.price),
+                        quantity: Number(candidate.quantity),
+                        brand: candidate.brand,
+                        image_url: candidate.image_url,
+                        category: candidate.recommendation_category,
+                        reason: candidate.reason,
+                        bundle_ready: false
+                    }));
+
+                const upgradePayload = { status: 'success', results: upgrades.length, data: { recommendations: upgrades } };
+                if (!noCache) recommendationCache.set(cacheKey, { createdAt: Date.now(), payload: upgradePayload });
+                return res.status(200).json(upgradePayload);
+            }
+
             const ranked = candidates
-                .filter(candidate => !cartProductIds.has(String(candidate.id).trim()))
-                .filter(candidate => !isRecommendationJunkCandidate(candidate))
-                .map(candidate => {
-                    const rankedCandidate = scoreRecommendationCandidate(candidate, sourceProfiles, cartCategories, recentCategories, context);
+                .filter(({ candidate }) => !cartProductIds.has(String(candidate.id).trim()))
+                .map(({ candidate, profile }) => {
+                    const rankedCandidate = scoreRecommendationCandidate(candidate, sourceProfiles, cartCategories, recentCategories, context, profile);
                     return {
                         ...candidate,
                         recommendation_category: rankedCandidate.category,

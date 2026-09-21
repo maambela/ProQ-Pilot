@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="js/dev-access.js?v=entra-access-20260917"></script>
     <title>ProQ Pilot | Legion Pro 7i Details</title>
-    <link rel="stylesheet" href="css/style.css?v=recs-engine-fix-20260921">
+    <link rel="stylesheet" href="css/style.css?v=recs-smart-v2-20260921">
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
     <style>
         /* Square Image Constraints */
@@ -681,13 +681,14 @@
         </section>
 
         <section id="productCompleteSetup" class="recommendation-slot recommendation-slot--wide" aria-label="Complete your setup"></section>
+        <section id="productStepUp" class="recommendation-slot recommendation-slot--wide" aria-label="Higher performance options"></section>
     </main>
 
     <footer class="site-footer"></footer>
 
     <script src="js/site-footer.js?v=footer-mobile-bg-20260708"></script>
     <script src="js/auth-ui.js?v=entra-access-20260917"></script>
-    <script src="js/recommendations.js?v=recs-engine-fix-20260921"></script>
+    <script src="js/recommendations.js?v=recs-smart-v2-20260921"></script>
     <script>
 
         // Helper function to limit product name to 4 words max
@@ -1384,6 +1385,22 @@
                     fetchLimit: 16,
                     randomize: true,
                     noCache: true
+                });
+
+                // Same kind of product, stronger spec.
+                window.StackRecommendations.init({
+                    container: '#productStepUp',
+                    title: 'Step up the spec',
+                    context: 'upgrade',
+                    product: recommendationProduct,
+                    productId,
+                    category: recommendationProduct.category,
+                    price: product.price,
+                    limit: 4,
+                    fetchLimit: 12,
+                    randomize: true,
+                    noCache: true,
+                    skipClientRerank: true
                 });
             }
         }
