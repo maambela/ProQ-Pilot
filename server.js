@@ -3860,7 +3860,11 @@ app.get('/api/v1/products/:id', async (req, res, next) => {
                 return next(new AppError('No product found with that ID', 404));
             }
 
-            if (Number(products[0].quantity || 0) <= 0 || shouldHideStoreApiProduct(products[0])) {
+            // shouldHideStoreApiProduct() curates the browse grid (it hides categories the grid
+            // doesn't have a section for) — it must not also gate direct access to a specific,
+            // otherwise-valid product, or anything linked to by ID (a recommendation, a cart line,
+            // an order history entry) 404s as "unavailable" even though it's approved and in stock.
+            if (Number(products[0].quantity || 0) <= 0) {
                 return next(new AppError('This product is not available in the procurement store', 404));
             }
 
