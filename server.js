@@ -3093,21 +3093,30 @@ function normalizeRecommendationCategory(input) {
     const explicitLaptop = /(laptop|notebook|macbook|thinkpad|ideapad|latitude|xps|elitebook|probook|surface|swift|aspire|legion|vivobook|mba\b|mbp\b)/i.test(text);
 
     // A warranty, charger or bag names the device it is *for*, so these are resolved before the
-    // device itself — otherwise "Charger for laptops" classifies as a laptop.
-    if (/(warranty|care pack|carepack|onsite|service plan|support plan|extended service)/i.test(text)) return 'support';
-    if (/(charger|power adapter|power supply|ac adapter|charging cable|power brick)/i.test(text)) return 'charger';
+    // device itself — otherwise "Charger for laptops" classifies as a laptop. BUT a real laptop's
+    // own spec dump routinely bundles a warranty clause, an AC adapter, an integrated webcam and
+    // a backlit keyboard into the SAME description (e.g. "...65 Watt AC adapter, Windows 11 Pro,
+    // 3 Year ProSupport and Next Business Day Onsite Warranty..."), so every one of these must
+    // also confirm the text doesn't already look like a full machine before claiming it.
+    // Deliberately not also checking !explicitLaptop here: an accessory's own description often
+    // says "for laptops" (a charger, stand or bag naming its target device), and explicitLaptop
+    // matches that bare word. looksLikeComputer's three-part processor+RAM+storage signature is
+    // the reliable signal that the text is actually describing a machine, not an accessory for one.
+    const isStandaloneAccessory = !looksLikeComputer;
+    if (/(warranty|care pack|carepack|onsite|service plan|support plan|extended service)/i.test(text) && isStandaloneAccessory) return 'support';
+    if (/(charger|power adapter|power supply|ac adapter|charging cable|power brick)/i.test(text) && isStandaloneAccessory) return 'charger';
     if (/(phone case|screen protector|phone cover)/i.test(text)) return 'phone_accessory';
     if (/\b(iphone|galaxy|pixel|smartphone|cellphone|mobile phone|phone)\b/i.test(text) && !looksLikeComputer && !explicitLaptop) return 'phone';
-    if (/(duo|mfa|multi.?factor|2fa|two.?factor|authentication|security license)/i.test(text)) return 'duo_license';
+    if (/(duo|mfa|multi.?factor|2fa|two.?factor|authentication|security license)/i.test(text) && isStandaloneAccessory) return 'duo_license';
     // "Windows 11" appears in most laptop descriptions, so a licence needs a licence-like signal
     // and must not look like an actual machine.
     if (/(microsoft 365|office 365|\bm365\b|\boffice\b|teams|sharepoint|outlook|licen[cs]e|subscription|software)/i.test(text) && !looksLikeComputer && !explicitLaptop) return 'microsoft_license';
     if (/(laptop bag|notebook bag|backpack|sleeve|carry case|\bbag\b|messenger|topload|briefcase)/i.test(text)) return 'laptop_bag';
-    if (/(webcam|web cam|conference camera|video bar|\bcam\b.*(usb|wireless|hd|1080|4k))/i.test(text)) return 'webcam';
+    if (/(webcam|web cam|conference camera|video bar|\bcam\b.*(usb|wireless|hd|1080|4k))/i.test(text) && isStandaloneAccessory) return 'webcam';
     // A keyboard-and-mouse set is its own thing and must be matched before either half.
-    if (/(keyboard (and|&|\+) mouse|mouse (and|&|\+) keyboard|desktop combo|wireless combo|combo set|keyboard mouse set|\bkm\s?combo\b)/i.test(text)) return 'combo';
-    if (/(keyboard|keychron|wireless keyboard)/i.test(text)) return 'keyboard';
-    if (/(mouse|mice|mx master|wireless mouse|mouse set)/i.test(text)) return 'mouse';
+    if (/(keyboard (and|&|\+) mouse|mouse (and|&|\+) keyboard|desktop combo|wireless combo|combo set|keyboard mouse set|\bkm\s?combo\b)/i.test(text) && isStandaloneAccessory) return 'combo';
+    if (/(keyboard|keychron|wireless keyboard)/i.test(text) && isStandaloneAccessory) return 'keyboard';
+    if (/(mouse|mice|mx master|wireless mouse|mouse set)/i.test(text) && isStandaloneAccessory) return 'mouse';
     // Towers/SFF machines share the processor+RAM+storage signature with laptops, so they are
     // separated before the laptop check.
     if (/(tower|desktop pc|\bsff\b|small form factor|optiplex|thinkcentre|prodesk|elitedesk|mini pc|micro form factor|\baio\b|all.in.one)/i.test(text)) return 'desktop';

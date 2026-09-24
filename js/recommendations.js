@@ -150,17 +150,28 @@
             /\b((128|256|512|1024|2048)\s?gb|[1248]\s?tb)\b/.test(text);
         const explicitLaptop = /(laptop|notebook|macbook|thinkpad|ideapad|latitude|xps|elitebook|probook|surface|swift|aspire|legion|vivobook|mba\b|mbp\b)/.test(text);
 
-        if (/(warranty|care pack|carepack|onsite|service plan|support plan|extended service)/.test(text)) return 'support';
-        if (/(charger|power adapter|power supply|ac adapter|charging cable|power brick)/.test(text)) return 'charger';
+        // A real laptop/desktop spec dump routinely bundles a warranty clause, an AC adapter, an
+        // integrated webcam and a backlit keyboard into its OWN description (e.g. "...65 Watt AC
+        // adapter, Windows 11 Pro, 3 Year ProSupport and Next Business Day Onsite Warranty..."),
+        // so these accessory checks must also confirm the text isn't already a full machine —
+        // otherwise the device gets classified as 'support'/'charger'/etc. and the same-category
+        // exclusion below never fires, letting another laptop back in as an "add-on".
+        // Deliberately not also checking !explicitLaptop here: an accessory's own description often
+        // says "for laptops" (a charger, stand or bag naming its target device), and explicitLaptop
+        // matches that bare word. looksLikeComputer's three-part processor+RAM+storage signature is
+        // the reliable signal that the text is actually describing a machine, not an accessory for one.
+        const isStandaloneAccessory = !looksLikeComputer;
+        if (/(warranty|care pack|carepack|onsite|service plan|support plan|extended service)/.test(text) && isStandaloneAccessory) return 'support';
+        if (/(charger|power adapter|power supply|ac adapter|charging cable|power brick)/.test(text) && isStandaloneAccessory) return 'charger';
         if (/(phone case|screen protector|phone cover)/.test(text)) return 'phone_accessory';
         if (/\b(iphone|galaxy|pixel|smartphone|cellphone|mobile phone|phone)\b/.test(text) && !looksLikeComputer && !explicitLaptop) return 'phone';
-        if (/(duo|mfa|multi.?factor|2fa|authentication|security license)/.test(text)) return 'duo_license';
+        if (/(duo|mfa|multi.?factor|2fa|authentication|security license)/.test(text) && isStandaloneAccessory) return 'duo_license';
         if (/(microsoft 365|office 365|\bm365\b|\boffice\b|teams|sharepoint|outlook|licen[cs]e|subscription|software)/.test(text) && !looksLikeComputer && !explicitLaptop) return 'microsoft_license';
         if (/(laptop bag|notebook bag|backpack|sleeve|carry case|\bbag\b|messenger|topload|briefcase)/.test(text)) return 'laptop_bag';
-        if (/(webcam|web cam|conference camera|video bar)/.test(text)) return 'webcam';
-        if (/(keyboard (and|&|\+) mouse|mouse (and|&|\+) keyboard|desktop combo|wireless combo|combo set|keyboard mouse set)/.test(text)) return 'combo';
-        if (/(keyboard|keychron|wireless keyboard)/.test(text)) return 'keyboard';
-        if (/(mouse|mice|mx master|wireless mouse|mouse set)/.test(text)) return 'mouse';
+        if (/(webcam|web cam|conference camera|video bar)/.test(text) && isStandaloneAccessory) return 'webcam';
+        if (/(keyboard (and|&|\+) mouse|mouse (and|&|\+) keyboard|desktop combo|wireless combo|combo set|keyboard mouse set)/.test(text) && isStandaloneAccessory) return 'combo';
+        if (/(keyboard|keychron|wireless keyboard)/.test(text) && isStandaloneAccessory) return 'keyboard';
+        if (/(mouse|mice|mx master|wireless mouse|mouse set)/.test(text) && isStandaloneAccessory) return 'mouse';
         if (/(tower|desktop pc|\bsff\b|small form factor|optiplex|thinkcentre|prodesk|elitedesk|mini pc|micro form factor|\baio\b|all.in.one)/.test(text)) return 'desktop';
         if (explicitLaptop || looksLikeComputer) return 'laptop';
         if (/(monitor|display|screen|lcd|led|uhd|fhd|qhd)/.test(text)) return 'monitor';

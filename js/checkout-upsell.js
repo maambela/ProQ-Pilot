@@ -165,40 +165,69 @@
         });
     }
 
+    // A slow recommendation check (a cold Cloud Run instance, a cold DB pool) must never make the
+    // checkout button look broken. If the check can't come back quickly, skip it — checking out is
+    // always more important than the popup.
+    const RECOMMENDATION_CHECK_TIMEOUT_MS = 4000;
+
     window.ProQCheckoutUpsell = {
         // cartItems: the cart array as rendered on cart.html. proceed: called exactly once,
         // whether or not a popup was shown, to continue on to checkout.
         async maybeShow(cartItems, proceed) {
             const items = Array.isArray(cartItems) ? cartItems : [];
+            let settled = false;
+            const proceedOnce = () => {
+                if (settled) return;
+                settled = true;
+                proceed();
+            };
+
+            const timeoutTimer = setTimeout(() => {
+                console.warn('[Checkout Upsell] Recommendation check timed out — proceeding to checkout.');
+                proceedOnce();
+            }, RECOMMENDATION_CHECK_TIMEOUT_MS);
+
             try {
-                const response = await fetch('/api/v1/recommendations', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        cartItems: items.map((item) => ({
-                            id: item.id || item.product_id,
-                            product_name: item.name || item.product_name,
-                            description: item.description,
-                            price: item.price
-                        })),
-                        context: 'checkout',
-                        limit: 4,
-                        noCache: true
-                    })
-                });
+                const controller = new AbortController();
+                const abortTimer = setTimeout(() => controller.abort(), RECOMMENDATION_CHECK_TIMEOUT_MS);
+                let response;
+                try {
+                    response = await fetch('/api/v1/recommendations', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        signal: controller.signal,
+                        body: JSON.stringify({
+                            cartItems: items.map((item) => ({
+                                id: item.id || item.product_id,
+                                product_name: item.name || item.product_name,
+                                description: item.description,
+                                price: item.price
+                            })),
+                            context: 'checkout',
+                            limit: 4,
+                            noCache: true
+                        })
+                    });
+                } finally {
+                    clearTimeout(abortTimer);
+                }
                 const result = await response.json();
+                clearTimeout(timeoutTimer);
+                if (settled) return; // the timeout already proceeded; don't also show the modal.
+
                 const recommendations = (result?.data?.recommendations || []).slice(0, 3);
                 if (!recommendations.length) {
-                    proceed();
+                    proceedOnce();
                     return;
                 }
                 await showModal(recommendations, items.length);
-                proceed();
+                proceedOnce();
             } catch (error) {
                 // A bad recommendation is worse than none, but a broken checkout is worse than
                 // both — any failure here just skips straight to checkout.
                 console.warn('[Checkout Upsell] Skipping popup, recommendation check failed:', error);
-                proceed();
+                clearTimeout(timeoutTimer);
+                proceedOnce();
             }
         }
     };
