@@ -87,18 +87,20 @@ function getCategoryFallbackImage(name, description, brand) {
         /\b(i[3579]|core|intel|ryzen|amd|celeron|pentium|snapdragon|ultra\s?[3579]|apple m[1-4]|\bm[1-4]\b|n100|n200)\b/.test(text) &&
         /\b(4|8|12|16|18|24|32|36|48|64)\s?gb\b/.test(text) &&
         /\b((128|256|512|1024|2048)\s?gb|[1248]\s?tb)\b/.test(text);
-    const explicitLaptopModel = /\b(laptop|notebook|macbook|thinkpad|ideapad|latitude|xps|elitebook|probook|swift|aspire|legion|vivobook|tmp\d|exo\d|nitro|predator|alienware)\b/.test(text);
+    const explicitLaptopModel = /\b(laptop|notebook|macbook|mba|mbp|thinkpad|ideapad|latitude|xps|elitebook|probook|swift|aspire|legion|vivobook|tmp\d|exo\d|nitro|predator|omen|victus|tuf|rog|alienware)\b/.test(text);
     const isTower = /\b(tower|desktop pc|optiplex|thinkcentre|prodesk|elitedesk|mini pc|workstation|precision|zbook)\b/.test(text);
     const isLaptopText = (explicitLaptopModel || looksLikeComputerSpec) && !isTower;
 
+    if (/\b(duo|mfa|multi.?factor|authentication)\b/.test(text)) return 'Images/DUO.png';
+    if (/\b(microsoft 365|office 365|\bm365\b|licen[cs]e|subscription)\b/.test(text) && !isLaptopText && !isTower) return 'Images/Microsoft.png';
     if (/\b(apple|macbook|\bmba\b|\bmbp\b)\b/.test(text) && isLaptopText) return 'Images/Macbook.webp';
     if (/\b(gaming|gamer|alienware|nitro|predator|\brog\b|rtx|geforce)\b/.test(text) && isLaptopText) return 'Images/gaming.avif';
     if (isLaptopText) return 'Images/Laptopsforbusiness.avif';
     if (isTower) return 'Images/workstation0.png';
     if (/\b(monitor|display|\bfhd\b|\bqhd\b|\buhd\b)\b/.test(text)) return 'Images/monitors.jpg';
     if (/\b(watch|smartwatch)\b/.test(text)) return 'Images/watch.webp';
-    if (/\b(duo|mfa|multi.?factor|authentication)\b/.test(text)) return 'Images/DUO.png';
-    if (/\b(microsoft 365|office 365|\bm365\b)\b/.test(text)) return 'Images/Microsoft.png';
+    // No dedicated stock photo for these, but a neutral placeholder still beats a blank card.
+    if (/\b(mouse|mice|keyboard|combo|backpack|laptop bag|sleeve|briefcase|webcam|headset|dock|charger|adapter)\b/.test(text)) return 'Images/product-placeholder.svg';
     return '';
 }
 
@@ -254,6 +256,8 @@ document.addEventListener('DOMContentLoaded', () => {
             name.includes("swift") ||
             name.includes("aspire") || name.includes("thinkbook") || /\bexo\d*/i.test(name) ||
             /\btmp\d*/i.test(name) || /\btmx\d*/i.test(name) || name.includes("travelmate") ||
+            // Gaming model lines, otherwise gaming laptops fail detection and get hidden.
+            /\b(nitro|predator|omen|victus|legion|tuf|rog|katana|raider)\b/i.test(name) ||
             name.includes("dell pro 13") || name.includes("dell pro 14") ||
             name.includes("dell pro 15") || name.includes("dell pro 16") ||
             name.includes("dell 14") || name.includes("dell 15") ||
@@ -323,6 +327,9 @@ document.addEventListener('DOMContentLoaded', () => {
         if (/\b(speaker|speakers|stereo|bluetooth speaker|soundbar|subwoofer)\b/.test(text)) return 'hidden-unwanted';
         if (/\b(usb receiver|wireless receiver|mini receiver|presentation remote|presenter|laser pointer|red laser|r400)\b/.test(text)) return 'hidden-unwanted';
         if (/\b(windows server|server cal|device cal|client access license|sever standard|server standard)\b/.test(text)) return 'hidden-unwanted';
+        // Mirrors getStoreProductCategory() in server.js — the sidebar's Licences section had
+        // nothing classified into it, so it could never show a product.
+        if (/\b(duo|mfa|multi.?factor|two.?factor|microsoft 365|office 365|\bm365\b|licen[cs]e|subscription|antivirus|endpoint protection)\b/.test(text) && !looksLikeFullComputer && !isLaptop(product)) return 'licenses';
         if (/\b(lock|defcon|kensington|nano combination|combination lock|notebook lock|wedge lock|key lock|cable lock|keyed lock|hypershield|3 in 1 combination|3-in-1 combination|legion nano)\b/.test(text)) return 'hidden-unwanted';
         if (/\b(ac adapter|adapter slim tip|usb c to ethernet|usb c-to ethernet|ethernet adapter|thinkpad usb|hdmi to vga|hdhmi to vga|video adapter|displayport socket|monitor cable)\b/.test(text) && !isLaptop(product)) return 'hidden-unwanted';
         if (/\b(eaton hotswap|hotswap mbp|mbp iec|hot swap mbp)\b/.test(text)) return 'hidden-unwanted';
@@ -345,6 +352,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (/\b(mouse|mice)\b/.test(text)) return 'mice';
         if (/\b(keyboard|combo keyboard|wireless combo)\b/.test(text)) return 'keyboards';
         if (/\b(monitor|display|fhd|qhd|uhd|4k)\b/.test(text) && !/\b(laptop|notebook|macbook)\b/.test(text) && !isLaptop(product)) return 'monitors';
+        if (/\b(webcam|web cam|conference camera|headset|headphone|earbud|mouse pad|mousepad|wrist rest|desk mat|external ssd|external hdd|portable ssd|flash drive|memory card|hdmi cable|displayport cable|usb cable)\b/.test(text)) return 'accessories';
         return 'hidden-unwanted';
     };
 
@@ -356,6 +364,11 @@ document.addEventListener('DOMContentLoaded', () => {
             return 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjMwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMzAwIiBoZWlnaHQ9IjMwMCIgZmlsbD0iI2Y5ZjlmOSI+PC9yZWN0Pjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTgiIGZpbGw9IiM5OTk5OTkiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj5ObyBJbWFnZTwvdGV4dD48L3N2Zz4=';
         }
         if (/^https?:\/\//i.test(url)) return `/image-proxy?url=${encodeURIComponent(url)}`;
+        if (/^(data:|blob:)/i.test(url)) return url;
+        // Stock-photo fallbacks the API fills in for products with no supplier image live under
+        // /Images, not /product_images — prefixing those would 404.
+        if (url.startsWith('/')) return url;
+        if (/^Images\//i.test(url)) return `/${url}`;
         return `/product_images/${url}`;
     }
 
@@ -375,11 +388,10 @@ document.addEventListener('DOMContentLoaded', () => {
             return getProductImageSrc(product.image_url);
         }
 
-        if (isAppleLaptopProduct(product)) {
-            return 'Images/Macbook.webp';
-        }
+        const categoryFallback = getCategoryFallbackImage(product?.product_name, product?.description, product?.brand);
+        if (categoryFallback) return getProductImageSrc(categoryFallback);
 
-        return getProductImageSrc(product?.image_url);
+        return getProductImageSrc('Images/product-placeholder.svg');
     }
 
     const canShowWithoutImage = () => false;

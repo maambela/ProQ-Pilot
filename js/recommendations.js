@@ -1,7 +1,6 @@
 (function () {
     const CACHE_TTL = 5 * 60 * 1000;
     const CART_CACHE_TTL = 45 * 1000;
-    const DEFAULT_IMAGE = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDQwIiBoZWlnaHQ9IjMyMCIgdmlld0JveD0iMCAwIDQ0MCAzMjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZyI+PHJlY3Qgd2lkdGg9IjQ0MCIgaGVpZ2h0PSIzMjAiIHJ4PSIyNCIgZmlsbD0iI2Y4ZmFmYyIvPjxwYXRoIGQ9Ik0xMTAgMjIwbDY0LTY2IDQ0IDQ4IDM0LTM4IDc4IDkySDExMHoiIGZpbGw9IiNkMWQ1ZGIiLz48Y2lyY2xlIGN4PSIyOTAiIGN5PSIxMTAiIHI9IjI4IiBmaWxsPSIjYzVkMWQ4Ii8+PHRleHQgeD0iMjIwIiB5PSIyNzAiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxOCIgZmlsbD0iIzg4OTJhMCI+UHJvZHVjdCBwaWNrPC90ZXh0Pjwvc3ZnPg==';
     let cartCache = null;
 
     function safeText(value) {
@@ -31,16 +30,46 @@
         return sessionId;
     }
 
-    function normalizeImage(url) {
+    // Supplier images (S3/Tarsus/Core) must go through /image-proxy like everywhere else in the
+    // app — fetching them directly from the browser fails, which is what left recommendation
+    // cards showing a broken-image icon while the same product rendered fine in the store grid.
+    function normalizeImage(url, item) {
         const value = String(url || '').trim();
         // hasUsableImage also rejects the Cisco Duo logo, which is used as a generic
         // fallback elsewhere and must never stand in for an unrelated product.
-        if (!hasUsableImage(value)) return DEFAULT_IMAGE;
+        if (!hasUsableImage(value)) return getRecommendationFallbackImage(item);
         if (/^(data:|blob:)/i.test(value)) return value;
-        if (/^https?:\/\//i.test(value) || value.startsWith('/')) return value;
+        if (/^https?:\/\//i.test(value)) return `/image-proxy?url=${encodeURIComponent(value)}`;
+        if (value.startsWith('/')) return value;
         if (/^Images\//i.test(value)) return `/${value}`;
         if (/^product_images\//i.test(value)) return `/${value}`;
         return `/product_images/${value}`;
+    }
+
+    // A product with no usable image still deserves a picture that looks like what it is, rather
+    // than an empty card. Falls back to the neutral placeholder only when nothing matches.
+    function getRecommendationFallbackImage(item) {
+        if (!item) return '/Images/product-placeholder.svg';
+        const text = [item.product_name, item.name, item.description, item.brand]
+            .filter(Boolean).join(' ').toLowerCase();
+        if (!text) return '/Images/product-placeholder.svg';
+
+        const looksLikeComputerSpec =
+            /\b(i[3579]|core|intel|ryzen|amd|celeron|pentium|snapdragon|ultra\s?[3579]|apple m[1-4]|\bm[1-4]\b|n100|n200)\b/.test(text) &&
+            /\b(4|8|12|16|18|24|32|36|48|64)\s?gb\b/.test(text);
+        const explicitLaptop = /\b(laptop|notebook|macbook|\bmba\b|\bmbp\b|thinkpad|ideapad|latitude|xps|elitebook|probook|swift|aspire|legion|vivobook|nitro|predator|alienware)\b/.test(text);
+        const isTower = /\b(tower|desktop pc|optiplex|thinkcentre|prodesk|elitedesk|mini pc|workstation|precision|zbook)\b/.test(text);
+        const isLaptop = (explicitLaptop || looksLikeComputerSpec) && !isTower;
+
+        if (/\b(duo|mfa|multi.?factor|authentication)\b/.test(text)) return '/Images/DUO.png';
+        if (/\b(microsoft 365|office 365|\bm365\b|\boffice\b)\b/.test(text)) return '/Images/Microsoft.png';
+        if (isTower) return '/Images/workstation0.png';
+        if (/\b(apple|macbook|\bmba\b|\bmbp\b)\b/.test(text) && isLaptop) return '/Images/Macbook.webp';
+        if (/\b(gaming|gamer|alienware|nitro|predator|\brog\b|rtx|geforce)\b/.test(text) && isLaptop) return '/Images/gaming.avif';
+        if (isLaptop) return '/Images/Laptopsforbusiness.avif';
+        if (/\b(monitor|display|\bfhd\b|\bqhd\b|\buhd\b|\b4k\b)\b/.test(text)) return '/Images/monitors.jpg';
+        if (/\b(watch|smartwatch|wearable)\b/.test(text)) return '/Images/watch.webp';
+        return '/Images/product-placeholder.svg';
     }
 
     function hasUsableImage(url) {
@@ -335,7 +364,7 @@
         return `
             <article class="recommendation-card${compact ? ' recommendation-card--compact' : ''}" data-product-id="${item.id}">
                 <a class="recommendation-image" href="/product.html?id=${item.id}" data-product-link="${item.id}" aria-label="View ${safeText(item.product_name)}">
-                    <img src="${normalizeImage(item.image_url)}" alt="" width="220" height="160" loading="lazy" decoding="async" onerror="this.onerror=null;this.src='${DEFAULT_IMAGE}';">
+                    <img src="${normalizeImage(item.image_url, item)}" alt="" width="220" height="160" loading="lazy" decoding="async" onerror="this.onerror=null;this.src='${getRecommendationFallbackImage(item)}';">
                 </a>
                 <div class="recommendation-copy">
                     <span>${safeText(item.brand || item.category || 'Add-on')}</span>

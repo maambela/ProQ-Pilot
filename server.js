@@ -2865,7 +2865,9 @@ function isStoreLaptopProduct(product) {
     if (accessoryTerms.test(name)) return false;
 
     const laptopBrand = /\b(dell|hp|lenovo|acer|microsoft|apple|macbook|mac)\b/.test(`${brand} ${name}`);
-    const laptopFamily = /\b(laptop|notebook|macbook|mba|mbp|mac\s?book|2in1|chromebook|v15|v14|latitude|xps|inspiron|thinkpad|ideapad|probook|elitebook|expertbook|zenbook|vivobook|alienware|swift|aspire|surface laptop|surface pro|thinkbook|exo\d*|tmp\d*|tmx\d*|travelmate|dell pro 13|dell pro 14|dell pro 15|dell pro 16|dell 14|dell 15|dell 16|e14|e16|t14|t14s|x13|tb\s?(14|16))\b/.test(`${brand} ${name}`);
+    // Gaming model lines (Nitro, Predator, Omen, Legion, ...) were missing, so gaming laptops
+    // failed laptop detection entirely and fell through to 'hidden-unwanted' in the store grid.
+    const laptopFamily = /\b(laptop|notebook|macbook|mba|mbp|mac\s?book|2in1|chromebook|v15|v14|latitude|xps|inspiron|thinkpad|ideapad|probook|elitebook|expertbook|zenbook|vivobook|alienware|swift|aspire|surface laptop|surface pro|thinkbook|exo\d*|tmp\d*|tmx\d*|travelmate|nitro|predator|omen|victus|legion|tuf|rog|katana|raider|dell pro 13|dell pro 14|dell pro 15|dell pro 16|dell 14|dell 15|dell 16|e14|e16|t14|t14s|x13|tb\s?(14|16))\b/.test(`${brand} ${name}`);
     const hasProcessor = /\b(i[3579]|core|intel|ryzen|amd|celeron|pentium|snapdragon|ultra\s?[3579]|u[3579][-\s]?\d*|m[1-5]|n100|n200)\b/.test(text) || /\b(mba|mbp|macbook)\b/.test(name);
     const hasRam = /\b(4|8|12|16|18|24|32|36|48|64|96|128)\s?gb\b.*\b(ram|memory|ddr|lpddr|unified)\b|\b(ram|memory|ddr|lpddr|unified)\b.*\b(4|8|12|16|18|24|32|36|48|64|96|128)\s?gb\b|\b(4|8|12|16|18|24|32|36|48|64|96|128)\s?gb\b/.test(text);
     const hasStorage = /\b(128|256|512|1024|2048)\s?gb\b.*\b(ssd|nvme|storage|solid|drive)\b|\b(1|2|4|8)\s?t(b)?\b|\b(ssd|nvme|storage|solid|drive)\b.*\b(128|256|512|1024|2048)\s?gb\b/.test(text) ||
@@ -2882,17 +2884,6 @@ function isStoreLaptopProduct(product) {
     }
 
     return laptopBrand && hasProcessor && hasRam && hasStorage && (laptopFamily || (hasPortableSignals && hasMobileBuild));
-}
-
-function isStoreAppleLaptopProduct(product) {
-    const text = normalizeStoreProductText([
-        product.product_name,
-        product.description,
-        product.brand,
-        product.product_number
-    ].filter(Boolean).join(' '));
-
-    return /\b(apple|macbook|mac\s?book|mba|mbp|mac)\b/.test(text) && isStoreLaptopProduct(product);
 }
 
 function getStoreProductCategory(product) {
@@ -2913,6 +2904,9 @@ function getStoreProductCategory(product) {
     if (/\b(speaker|speakers|stereo|bluetooth speaker|soundbar|subwoofer)\b/.test(text)) return 'hidden-unwanted';
     if (/\b(usb receiver|wireless receiver|mini receiver|presentation remote|presenter|laser pointer|red laser|r400)\b/.test(text)) return 'hidden-unwanted';
     if (/\b(windows server|server cal|device cal|client access license|sever standard|server standard)\b/.test(text)) return 'hidden-unwanted';
+    // The store sidebar has a Licences section, but nothing was ever classified into it, so it
+    // could never show a single product. Duo and Microsoft licensing are core catalogue lines here.
+    if (/\b(duo|mfa|multi.?factor|two.?factor|microsoft 365|office 365|\bm365\b|licen[cs]e|subscription|antivirus|endpoint protection)\b/.test(text) && !looksLikeFullComputer && !isStoreLaptopProduct(product)) return 'licenses';
     if (/\b(lock|defcon|kensington|nano combination|combination lock|notebook lock|wedge lock|key lock|cable lock|keyed lock|hypershield|3 in 1 combination|3-in-1 combination|legion nano)\b/.test(text)) return 'hidden-unwanted';
     if (/\b(ac adapter|adapter slim tip|usb c to ethernet|usb c-to ethernet|ethernet adapter|thinkpad usb|hdmi to vga|hdhmi to vga|video adapter|displayport socket|monitor cable)\b/.test(text) && !isStoreLaptopProduct(product)) return 'hidden-unwanted';
     if (/\b(eaton hotswap|hotswap mbp|mbp iec|hot swap mbp)\b/.test(text)) return 'hidden-unwanted';
@@ -2936,6 +2930,9 @@ function getStoreProductCategory(product) {
     if (/\b(mouse|mice)\b/.test(text)) return 'mice';
     if (/\b(keyboard|combo keyboard|wireless combo)\b/.test(text)) return 'keyboards';
     if (/\b(monitor|display|fhd|qhd|uhd|4k)\b/.test(text) && !/\b(laptop|notebook|macbook)\b/.test(text) && !isStoreLaptopProduct(product)) return 'monitors';
+    // Genuinely sellable peripherals that were only hidden because nothing ever classified them —
+    // the rules above deliberately hide junk, but these simply fell through to the catch-all.
+    if (/\b(webcam|web cam|conference camera|headset|headphone|earbud|mouse pad|mousepad|wrist rest|desk mat|external ssd|external hdd|portable ssd|flash drive|memory card|hdmi cable|displayport cable|usb cable)\b/.test(text)) return 'accessories';
     return 'hidden-unwanted';
 }
 
@@ -2954,6 +2951,35 @@ function shouldHideStoreApiProduct(product) {
         text.includes('legion notebook combination nano');
 }
 
+// Supplier feeds (especially Core) ship plenty of real, in-stock products with no image URL at
+// all. Dropping every one of them is what left the store showing a handful of items, so instead
+// each gets a stock photo that actually matches what it is. Returns '' only when we have nothing
+// sensible to show, and those are still dropped rather than rendered as a blank card.
+function getStoreFallbackImage(product) {
+    const text = normalizeStoreProductText([
+        product.product_name,
+        product.description,
+        product.brand
+    ].filter(Boolean).join(' '));
+    const category = getStoreProductCategory(product);
+
+    if (category === 'laptops') {
+        if (/\b(apple|macbook|mba|mbp)\b/.test(text)) return 'Images/Macbook.webp';
+        if (/\b(gaming|nitro|predator|omen|victus|legion|tuf|rog|alienware|rtx|geforce)\b/.test(text)) return 'Images/gaming.avif';
+        return 'Images/Laptopsforbusiness.avif';
+    }
+    if (category === 'desktops' || category === 'workstations') return 'Images/workstation0.png';
+    if (category === 'monitors') return 'Images/monitors.jpg';
+    if (category === 'licenses') {
+        if (/\b(duo|mfa|multi.?factor|two.?factor)\b/.test(text)) return 'Images/DUO.png';
+        return 'Images/Microsoft.png';
+    }
+    if (category === 'mice' || category === 'keyboards' || category === 'laptop-bags' || category === 'accessories') {
+        return 'Images/product-placeholder.svg';
+    }
+    return '';
+}
+
 function getStoreDedupeKey(product) {
     const name = normalizeStoreProductText(product.product_name || product.description);
     const brand = normalizeStoreProductText(product.brand);
@@ -2964,10 +2990,17 @@ function getStoreDedupeKey(product) {
 function dedupeStoreProducts(products) {
     const groups = new Map();
 
-    products.forEach(product => {
-        if ((Number(product.quantity) || 0) <= 0) return;
-        if ((!product.image_url || String(product.image_url).trim() === '') && !isStoreAppleLaptopProduct(product)) return;
-        if (shouldHideStoreApiProduct(product)) return;
+    products.forEach(rawProduct => {
+        if ((Number(rawProduct.quantity) || 0) <= 0) return;
+        if (shouldHideStoreApiProduct(rawProduct)) return;
+
+        // Fill in a matching stock photo rather than discarding an otherwise valid product.
+        let product = rawProduct;
+        if (!product.image_url || String(product.image_url).trim() === '') {
+            const fallbackImage = getStoreFallbackImage(product);
+            if (!fallbackImage) return;
+            product = { ...product, image_url: fallbackImage };
+        }
 
         const key = getStoreDedupeKey(product);
         const category = getStoreProductCategory(product);
