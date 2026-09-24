@@ -285,6 +285,17 @@
             border-right-color: rgba(0, 0, 0, 0.08);
         }
 
+        /* Unzoomed sizing for laptop (14"-16") and desktop monitor (24"-28") screens: the square
+           gallery image was growing to fill half the 1560px-wide container, dwarfing the info
+           column. Capping its grid track (rather than the whole container) shrinks just the
+           image while leaving layout, spacing, and functionality elsewhere untouched. Below
+           1100px the existing tablet/mobile rules already cap it. */
+        @media (min-width: 1101px) {
+            .product-display {
+                grid-template-columns: minmax(360px, 460px) minmax(360px, 1fr);
+            }
+        }
+
         @media (max-width: 1100px) {
             .product-page-container {
                 padding: 106px 4% 64px;
@@ -349,13 +360,11 @@
             }
 
             .purchase-actions {
-                position: sticky;
-                bottom: 10px;
-                z-index: 40;
                 display: grid;
                 grid-template-columns: auto minmax(0, 1fr) auto;
                 gap: 8px;
                 padding: 10px;
+                margin: 18px 0;
                 border: 1px solid rgba(255, 255, 255, 0.3);
                 border-radius: 22px;
                 background: rgba(15, 15, 15, 0.45);
@@ -489,7 +498,7 @@
             }
 
             .purchase-actions {
-                bottom: 8px;
+                margin: 14px 0;
                 grid-template-columns: auto minmax(0, 1fr) 38px;
                 border-radius: 18px;
                 padding: 8px;
