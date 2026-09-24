@@ -3392,6 +3392,108 @@ if (sourceSet.has('laptop') && targetCategory === 'microsoft_license') {
     return 'Smart add-on based on your selected product.';
 }
 
+// The pre-checkout popup needs to read like a salesperson who noticed a gap, not a repeated
+// banner — so each pairing gets a small set of varied phrasings, picked at random per request.
+// Anything not covered here (an unmodeled category, or a pairing not worth special-casing) falls
+// through to a still-confident generic line rather than an empty or robotic one.
+function pickCheckoutUpsellCopy(sourceCategories, targetCategory, targetName) {
+    const sourceSet = new Set(sourceCategories);
+    const name = String(targetName || 'this').split(/\s+/).slice(0, 5).join(' ');
+    const pick = (options) => options[Math.floor(Math.random() * options.length)];
+
+    const table = [
+        {
+            when: sourceSet.has('desktop') && targetCategory === 'monitor',
+            headline: pick(['Before you check out…', 'Complete your desktop setup']),
+            message: pick([
+                `You've selected a desktop, but I don't see a monitor in your order. Want to add ${name}?`,
+                `A tower needs a screen to go with it — ${name} would complete the setup.`
+            ])
+        },
+        {
+            when: sourceSet.has('desktop') && targetCategory === 'combo',
+            headline: pick(['Complete your desktop setup', 'One more thing…']),
+            message: pick([
+                `Every tower needs a way to type and click — would you like to add ${name}?`,
+                `A keyboard and mouse set would get this desktop ready to use out of the box.`
+            ])
+        },
+        {
+            when: sourceSet.has('monitor') && targetCategory === 'monitor',
+            headline: pick(['Upgrade your workspace', 'One more thing…']),
+            message: pick([
+                `Would you like to add a second ${name} for a dual-screen setup?`,
+                `If you're using this as your main workstation, a second monitor could help with multitasking.`
+            ])
+        },
+        {
+            when: sourceSet.has('laptop') && targetCategory === 'laptop_bag',
+            headline: pick(['Make your laptop setup complete', 'Complete your laptop setup']),
+            message: pick([
+                `A quality laptop bag could make this much easier to carry around — want to add ${name}?`,
+                `Would you like to add ${name} to keep the new laptop protected on the move?`
+            ])
+        },
+        {
+            when: sourceSet.has('laptop') && ['mouse', 'keyboard', 'combo'].includes(targetCategory),
+            headline: pick(['Make your laptop setup complete', 'One more thing…']),
+            message: pick([
+                `Would you like to add ${name} to make this laptop easier to work on at a desk?`,
+                `A lot of laptop buyers add ${name} for a more comfortable setup — want it added?`
+            ])
+        },
+        {
+            when: sourceSet.has('laptop') && targetCategory === 'duo_license',
+            headline: 'Protect your new device',
+            message: pick([
+                `Would you like to add ${name} to help secure sign-ins on the new laptop?`,
+                `Most business laptops go out with sign-in protection — want to add ${name}?`
+            ])
+        },
+        {
+            when: sourceSet.has('laptop') && targetCategory === 'microsoft_license',
+            headline: 'One more thing…',
+            message: `Would you like to add ${name} so the laptop is ready for work out of the box?`
+        },
+        {
+            when: sourceSet.has('mouse') && targetCategory === 'keyboard',
+            headline: pick(['A small upgrade for your setup', 'One more thing…']),
+            message: `Would you like to add ${name} to go with the mouse?`
+        },
+        {
+            when: sourceSet.has('keyboard') && targetCategory === 'mouse',
+            headline: pick(['A small upgrade for your setup', 'One more thing…']),
+            message: `Would you like to add ${name} to go with the keyboard?`
+        },
+        {
+            when: (sourceSet.has('mouse') || sourceSet.has('keyboard')) && targetCategory === 'accessory',
+            headline: 'A small upgrade for your setup',
+            message: `Would you like to add ${name} to make your setup more comfortable?`
+        },
+        {
+            when: sourceSet.has('phone') && targetCategory === 'phone_accessory',
+            headline: 'Protect your new device',
+            message: `Would you like to add ${name} to help protect the new phone?`
+        },
+        {
+            when: sourceSet.has('phone') && targetCategory === 'charger',
+            headline: 'One more thing…',
+            message: `Would you like to add ${name} so the new phone arrives ready to charge?`
+        }
+    ];
+
+    const match = table.find(entry => entry.when);
+    if (match) return { headline: match.headline, message: match.message };
+
+    return {
+        headline: pick(['Before you check out…', 'One more thing…', 'Worth adding?']),
+        message: pick([
+            `Would you like to add ${name} to your order?`,
+            `${name} is a popular pairing with what's in your cart — want to add it?`
+        ])
+    };
+}
+
 // Builds (and caches) the pool every recommendation request scores against: the database
 // catalogue merged with the live supplier feed, junk removed, and each product classified once.
 async function getPreparedRecommendationCandidates(connection) {
@@ -3497,9 +3599,19 @@ function scoreRecommendationCandidate(candidate, sourceProfiles, cartCategories,
     const sourceSet = new Set(sourceCategories);
     const sourceText = sourceProfiles.map(item => item.text || '').join(' ');
 
+    // A keyboard+mouse combo already covers both halves — don't also suggest a bare mouse or
+    // keyboard on top of it.
+    if (sourceSet.has('combo')) { sourceSet.add('mouse'); sourceSet.add('keyboard'); }
+
     // Someone looking at a machine wants the things that complete it, not another machine.
     // Suggesting a second laptop alongside a laptop is the single most common failure here.
-    if (sourceSet.has(candidateCategory)) score -= 130;
+    // A monitor is the one legitimate exception: a second screen is a genuine, common upsell, so
+    // it only gets excluded once there are already two or more (an actual dual-monitor setup).
+    const monitorCount = sourceCategories.filter(c => c === 'monitor').length;
+    if (sourceSet.has(candidateCategory)) {
+        if (candidateCategory === 'monitor' && monitorCount < 2) score += 15;
+        else score -= 130;
+    }
     if ((sourceSet.has('laptop') || sourceSet.has('desktop')) && ['laptop', 'desktop'].includes(candidateCategory)) score -= 130;
 
     // Completion add-ons are the priority for any machine purchase; a bag always applies to a laptop.
@@ -3716,9 +3828,23 @@ app.post('/api/v1/recommendations', async (req, res, next) => {
             const sourceIsMachine = sourceCategories.some(c => ['laptop', 'desktop'].includes(c));
             const essentialCategory = GUARANTEED_ESSENTIAL_CATEGORY[sourceProfiles[0]?.category];
 
+            // The checkout popup is a hard business rule, not a preference: a category the cart
+            // already covers must never appear, so this is a real exclusion rather than the score
+            // penalty scoreRecommendationCandidate() applies elsewhere (which only deprioritizes,
+            // since the always-on widgets need to fill their slots regardless). A combo already
+            // covers mouse and keyboard; a second monitor is the one deliberate exception, and only
+            // while fewer than two are already in the cart.
+            const checkoutOwnedCategories = new Set(sourceCategories);
+            if (checkoutOwnedCategories.has('combo')) { checkoutOwnedCategories.add('mouse'); checkoutOwnedCategories.add('keyboard'); }
+            const checkoutMonitorCount = sourceCategories.filter(c => c === 'monitor').length;
+
             const scoredPool = candidates
                 .filter(({ candidate }) => !cartProductIds.has(String(candidate.id).trim()))
                 .filter(({ profile }) => !(sourceIsMachine && ['laptop', 'desktop'].includes(profile.category)))
+                .filter(({ profile }) => {
+                    if (context !== 'checkout' || !checkoutOwnedCategories.has(profile.category)) return true;
+                    return profile.category === 'monitor' && checkoutMonitorCount < 2;
+                })
                 .map(({ candidate, profile }) => {
                     const rankedCandidate = scoreRecommendationCandidate(candidate, sourceProfiles, cartCategories, recentCategories, context, profile);
                     return {
@@ -3732,34 +3858,66 @@ app.post('/api/v1/recommendations', async (req, res, next) => {
                 .filter(candidate => candidate.recommendation_score > -45)
                 .sort((a, b) => b.recommendation_score - a.recommendation_score);
 
-            let ranked = scoredPool
-                .slice(0, Math.max(safeLimit * 6, 32))
-                .sort((a, b) => b.recommendation_random - a.recommendation_random)
-                .slice(0, safeLimit);
+            // The pre-checkout popup must only interrupt the customer for a genuinely strong
+            // pick — a bad recommendation is worse than none — so it uses a far higher bar than
+            // the -45 floor above, which just keeps the always-on widgets from showing junk.
+            // Clearing this bar requires a real category relationship (COMPLETION_CATEGORIES,
+            // the essential-pairing weights, or a context bonus), not just decent price/stock.
+            const CHECKOUT_UPSELL_STRONG_THRESHOLD = 60;
+            const qualifiedPool = context === 'checkout'
+                ? scoredPool.filter(candidate => candidate.recommendation_score >= CHECKOUT_UPSELL_STRONG_THRESHOLD)
+                : scoredPool;
 
-            // Pin the one essential add-on for this device type into the result — a laptop buyer
-            // must always see a Duo licence among the top picks, a tower buyer a monitor, etc.
-            if (essentialCategory && !ranked.some(item => item.recommendation_category === essentialCategory)) {
-                const essentialPick = scoredPool.find(item => item.recommendation_category === essentialCategory);
-                if (essentialPick) {
-                    const guaranteedSlot = Math.min(2, ranked.length - 1);
-                    if (guaranteedSlot >= 0) ranked.splice(guaranteedSlot, 1, essentialPick);
-                    else ranked = [essentialPick];
+            let ranked;
+            if (context === 'checkout') {
+                // Highest-quality picks only, in score order — no shuffling. This is a single
+                // interruption before checkout, so it should show the best match, not a varied one.
+                ranked = qualifiedPool.slice(0, 3);
+                if (essentialCategory && !ranked.some(item => item.recommendation_category === essentialCategory)) {
+                    const essentialPick = qualifiedPool.find(item => item.recommendation_category === essentialCategory);
+                    if (essentialPick && !ranked.includes(essentialPick)) {
+                        ranked = [essentialPick, ...ranked].slice(0, 3);
+                    }
+                }
+            } else {
+                ranked = scoredPool
+                    .slice(0, Math.max(safeLimit * 6, 32))
+                    .sort((a, b) => b.recommendation_random - a.recommendation_random)
+                    .slice(0, safeLimit);
+
+                // Pin the one essential add-on for this device type into the result — a laptop
+                // buyer must always see a Duo licence among the top picks, a tower buyer a
+                // monitor, etc.
+                if (essentialCategory && !ranked.some(item => item.recommendation_category === essentialCategory)) {
+                    const essentialPick = scoredPool.find(item => item.recommendation_category === essentialCategory);
+                    if (essentialPick) {
+                        const guaranteedSlot = Math.min(2, ranked.length - 1);
+                        if (guaranteedSlot >= 0) ranked.splice(guaranteedSlot, 1, essentialPick);
+                        else ranked = [essentialPick];
+                    }
                 }
             }
 
-            ranked = ranked.map(candidate => ({
-                id: candidate.id,
-                product_name: candidate.product_name,
-                description: candidate.description,
-                price: Number(candidate.price),
-                quantity: Number(candidate.quantity),
-                brand: candidate.brand,
-                image_url: candidate.image_url,
-                category: candidate.recommendation_category,
-                reason: candidate.reason,
-                bundle_ready: context === 'cart' || context === 'checkout'
-            }));
+            ranked = ranked.map(candidate => {
+                const base = {
+                    id: candidate.id,
+                    product_name: candidate.product_name,
+                    description: candidate.description,
+                    price: Number(candidate.price),
+                    quantity: Number(candidate.quantity),
+                    brand: candidate.brand,
+                    image_url: candidate.image_url,
+                    category: candidate.recommendation_category,
+                    reason: candidate.reason,
+                    bundle_ready: context === 'cart' || context === 'checkout'
+                };
+                if (context === 'checkout') {
+                    const copy = pickCheckoutUpsellCopy(sourceCategories, candidate.recommendation_category, candidate.product_name);
+                    base.headline = copy.headline;
+                    base.reason = copy.message;
+                }
+                return base;
+            });
 
             const payload = {
                 status: 'success',
@@ -3783,6 +3941,16 @@ app.post('/api/v1/recommendations', async (req, res, next) => {
         console.error('[Recommendations API] Error:', err.message);
         next(err);
     }
+});
+
+// Minimal, dependency-free tracking for the checkout upsell popup (shown / accepted / rejected).
+// There is no analytics dashboard in this app yet, so this only writes a structured log line —
+// enough to grep/aggregate later — rather than standing up a new metrics table for one feature.
+// Sent via navigator.sendBeacon, so this must never fail the caller or block navigation.
+app.post('/api/v1/analytics/checkout-upsell', (req, res) => {
+    const { event, productId, category, cartSize, count, categories } = req.body || {};
+    console.log('[Checkout Upsell Analytics]', JSON.stringify({ event, productId, category, cartSize, count, categories, at: new Date().toISOString() }));
+    res.status(204).end();
 });
 
 //=============================================================================//

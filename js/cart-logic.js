@@ -6,6 +6,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const user = await window.ProQSession.ready;
     let renderRequestId = 0;
     let cartMutationQueue = Promise.resolve();
+    let latestCart = [];
 
     const DELIVERY_FEE = 75; // 📦 Fixed Delivery Cost
     const isDigitalLicenseType = (type) => (
@@ -302,7 +303,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         console.log('[Cart Logic] Starting cart render...');
         const cart = await getActiveCart();
         if (requestId !== renderRequestId) return;
-        
+        latestCart = cart;
+
         console.log('[Cart Logic] Cart data retrieved:', {
             total_items: cart.length,
             items: cart.map(i => ({ name: i.name, type: i.type, price: i.price }))
@@ -563,13 +565,25 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Proceed to checkout - require login
     const checkoutBtn = document.getElementById('checkoutBtn');
     if (checkoutBtn) {
-        checkoutBtn.addEventListener('click', () => {
+        checkoutBtn.addEventListener('click', async () => {
             const userLocal = JSON.parse(localStorage.getItem('user'));
             if (!userLocal) {
                 localStorage.setItem('redirectAfterLogin', '/checkout.html');
                 return window.location.href = '/signin.html';
             }
-            window.location.href = '/checkout.html';
+
+            const goToCheckout = () => { window.location.href = '/checkout.html'; };
+
+            if (window.ProQCheckoutUpsell) {
+                checkoutBtn.disabled = true;
+                try {
+                    await window.ProQCheckoutUpsell.maybeShow(latestCart, goToCheckout);
+                } finally {
+                    checkoutBtn.disabled = false;
+                }
+            } else {
+                goToCheckout();
+            }
         });
     }
 

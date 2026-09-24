@@ -10844,6 +10844,221 @@ body:has(.cart-container) {
     margin: 18px 0 0;
 }
 
+/* Pre-checkout smart upsell popup — same liquid-glass + white treatment as .summary-card and
+   .recommendation-card, kept deliberately small since it only ever holds 1-3 picks. */
+.checkout-upsell-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 2000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    background: rgba(8, 8, 12, 0.55);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    animation: checkoutUpsellFadeIn 0.18s ease;
+}
+
+.checkout-upsell-overlay[hidden] { display: none; }
+
+@keyframes checkoutUpsellFadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.checkout-upsell-modal {
+    position: relative;
+    width: 100%;
+    max-width: 380px;
+    max-height: min(84vh, 620px);
+    overflow-y: auto;
+    padding: 22px;
+    border-radius: 22px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.28);
+    backdrop-filter: blur(22px) saturate(160%);
+    -webkit-backdrop-filter: blur(22px) saturate(160%);
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.35), inset 0 1px 2px rgba(255, 255, 255, 0.35);
+    animation: checkoutUpsellPopIn 0.2s ease;
+}
+
+@keyframes checkoutUpsellPopIn {
+    from { opacity: 0; transform: translateY(8px) scale(0.98); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.checkout-upsell-close {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    width: 28px;
+    height: 28px;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.08);
+    color: rgba(255, 255, 255, 0.85);
+    font-size: 1rem;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.checkout-upsell-close:hover {
+    background: rgba(255, 255, 255, 0.18);
+}
+
+.checkout-upsell-kicker {
+    display: block;
+    color: var(--accent-teal, #44ffe0);
+    font-size: 0.68rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 4px;
+}
+
+.checkout-upsell-modal h3 {
+    margin: 0 0 4px;
+    padding-right: 24px;
+    color: #fff;
+    font-size: 1.08rem;
+    font-weight: 300;
+    line-height: 1.25;
+}
+
+.checkout-upsell-subtext {
+    margin: 0 0 16px;
+    color: rgba(255, 255, 255, 0.68);
+    font-size: 0.78rem;
+    line-height: 1.4;
+}
+
+.checkout-upsell-items {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 16px;
+}
+
+.checkout-upsell-item {
+    display: grid;
+    grid-template-columns: 52px 1fr;
+    gap: 10px;
+    padding: 10px;
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.16);
+}
+
+.checkout-upsell-item-image {
+    width: 52px;
+    height: 52px;
+    border-radius: 10px;
+    background: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+
+.checkout-upsell-item-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    padding: 4px;
+}
+
+.checkout-upsell-item-body {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.checkout-upsell-item-name {
+    color: #fff;
+    font-size: 0.82rem;
+    font-weight: 400;
+    line-height: 1.25;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.checkout-upsell-item-reason {
+    margin: 0;
+    color: rgba(255, 255, 255, 0.65);
+    font-size: 0.7rem;
+    line-height: 1.3;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.checkout-upsell-item-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-top: 2px;
+}
+
+.checkout-upsell-item-price {
+    color: #fff;
+    font-size: 0.84rem;
+    font-weight: 200;
+}
+
+.checkout-upsell-add {
+    min-height: 28px;
+    padding: 4px 12px;
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.12);
+    color: #fff;
+    font-size: 0.68rem;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.checkout-upsell-add:hover {
+    background: rgba(255, 255, 255, 0.24);
+    border-color: rgba(255, 255, 255, 0.8);
+}
+
+.checkout-upsell-add[disabled] {
+    background: rgba(68, 255, 224, 0.18);
+    border-color: rgba(68, 255, 224, 0.5);
+    color: var(--accent-teal, #44ffe0);
+    cursor: default;
+}
+
+.checkout-upsell-continue {
+    width: 100%;
+    min-height: 42px;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.08);
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 0.82rem;
+    cursor: pointer;
+    transition: background 0.15s ease;
+}
+
+.checkout-upsell-continue:hover {
+    background: rgba(255, 255, 255, 0.16);
+}
+
+@media (max-width: 480px) {
+    .checkout-upsell-modal {
+        max-width: 100%;
+        padding: 18px;
+    }
+}
+
 @media (max-width: 1180px) {
     .cart-container {
         width: 100%;

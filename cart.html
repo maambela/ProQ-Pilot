@@ -46,7 +46,7 @@
 
 
     <main class="cart-container">
-        <div class="cart-items-heading" style="text-align: left; position: sticky; top: 100px; z-index: 900; padding: 0px 0; max-width: 1200px; margin: 0 auto;">
+        <div class="cart-items-heading" style="text-align: left; padding: 0px 0; max-width: 1200px; margin: 0 auto;">
             <h2 style="font-size: 2rem; color: var(--text-main);">Shopping cart</h2>
         </div>
         
@@ -117,12 +117,24 @@
         </div>
     </main>
 
+    <div id="checkoutUpsellOverlay" class="checkout-upsell-overlay" hidden>
+        <div class="checkout-upsell-modal" role="dialog" aria-modal="true" aria-labelledby="checkoutUpsellHeadline">
+            <button type="button" class="checkout-upsell-close" id="checkoutUpsellClose" aria-label="Close">&times;</button>
+            <span class="checkout-upsell-kicker">Before you check out</span>
+            <h3 id="checkoutUpsellHeadline">Would you like to add something useful?</h3>
+            <p class="checkout-upsell-subtext" id="checkoutUpsellSubtext"></p>
+            <div class="checkout-upsell-items" id="checkoutUpsellItems"></div>
+            <button type="button" class="checkout-upsell-continue" id="checkoutUpsellContinue">No thanks, continue to checkout</button>
+        </div>
+    </div>
+
     <footer class="site-footer"></footer>
 
     <script src="js/site-footer.js?v=footer-mobile-bg-20260708"></script>
     <script src="js/script.js?v=img-fallback-20260921"></script>
     <script src="js/recommendations.js?v=recs-restructure-20260921"></script>
-    <script src="js/cart-logic.js?v=recs-restructure-20260921"></script>
+    <script src="js/checkout-upsell.js?v=checkout-upsell-20260924"></script>
+    <script src="js/cart-logic.js?v=checkout-upsell-20260924"></script>
     <script src="js/auth-ui.js?v=entra-access-20260917"></script>
 </body>
 </html>
