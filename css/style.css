@@ -11622,3 +11622,11 @@ body:has(.cart-container) {
         font-size: 0.82rem !important;
     }
 }
+
+/* Licensing card: show the Microsoft logo smaller inside its frame. */
+.category-image-wrapper img.licensing-image,
+.preferred-category-panel .category-image-wrapper img.licensing-image {
+    object-fit: contain !important;
+    padding: 12% !important;
+    box-sizing: border-box !important;
+}
