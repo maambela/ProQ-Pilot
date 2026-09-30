@@ -11632,6 +11632,6 @@ body:has(.cart-container) {
     width: 50% !important;
     height: 50% !important;
     object-fit: contain !important;
-    padding: 12% !important;
+    padding: 0 !important;
     box-sizing: border-box !important;
 }
