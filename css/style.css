@@ -11626,6 +11626,11 @@ body:has(.cart-container) {
 /* Licensing card: show the Microsoft logo smaller inside its frame. */
 .category-image-wrapper img.licensing-image,
 .preferred-category-panel .category-image-wrapper img.licensing-image {
+    position: absolute !important;
+    top: 25% !important;
+    left: 25% !important;
+    width: 50% !important;
+    height: 50% !important;
     object-fit: contain !important;
     padding: 12% !important;
     box-sizing: border-box !important;
