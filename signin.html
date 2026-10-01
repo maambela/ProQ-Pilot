@@ -8,7 +8,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400&display=swap" rel="stylesheet">
     <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
     <link rel="stylesheet" href="css/style.css?v=checkout-upsell-20260924">
-    <link rel="stylesheet" href="css/signin.css?v=proq-portal-readable-20260920">
+    <link rel="stylesheet" href="css/signin.css?v=choice-card-20261001c">
     <script src="js/auth-ui.js?v=entra-access-20260917"></script>
     <style>
         .signin-page .signin-status { margin: 0 0 18px; padding: 12px 14px; border: 1px solid rgba(255, 255, 255, 0.28); border-radius: 8px; background: rgba(255, 255, 255, 0.1); color: #fff; font-size: 12px; line-height: 1.6; }
@@ -26,37 +26,44 @@
     </svg>
     <main class="auth-page">
         <div class="auth-card">
+          <div class="signin-stack">
             <div class="signin-brand">
                 <a href="welcome.html" class="signin-logo" aria-label="Return to ProQ Pilot welcome page"><img src="Images/Logos/Proq2.png" alt="ProQ Pilot"></a>
             </div>
             <div class="signin-content">
                 <div class="signin-heading">
                     <span class="signin-kicker">Secure access</span>
-                    <p class="signin-title">Sign in to ProQ Pilot</p>
+                    <p class="signin-title" id="signinTitle">Sign in to ProQ Pilot</p>
                 </div>
                 <div id="signInStatus" class="signin-status" role="status" aria-live="polite" hidden></div>
-                <div class="signin-action">
+                <section class="signin-view" id="signinChoiceView">
                     <button class="provider-button" type="button" id="microsoftSignInButton">
                         <span class="provider-mark" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
                         <span>Sign in with Microsoft</span>
-                        <i class="bx bx-right-arrow-alt" aria-hidden="true"></i>
                     </button>
-                </div>
-                <p class="signin-secured"><i class="bx bx-lock-alt" aria-hidden="true"></i> Secured by Microsoft</p>
-                <div class="signin-or"><span>OR</span></div>
-                <form class="signin-email-form" id="emailSignInForm" novalidate>
-                    <label for="signinEmail">Email</label>
-                    <input id="signinEmail" name="email" type="email" autocomplete="email" required>
-                    <label for="signinPassword">Password</label>
-                    <input id="signinPassword" name="password" type="password" autocomplete="current-password" required>
-                    <button class="email-signin-button" type="submit"><i class="bx bx-envelope" aria-hidden="true"></i><span>Sign in with email</span><i class="bx bx-right-arrow-alt" aria-hidden="true"></i></button>
-                </form>
+                    <p class="signin-secured"><i class="bx bx-lock-alt" aria-hidden="true"></i> Secured by Microsoft</p>
+                    <div class="signin-or"><span>OR</span></div>
+                    <button class="email-choice-button" type="button" id="emailChoiceButton">
+                        <i class="bx bx-envelope" aria-hidden="true"></i><span>Sign in with email</span><i class="bx bx-right-arrow-alt" aria-hidden="true"></i>
+                    </button>
+                </section>
+                <section class="signin-view" id="signinEmailView" hidden>
+                    <button class="signin-back" type="button" id="emailBackButton"><i class="bx bx-left-arrow-alt" aria-hidden="true"></i> All sign-in options</button>
+                    <form class="signin-email-form" id="emailSignInForm" novalidate>
+                        <label for="signinEmail">Email</label>
+                        <input id="signinEmail" name="email" type="email" autocomplete="email" required>
+                        <label for="signinPassword">Password</label>
+                        <input id="signinPassword" name="password" type="password" autocomplete="current-password" required>
+                        <button class="email-signin-button" type="submit"><span>Sign in</span><i class="bx bx-right-arrow-alt" aria-hidden="true"></i></button>
+                    </form>
+                </section>
                 <a class="signin-home" href="welcome.html" aria-label="Return to welcome page"><i class="bx bx-home" aria-hidden="true"></i></a>
                 <div class="signin-trust">
                     <span><i class="bx bx-lock-alt" aria-hidden="true"></i> Secure login</span>
                     <span><i class="bx bx-user" aria-hidden="true"></i> Microsoft work accounts</span>
                 </div>
             </div>
+          </div>
         </div>
     </main>
     <script>
@@ -94,6 +101,29 @@
                 window.location.assign('/api/auth/microsoft/signin?redirect=' + encodeURIComponent(target));
             });
             window.addEventListener('pageshow', () => { document.getElementById('microsoftSignInButton').disabled = false; });
+
+            // The email form is its own view (#email), so the browser Back button returns to the choices.
+            const choiceView = document.getElementById('signinChoiceView');
+            const emailView = document.getElementById('signinEmailView');
+            const title = document.getElementById('signinTitle');
+            function showView(focus) {
+                const isEmail = window.location.hash === '#email';
+                choiceView.hidden = isEmail;
+                emailView.hidden = !isEmail;
+                title.textContent = isEmail ? 'Sign in with your email' : 'Sign in to ProQ Pilot';
+                if (focus) (isEmail ? document.getElementById('signinEmail') : document.getElementById('emailChoiceButton')).focus();
+            }
+            document.getElementById('emailChoiceButton').addEventListener('click', () => { window.location.hash = 'email'; });
+            document.getElementById('emailBackButton').addEventListener('click', () => {
+                if (window.history.state?.fromChoice) return window.history.back();
+                window.history.replaceState(null, '', window.location.pathname + window.location.search);
+                showView(true);
+            });
+            window.addEventListener('hashchange', () => {
+                if (window.location.hash === '#email') window.history.replaceState({ fromChoice: true }, '');
+                showView(true);
+            });
+            showView(false);
 
             document.getElementById('emailSignInForm').addEventListener('submit', async event => {
                 event.preventDefault();
