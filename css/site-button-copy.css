@@ -36,6 +36,14 @@ html body :is(
     animation: pulse-green 2s infinite !important;
 }
 
+html body .product-card .btn-view-details {
+    width: fit-content !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    align-self: center !important;
+    flex: 0 0 auto !important;
+}
+
 html body :is(
     #site-copy-button-style,
     button,
