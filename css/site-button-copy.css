@@ -1,0 +1,107 @@
+/* Exact visual copy of the home hero .btn.btn-primary treatment. */
+html body :is(
+    #site-copy-button-style,
+    button,
+    input[type="button"],
+    input[type="submit"],
+    input[type="reset"],
+    [role="button"],
+    a[class*="btn"],
+    a[class*="button"],
+    a.signin-home
+):not(body.welcome-page .hero-btns > a[href="store.html"]):not(body.welcome-page .hero-btns > a[href="brands.html"]) {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    min-height: 42px !important;
+    padding: 0 18px !important;
+    width: fit-content !important;
+    border: 1px solid rgba(255, 255, 255, 0.18) !important;
+    border-top-color: rgba(255, 255, 255, 0.35) !important;
+    border-left-color: rgba(255, 255, 255, 0.25) !important;
+    border-radius: 50px !important;
+    color: #fff !important;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.03)) !important;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2), inset 0 1px 1px rgba(255, 255, 255, 0.25) !important;
+    backdrop-filter: blur(20px) saturate(180%) !important;
+    -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
+    font-family: inherit !important;
+    font-size: 0.8rem !important;
+    font-weight: 100 !important;
+    line-height: 1.6 !important;
+    text-align: center !important;
+    text-decoration: none !important;
+    transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1) !important;
+    position: relative !important;
+    overflow: hidden !important;
+    animation: pulse-green 2s infinite !important;
+}
+
+html body :is(
+    #site-copy-button-style,
+    button,
+    input[type="button"],
+    input[type="submit"],
+    input[type="reset"],
+    [role="button"],
+    a[class*="btn"],
+    a[class*="button"],
+    a.signin-home
+):not(body.welcome-page .hero-btns > a[href="store.html"]):not(body.welcome-page .hero-btns > a[href="brands.html"])::before {
+    content: "" !important;
+    position: absolute !important;
+    top: 0 !important;
+    left: -100% !important;
+    width: 120% !important;
+    height: 100% !important;
+    background: linear-gradient(120deg, transparent, rgba(255, 255, 255, 0.35), transparent) !important;
+    transition: all 0.6s ease !important;
+    pointer-events: none !important;
+}
+
+html body :is(
+    #site-copy-button-style,
+    button,
+    input[type="button"],
+    input[type="submit"],
+    input[type="reset"],
+    [role="button"],
+    a[class*="btn"],
+    a[class*="button"],
+    a.signin-home
+):not(body.welcome-page .hero-btns > a[href="store.html"]):not(body.welcome-page .hero-btns > a[href="brands.html"]):hover {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.25), rgba(255, 255, 255, 0.1)) !important;
+    transform: translateY(-2px) scale(1.02) !important;
+    box-shadow: 0 12px 35px rgba(0, 188, 212, 0.4), inset 0 1px 2px rgba(255, 255, 255, 0.5) !important;
+    animation: liquidWobble 0.8s ease-out !important;
+    border-color: rgba(255, 255, 255, 0.4) !important;
+}
+
+html body :is(
+    #site-copy-button-style,
+    button,
+    input[type="button"],
+    input[type="submit"],
+    input[type="reset"],
+    [role="button"],
+    a[class*="btn"],
+    a[class*="button"],
+    a.signin-home
+):not(body.welcome-page .hero-btns > a[href="store.html"]):not(body.welcome-page .hero-btns > a[href="brands.html"]):hover::before {
+    left: 100% !important;
+}
+
+@keyframes pulse-green {
+    0% { box-shadow: 0 0 0 0 rgba(9, 116, 255, 0.4); }
+    70% { box-shadow: 0 0 0 10px rgba(0, 230, 118, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(0, 230, 118, 0); }
+}
+
+@keyframes liquidWobble {
+    0% { transform: scale(1) rotate(0deg); }
+    20% { transform: scale(1.06, 0.96) rotate(-1deg); }
+    40% { transform: scale(0.98, 1.04) rotate(1deg); }
+    60% { transform: scale(1.03, 0.97) rotate(-0.5deg); }
+    80% { transform: scale(0.99, 1.01) rotate(0.5deg); }
+    100% { transform: scale(1) rotate(0deg); }
+}
