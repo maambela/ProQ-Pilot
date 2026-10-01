@@ -8,7 +8,7 @@ html body :is(
     [role="button"],
     a[class*="btn"],
     a[class*="button"]
-):not(.action-btn):not(.btn-wishlist):not(.signin-home):not(.hamburger):not(.hero-btns > a[href="store.html"]):not(.hero-btns > a[href="brands.html"]) {
+):not(.action-btn):not(.qty-btn):not(.btn-wishlist):not(.signin-home):not(.hamburger):not(.hero-btns > a[href="store.html"]):not(.hero-btns > a[href="brands.html"]) {
     display: inline-flex !important;
     align-items: center !important;
     justify-content: center !important;
@@ -45,7 +45,7 @@ html body :is(
     [role="button"],
     a[class*="btn"],
     a[class*="button"]
-):not(.action-btn):not(.btn-wishlist):not(.signin-home):not(.hamburger):not(.hero-btns > a[href="store.html"]):not(.hero-btns > a[href="brands.html"])::before {
+):not(.action-btn):not(.qty-btn):not(.btn-wishlist):not(.signin-home):not(.hamburger):not(.hero-btns > a[href="store.html"]):not(.hero-btns > a[href="brands.html"])::before {
     content: "" !important;
     position: absolute !important;
     top: 0 !important;
@@ -66,7 +66,7 @@ html body :is(
     [role="button"],
     a[class*="btn"],
     a[class*="button"]
-):not(.action-btn):not(.btn-wishlist):not(.signin-home):not(.hamburger):not(.hero-btns > a[href="store.html"]):not(.hero-btns > a[href="brands.html"]):hover {
+):not(.action-btn):not(.qty-btn):not(.btn-wishlist):not(.signin-home):not(.hamburger):not(.hero-btns > a[href="store.html"]):not(.hero-btns > a[href="brands.html"]):hover {
     background: linear-gradient(135deg, rgba(255, 255, 255, 0.25), rgba(255, 255, 255, 0.1)) !important;
     transition-property: background, border-color, box-shadow !important;
     box-shadow: 0 12px 35px rgba(0, 188, 212, 0.4), inset 0 1px 2px rgba(255, 255, 255, 0.5) !important;
@@ -83,7 +83,7 @@ html body :is(
     [role="button"],
     a[class*="btn"],
     a[class*="button"]
-):not(.action-btn):not(.btn-wishlist):not(.signin-home):not(.hamburger):not(.hero-btns > a[href="store.html"]):not(.hero-btns > a[href="brands.html"]):hover::before {
+):not(.action-btn):not(.qty-btn):not(.btn-wishlist):not(.signin-home):not(.hamburger):not(.hero-btns > a[href="store.html"]):not(.hero-btns > a[href="brands.html"]):hover::before {
     left: 100% !important;
 }
 
