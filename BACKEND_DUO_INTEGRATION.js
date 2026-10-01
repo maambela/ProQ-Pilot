@@ -11,6 +11,8 @@
  * - PII and credentials must never be exposed to frontend
  */
 
+const { createBrandedEmailHtml } = require('./utils/emailTemplates');
+
 // ===== 1. SETUP REQUIREMENTS =====
 
 /**
@@ -461,7 +463,7 @@ const sendEmail = async ({ to, subject, html }) => {
         from: process.env.FROM_EMAIL,
         to,
         subject,
-        html
+        html: createBrandedEmailHtml(html, { subject })
     });
 };
 

@@ -1,4 +1,5 @@
 const axios = require('axios');
+const { createBrandedEmailHtml } = require('./emailTemplates');
 
 const EMAIL_SENDERS = {
     sales: process.env.EMAIL_SALES_FROM || 'sales@proqpilot.com',
@@ -100,7 +101,7 @@ async function sendGraphEmail({
         subject,
         body: {
             contentType: html ? 'HTML' : 'Text',
-            content: html || text || ''
+            content: html ? createBrandedEmailHtml(html, { subject }) : text || ''
         },
         toRecipients
     };

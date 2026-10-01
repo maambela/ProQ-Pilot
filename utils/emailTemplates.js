@@ -9,7 +9,8 @@ const BRAND = {
     platinum: '#E2E8F0',
     success: '#157A64',
     warning: '#A76A00',
-    danger: '#B94444'
+    danger: '#B94444',
+    logoUrl: 'https://i.postimg.cc/rpCKP67v/Proq2.png'
 };
 
 const VARIANTS = {
@@ -188,7 +189,7 @@ function createEmail({
     footerNote
 } = {}) {
     const tone = VARIANTS[variant] || VARIANTS.info;
-    const logoUrl = publicAssetUrl('Images/Logos/Proq2.png', publicBaseUrl);
+    const logoUrl = BRAND.logoUrl || publicAssetUrl('Images/Logos/Proq2.png', publicBaseUrl);
     const previewText = escapeHtml(preview || title || BRAND.name);
     const eyebrowText = escapeHtml(eyebrow || tone.label);
     const helpAddress = escapeAttribute(process.env.EMAIL_SUPPORT_FROM || 'support@proqpilot.com');
@@ -216,12 +217,20 @@ function createEmail({
             .proq-title { font-size: 25px !important; line-height: 1.22 !important; }
             .proq-item-image { width: 48px !important; height: 48px !important; }
             .proq-item-amount { font-size: 13px !important; }
+            .proq-legacy-content { font-size: 14px !important; }
+            .proq-legacy-content table { width: 100% !important; max-width: 100% !important; }
+            .proq-legacy-content img { max-width: 100% !important; height: auto !important; }
         }
         @media screen and (max-width: 380px) {
             .proq-content { padding: 20px 16px !important; }
             .proq-header { padding: 14px 16px !important; }
             .proq-footer { padding: 16px !important; }
         }
+        .proq-legacy-content { color: ${BRAND.graphite}; font-family: Arial,Helvetica,sans-serif; font-size: 15px; line-height: 1.6; overflow-wrap: anywhere; }
+        .proq-legacy-content img { max-width: 100%; height: auto; }
+        .proq-legacy-content table { max-width: 100%; }
+        .proq-legacy-content a { overflow-wrap: anywhere; }
+        .proq-legacy-content pre { white-space: pre-wrap; overflow-wrap: anywhere; }
     </style>
 </head>
 <body style="margin:0;padding:0;background:${BRAND.porcelain};">
@@ -229,7 +238,7 @@ function createEmail({
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="${BRAND.porcelain}" style="width:100%;margin:0;padding:0;background:${BRAND.porcelain};border-collapse:collapse;">
         <tr>
             <td class="proq-page-gutter" align="center" style="padding:20px 12px;">
-                <table class="proq-shell" role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="width:600px;max-width:600px;border-collapse:collapse;background:#FFFFFF;">
+                <table class="proq-shell" role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="width:100%;max-width:600px;border-collapse:collapse;background:#FFFFFF;">
                     <tr><td style="height:4px;background:${tone.accent};font-size:0;line-height:0;">&nbsp;</td></tr>
                     <tr>
                         <td class="proq-header" bgcolor="${BRAND.ink}" style="padding:16px 24px;background:${BRAND.ink};">
@@ -267,6 +276,29 @@ function createEmail({
 </html>`;
 }
 
+function createBrandedEmailHtml(html, { subject, preview } = {}) {
+    const source = String(html || '').trim();
+    if (!source) return '';
+    if (/class=["'][^"']*\bproq-shell\b/i.test(source)) return source;
+
+    const bodyMatch = source.match(/<body\b[^>]*>([\s\S]*?)<\/body\s*>/i);
+    const content = bodyMatch
+        ? bodyMatch[1]
+        : source
+            .replace(/<!doctype[^>]*>/gi, '')
+            .replace(/<head\b[^>]*>[\s\S]*?<\/head\s*>/gi, '')
+            .replace(/<\/?html\b[^>]*>/gi, '')
+            .trim();
+    const previewText = preview || content.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 160);
+
+    return createEmail({
+        eyebrow: 'PROQ PILOT',
+        title: subject || BRAND.name,
+        preview: previewText || subject || BRAND.name,
+        body: `<div class="proq-legacy-content">${content}</div>`
+    });
+}
+
 function createPlainText({ title, intro, lines = [], cta, footerNote } = {}) {
     const output = [title, intro, ...lines, cta?.label && cta?.href ? `${cta.label}: ${cta.href}` : '', footerNote, 'Need assistance? Contact ProQ Pilot Support: support@proqpilot.com', `© ${new Date().getFullYear()} ProQ Pilot`]
         .filter(Boolean)
@@ -289,5 +321,6 @@ module.exports = {
     button,
     itemList,
     createEmail,
+    createBrandedEmailHtml,
     createPlainText
 };
