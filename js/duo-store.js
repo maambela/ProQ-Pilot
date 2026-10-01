@@ -280,8 +280,9 @@ function addUpgradeToCart(upgradeConfig) {
     }
 
     localStorage.setItem('cart', JSON.stringify(cart));
-    
+
     // Sync to server if logged in
+    const user = JSON.parse(localStorage.getItem('user'));
     if (user && user.userID) {
         console.log('[Duo Store] Syncing upgrade to server...');
         console.log('[Duo Store] User ID:', user.userID);

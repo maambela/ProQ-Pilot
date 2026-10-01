@@ -690,6 +690,7 @@ app.get('/api/v1/stitch-payment/verify', async (req, res) => {
             externalReference,
             paymentId: paymentRequestId
         });
+        if (result.paid) await provisionDuoAfterStitch(result.orderId);
         if (!String(req.get('accept') || '').includes('application/json')) {
             return res.redirect(302, '/order-success.html?orderId=' + encodeURIComponent(result.orderId));
         }
@@ -700,6 +701,14 @@ app.get('/api/v1/stitch-payment/verify', async (req, res) => {
     }
 });
 
+async function provisionDuoAfterStitch(orderId) {
+    try {
+        await provisionDuoForPaidOrder(orderId);
+    } catch (error) {
+        console.error(`[STITCH] Duo provisioning for order #${orderId} failed:`, error.message);
+    }
+}
+
 app.post('/webhook/stitch', async (req, res) => {
     try {
         const event = stitchApi.verifySvixWebhook(req.rawBody, req.headers);
@@ -707,7 +716,8 @@ app.post('/webhook/stitch', async (req, res) => {
             return res.status(400).json({ status: 'error', message: 'Unsupported Stitch Express webhook payload' });
         }
 
-        await processStitchPaymentNode(event, { paymentId: String(event.id) });
+        const result = await processStitchPaymentNode(event, { paymentId: String(event.id) });
+        if (result.paid) await provisionDuoAfterStitch(result.orderId);
         res.status(200).json({ status: 'success' });
     } catch (error) {
         console.error('[STITCH] Webhook error:', error.message);
@@ -878,159 +888,123 @@ app.post('/api/v1/payfast-checkout', async (req, res, next) => {
 });
 
 // ============== HELPER: Create Duo Account After Payment ==============
+// Provisions every Duo item on an order that has not been deployed yet. Safe to call more than once
+// (payment redirect + webhook both call it): deployed items are skipped, and failed items stay
+// undeployed so the next call retries them.
 async function createDuoAccountAfterPayment(orderId, userID, connection) {
-    try {
-        console.log(`\n[DUO PROVISIONING] ========================================`);
-        console.log(`[DUO PROVISIONING] 🚀 STARTING: Order #${orderId}, User #${userID}`);
-        console.log(`[DUO PROVISIONING] ========================================\n`);
-        
-        // Fetch Duo items from the order
-        console.log(`[DUO PROVISIONING] Step 1: Fetching Duo items from database...`);
-        const [duoItems] = await connection.query(
-            `SELECT * FROM duo_order_items_meta
-             WHERE order_id = ? AND cart_type IN ('duo-security', 'duo-security-upgrade')`,
-            [orderId]
-        );
+    const [duoItems] = await connection.query(
+        `SELECT * FROM duo_order_items_meta
+         WHERE order_id = ? AND cart_type IN ('duo-security', 'duo-security-upgrade')
+           AND (status IS NULL OR status <> 'deployed')`,
+        [orderId]
+    );
 
-        console.log(`[DUO PROVISIONING] Found ${duoItems.length} Duo item(s)`);
-        
-        if (duoItems.length === 0) {
-            console.log(`[DUO PROVISIONING] ❌ No Duo items found. Skipping account creation.\n`);
-            return null;
-        }
-
-        // Extract first Duo item config (typically only one Duo purchase per order)
-        const duoItem = duoItems[0];
-        console.log(`[DUO PROVISIONING] Step 2: Parsing Duo configuration...`);
-        const config = safeJsonParse(duoItem.duo_config_json);
-
-        if (!config || !config.organization_name) {
-            console.error(`[DUO PROVISIONING] ❌ Invalid or missing configuration for order #${orderId}`);
-            console.log(`[DUO PROVISIONING] Config received:`, config);
-            console.log(`[DUO PROVISIONING] ========================================\n`);
-            return null;
-        }
-
-        console.log(`[DUO PROVISIONING] ✅ Config parsed successfully`);
-        console.log(`[DUO PROVISIONING]    Organization: ${config.organization_name}`);
-        console.log(`[DUO PROVISIONING]    Edition: ${config.edition || 'PLATFORM'}`);
-        console.log(`[DUO PROVISIONING]    User Limit: ${config.user_limit || 5}`);
-        console.log(`[DUO PROVISIONING]    Admin Emails: ${Array.isArray(config.admin_emails) ? config.admin_emails.join(', ') : 'None'}`);
-
-        // Extract necessary fields
-        const {
-            organization_name,
-            user_limit = 5,
-            edition = 'PLATFORM',
-            admin_emails = []
-        } = config;
-
-        try {
-            // ============ STEP 1: Create the Child Account ============
-            console.log(`\n[DUO API] Step 3: CREATING CHILD ACCOUNT`);
-            console.log(`[DUO API] Calling: POST /accounts/v1/account/create`);
-            console.log(`[DUO API] Parameters: name="${organization_name}"`);
-            
-            const duoAccount = await duoApi.createDuoAccount(organization_name);
-            const { account_id, api_hostname } = duoAccount;
-            
-            console.log(`[DUO API] ✅ Account created successfully!`);
-            console.log(`[DUO API]    Account ID: ${account_id}`);
-            console.log(`[DUO API]    API Hostname: ${api_hostname}`);
-
-            // ============ STEP 2: Set the Edition ============
-            console.log(`\n[DUO API] Step 4: SETTING EDITION`);
-            console.log(`[DUO API] Calling: POST /admin/v1/billing/edition`);
-            console.log(`[DUO API] Parameters: account_id="${account_id}", edition="${edition}"`);
-            console.log(`[DUO API] Using hostname: ${api_hostname}`);
-            
-            await duoApi.setEdition(account_id, api_hostname, edition);
-            console.log(`[DUO API] ✅ Edition set to ${edition}`);
-
-            // ============ STEP 3: Set the Hard User Limit ============
-            console.log(`\n[DUO API] Step 5: SETTING USER LIMIT`);
-            console.log(`[DUO API] Calling: PUT /admin/v1/accounts/${account_id}/settings/hard_user_limit`);
-            console.log(`[DUO API] Parameters: hard_limit="${user_limit}"`);
-            console.log(`[DUO API] Using hostname: ${api_hostname}`);
-            
-            await duoApi.updateHardUserLimit(account_id, api_hostname, user_limit);
-            console.log(`[DUO API] ✅ User limit set to ${user_limit}`);
-
-            // ============ STEP 4: Create Administrators ============
-            console.log(`\n[DUO API] Step 6: CREATING ADMINISTRATORS`);
-            const adminEmails = Array.isArray(admin_emails) ? admin_emails : [];
-            console.log(`[DUO API] Total admins to create: ${adminEmails.length}`);
-            
-            if (adminEmails && adminEmails.length > 0) {
-                for (let i = 0; i < adminEmails.length; i++) {
-                    const email = adminEmails[i];
-                    try {
-                        console.log(`[DUO API]   Admin ${i + 1}/${adminEmails.length}: ${email}`);
-                        console.log(`[DUO API]   Calling: POST /admin/v1/admins`);
-                        console.log(`[DUO API]   Parameters: email="${email}", role="Owner"`);
-                        
-                        await duoApi.createDuoAdministrator(account_id, api_hostname, email);
-                        console.log(`[DUO API]   ✅ Admin created: ${email}`);
-                    } catch (adminErr) {
-                        console.warn(`[DUO API]   ⚠️ Admin creation skipped for ${email}: ${adminErr.message}`);
-                    }
-                }
-            } else {
-                console.log(`[DUO API]   ℹ️ No admin emails provided`);
-            }
-
-            // ============ STEP 5: Update Database ============
-            console.log(`\n[DUO PROVISIONING] Step 7: UPDATING DATABASE`);
-            console.log(`[DUO PROVISIONING] Updating duo_order_items_meta...`);
-            
-            await connection.query(
-                `UPDATE duo_order_items_meta 
-                 SET duo_account_id = ?, status = 'deployed', api_hostname = ? 
-                 WHERE order_id = ?`,
-                [account_id, api_hostname, orderId]
-            );
-            console.log(`[DUO PROVISIONING] ✅ duo_order_items_meta updated`);
-
-            console.log(`[DUO PROVISIONING] Creating record in duo_organizations...`);
-            
-            await connection.query(
-                `INSERT INTO duo_organizations 
-                 (customer_id, organization_name, duo_account_id, user_limit, admin_emails, api_hostname, status)
-                 VALUES (?, ?, ?, ?, ?, ?, 'active')`,
-                [userID, organization_name, account_id, user_limit, JSON.stringify(admin_emails), api_hostname]
-            );
-            console.log(`[DUO PROVISIONING] ✅ duo_organizations record created`);
-            
-            console.log(`\n[DUO PROVISIONING] ========================================`);
-            console.log(`[DUO PROVISIONING] ✅ PROVISIONING COMPLETE FOR ORDER #${orderId}`);
-            console.log(`[DUO PROVISIONING] Account ID: ${account_id}`);
-            console.log(`[DUO PROVISIONING] Organization: ${organization_name}`);
-            console.log(`[DUO PROVISIONING] ========================================\n`);
-            
-            return {
-                account_id,
-                api_hostname,
-                organization_name,
-                user_limit,
-                edition,
-                admin_emails
-            };
-
-        } catch (error) {
-            console.error(`\n[DUO API] ❌ PROVISIONING FAILED`);
-            console.error(`[DUO API] Error:`, error.message);
-            console.error(`[DUO API] Stack:`, error.stack);
-            console.log(`[DUO PROVISIONING] ========================================\n`);
-            throw error;
-        }
-
-    } catch (error) {
-        console.error(`\n[DUO PROVISIONING] ❌ FATAL ERROR`);
-        console.error(`[DUO PROVISIONING] Order #${orderId} - Error: ${error.message}`);
-        console.error(`[DUO PROVISIONING] ========================================\n`);
-        // Log but don't throw - payment already completed, manual intervention needed
+    if (!duoItems.length) {
+        console.log(`[DUO PROVISIONING] Order #${orderId}: no undeployed Duo items`);
         return null;
     }
+
+    const results = [];
+    for (const duoItem of duoItems) {
+        const config = safeJsonParse(duoItem.duo_config_json, {}) || {};
+        try {
+            const result = duoItem.cart_type === 'duo-security-upgrade'
+                ? await applyDuoUpgradeForItem(duoItem, config, userID, connection)
+                : await createDuoAccountForItem(duoItem, config, userID, connection);
+            if (result) results.push(result);
+        } catch (error) {
+            // Payment is already confirmed; leave the item undeployed so a later call retries it.
+            console.error(`[DUO PROVISIONING] Order #${orderId} item #${duoItem.id} failed: ${error.message}`);
+        }
+    }
+
+    return results[0] || null;
+}
+
+async function createDuoAccountForItem(duoItem, config, userID, connection) {
+    const { organization_name, user_limit = 5, edition = 'PLATFORM', admin_emails = [] } = config;
+    if (!organization_name) {
+        console.error(`[DUO PROVISIONING] Item #${duoItem.id} has no organization name`);
+        return null;
+    }
+
+    console.log(`[DUO PROVISIONING] Creating "${organization_name}" (${edition}, ${user_limit} users) for order #${duoItem.order_id}`);
+    const { account_id, api_hostname } = await duoApi.createDuoAccount(organization_name);
+
+    // Record the account straight away so a failure in a later step can't cause a second account.
+    await connection.query(
+        `UPDATE duo_order_items_meta SET duo_account_id = ?, status = 'deployed', api_hostname = ? WHERE id = ?`,
+        [account_id, api_hostname, duoItem.id]
+    );
+    await connection.query(
+        `INSERT INTO duo_organizations
+         (customer_id, organization_name, duo_account_id, user_limit, admin_emails, api_hostname, status)
+         VALUES (?, ?, ?, ?, ?, ?, 'active')`,
+        [userID, organization_name, account_id, user_limit, JSON.stringify(admin_emails), api_hostname]
+    );
+
+    await duoApi.setEdition(account_id, api_hostname, edition);
+    await duoApi.updateHardUserLimit(account_id, api_hostname, user_limit);
+
+    for (const email of Array.isArray(admin_emails) ? admin_emails : []) {
+        try {
+            await duoApi.createDuoAdministrator(account_id, api_hostname, email);
+        } catch (adminErr) {
+            console.warn(`[DUO PROVISIONING] Admin ${email} not created: ${adminErr.message}`);
+        }
+    }
+
+    console.log(`[DUO PROVISIONING] ✅ "${organization_name}" provisioned as ${account_id}`);
+    return { account_id, api_hostname, organization_name, user_limit, edition, admin_emails };
+}
+
+async function applyDuoUpgradeForItem(duoItem, config, userID, connection) {
+    const newLimit = Number(config.new_user_limit);
+    const [orgs] = await connection.query(
+        'SELECT * FROM duo_organizations WHERE id = ? AND customer_id = ?',
+        [config.duo_org_id, userID]
+    );
+    if (!orgs.length || !Number.isInteger(newLimit) || newLimit <= 0) {
+        console.error(`[DUO PROVISIONING] Upgrade item #${duoItem.id} has no matching organization or valid limit`);
+        return null;
+    }
+
+    const org = orgs[0];
+    await duoApi.updateHardUserLimit(org.duo_account_id, org.api_hostname, newLimit);
+    await connection.query('UPDATE duo_organizations SET user_limit = ? WHERE id = ?', [newLimit, org.id]);
+    await connection.query(
+        `UPDATE duo_order_items_meta SET duo_account_id = ?, status = 'deployed', api_hostname = ? WHERE id = ?`,
+        [org.duo_account_id, org.api_hostname, duoItem.id]
+    );
+
+    console.log(`[DUO PROVISIONING] ✅ "${org.organization_name}" upgraded ${org.user_limit} → ${newLimit} users`);
+    return {
+        account_id: org.duo_account_id,
+        api_hostname: org.api_hostname,
+        organization_name: org.organization_name,
+        user_limit: newLimit
+    };
+}
+
+// Runs Duo provisioning for a paid order, at most once at a time per order in this process.
+const duoProvisioningInFlight = new Map();
+function provisionDuoForPaidOrder(orderId) {
+    const key = String(orderId);
+    if (duoProvisioningInFlight.has(key)) return duoProvisioningInFlight.get(key);
+
+    const run = (async () => {
+        const connection = await db.getConnection();
+        try {
+            const [orders] = await connection.query('SELECT userID, status FROM Orders WHERE id = ?', [orderId]);
+            if (!orders.length || orders[0].status !== 'paid') return null;
+            return await createDuoAccountAfterPayment(orderId, orders[0].userID, connection);
+        } finally {
+            connection.release();
+        }
+    })().finally(() => duoProvisioningInFlight.delete(key));
+
+    duoProvisioningInFlight.set(key, run);
+    return run;
 }
 
 // ============== PAYFAST WEBHOOK (ITN) ==============
@@ -1105,7 +1079,7 @@ app.post('/webhook/payfast', async (req, res) => {
                 
                 // Create Duo account using shared helper function (AWAIT this!)
                 try {
-                    const duoAccount = await createDuoAccountAfterPayment(orderId, order.userID, connection);
+                    const duoAccount = await provisionDuoForPaidOrder(orderId);
                     if (duoAccount) {
                         console.log(`\n[PAYFAST WEBHOOK] ✅ DUO ACCOUNT PROVISIONING SUCCESSFUL`);
                         console.log(`[PAYFAST WEBHOOK] Account ID: ${duoAccount.account_id}`);
@@ -5640,7 +5614,7 @@ app.get('/api/v1/orders/:orderId', async (req, res, next) => {
             `SELECT 1 as quantity, 0 as price, 0 as product_id,
                     CASE WHEN dm.cart_type = 'microsoft-license' THEN 'Microsoft License' ELSE 'Cisco Duo Security' END as product_name,
                     CASE WHEN dm.cart_type = 'microsoft-license' THEN '/Images/Logos/Proq2.png' ELSE '/Images/DUO.png' END as image_url,
-                    dm.cart_type, dm.duo_config_json
+                    dm.cart_type, dm.duo_config_json, dm.status AS provisioning_status, dm.duo_account_id
              FROM duo_order_items_meta dm
              WHERE dm.order_id = ?`,
             [orderId]

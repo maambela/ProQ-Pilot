@@ -182,11 +182,9 @@ document.addEventListener('DOMContentLoaded', async ()=>{
 
     document.getElementById('editAddress').addEventListener('click', ()=>{ window.location.href='/checkout.html'; });
 
-    // Show Test DUO button if there are Duo items
+    // The Test DUO button creates real Duo accounts without payment, so it stays hidden for customers.
+    // Duo accounts are provisioned on the server once the payment is confirmed.
     const testDuoBtn = document.getElementById('testDuoBtn');
-    if (hasDuoItems) {
-        testDuoBtn.style.display = 'inline-flex';
-    }
 
     const payBtn = document.getElementById('payBtn');
     payBtn.innerText = `Pay R${total.toLocaleString()}`;
@@ -202,6 +200,8 @@ document.addEventListener('DOMContentLoaded', async ()=>{
             
             if (selectedMethod === 'payfast') {
                 endpoint = '/api/v1/payfast-checkout';
+            } else if (selectedMethod === 'yoco') {
+                endpoint = '/api/v1/checkout-payment';
             } else if (selectedMethod === 'stitch') {
                 endpoint = '/api/v1/stitch-checkout';
             }
