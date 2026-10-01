@@ -11703,3 +11703,27 @@ body:has(.cart-container) {
     max-width: 170px !important;
     max-height: none !important;
 }
+
+/* Header menu: chips that link somewhere look like the plain chips. */
+.nav-preview-chips a {
+    padding: 5px 9px;
+    border-radius: 999px;
+    color: rgba(255, 255, 255, 0.82);
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    font-size: 0.66rem;
+    font-weight: 200;
+    text-decoration: none;
+    transition: background 0.18s ease, border-color 0.18s ease;
+}
+
+.nav-preview-chips a:hover {
+    background: rgba(255, 255, 255, 0.16);
+    border-color: rgba(255, 255, 255, 0.32);
+}
+
+/* Jump targets from the header menu land below the fixed header. */
+#role-setups, #onboarding-procurement, #featured-products, #shop-categories,
+#buying-flow, #team-rollouts, #why-proq, #brands, #help-message, #faq {
+    scroll-margin-top: 120px;
+}

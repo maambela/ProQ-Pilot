@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>My Orders - ProQ Pilot</title>
-    <link rel="stylesheet" href="css/style.css?v=buttons-rollback-20261001">
+    <link rel="stylesheet" href="css/style.css?v=page-menus-20261001">
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
     <style>
         .orders-wrapper {
@@ -748,6 +748,20 @@
             });
 
             document.getElementById('order-range-filter')?.addEventListener('change', renderOrders);
+
+            // Deep links from the header menu, e.g. ?status=pending or ?range=30.
+            const params = new URLSearchParams(window.location.search);
+            const statusButton = document.querySelector(`[data-order-status="${CSS.escape(params.get('status') || '')}"]`);
+            if (statusButton) {
+                document.querySelectorAll('[data-order-status]').forEach(item => item.classList.remove('active'));
+                statusButton.classList.add('active');
+            }
+            const rangeSelect = document.getElementById('order-range-filter');
+            const range = params.get('range');
+            if (rangeSelect && range && [...rangeSelect.options].some(option => option.value === range)) rangeSelect.value = range;
+            if (statusButton || params.has('range')) {
+                document.querySelector('.orders-toolbar')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
         }
 
         function renderOrders() {
@@ -910,6 +924,6 @@
 
     <script src="js/site-footer.js?v=footer-mobile-bg-20260708"></script>
     <script src="js/script.js?v=store-catalog-20260924"></script>
-    <script src="js/auth-ui.js?v=entra-access-20260917"></script>
+    <script src="js/auth-ui.js?v=page-menus-20261001"></script>
 </body>
 </html>

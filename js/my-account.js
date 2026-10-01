@@ -68,12 +68,21 @@ function switchSection(section) {
     }
 }
 
+// Deep links from the header menu: #profile, #orders, #addresses, #returns, #support,
+// plus #help-message and #faq, which open Help & Support and scroll to that block.
 function openSectionFromHash() {
     const hash = window.location.hash.replace('#', '').toLowerCase();
-    if (hash === 'support' || hash === 'help') {
+    const sections = { profile: 'profile', orders: 'orders', addresses: 'addresses', returns: 'returns', support: 'help', help: 'help' };
+    const supportBlocks = { 'help-message': 'help-message', faq: 'faq' };
+
+    if (sections[hash]) {
+        switchSection(sections[hash]);
+    } else if (supportBlocks[hash]) {
         switchSection('help');
-    } else if (hash === 'profile') {
-        switchSection('profile');
+        setTimeout(() => {
+            document.getElementById(supportBlocks[hash])?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            if (hash === 'help-message') document.getElementById('helpSubject')?.focus({ preventScroll: true });
+        }, 350);
     }
 }
 

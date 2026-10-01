@@ -168,7 +168,11 @@ function initHeaderPreview() {
             kicker: 'Overview',
             title: 'Start procurement cleanly.',
             body: 'See featured devices, brand paths, and guided kits for new starters, hybrid teams, and secure business growth.',
-            chips: ['Procurement kits', 'Featured laptops', 'Brands'],
+            chips: [
+                { label: 'Onboarding kits', href: 'index.html#onboarding-procurement' },
+                { label: 'Featured devices', href: 'index.html#featured-products' },
+                { label: 'Brands', href: 'index.html#brands' }
+            ],
             action: 'Open home',
             href: 'index.html',
             icon: 'bx bx-home'
@@ -186,7 +190,11 @@ function initHeaderPreview() {
             kicker: 'Tracking',
             title: 'Follow every purchase from cart to delivery.',
             body: 'Check order history, payment status, procurement records, and delivery progress for each business purchase.',
-            chips: ['Order status', 'Invoices', 'Delivery'],
+            chips: [
+                { label: 'Pending', href: 'user-orders.html?status=pending' },
+                { label: 'Completed', href: 'user-orders.html?status=completed' },
+                { label: 'Order help', href: 'my-account.html#support' }
+            ],
             action: 'View orders',
             href: 'user-orders.html',
             icon: 'bx bx-receipt'
@@ -195,7 +203,11 @@ function initHeaderPreview() {
             kicker: 'Workspace',
             title: 'Manage buyer and company details.',
             body: 'Keep profile details, delivery information, saved activity, and account settings ready for faster procurement.',
-            chips: ['Profile', 'Addresses', 'Saved details'],
+            chips: [
+                { label: 'Profile', href: 'my-account.html#profile' },
+                { label: 'Addresses', href: 'my-account.html#addresses' },
+                { label: 'Support', href: 'my-account.html#support' }
+            ],
             action: 'Open account',
             href: 'my-account.html',
             icon: 'bx bx-user-circle'
@@ -247,7 +259,8 @@ function initHeaderPreview() {
         }
     };
 
-    const megaColumns = [
+    // Store (and any page without its own set) keeps the catalogue columns.
+    const storeColumns = [
         {
             title: 'Procurement',
             links: [
@@ -274,6 +287,104 @@ function initHeaderPreview() {
         }
     ];
 
+    // Home, Orders and My Account only show links into their own page (or closely related pages).
+    const pageColumns = {
+        home: [
+            {
+                title: 'Get started',
+                links: [
+                    { label: 'Role setups', hint: 'Match equipment to each role in your team.', href: 'index.html#role-setups', icon: 'bx bx-id-card' },
+                    { label: 'Onboarding kits', hint: 'New employee, remote team, and secure business kits.', href: 'index.html#onboarding-procurement', icon: 'bx bx-package' },
+                    { label: 'Popular components', hint: 'The devices teams order most.', href: 'index.html#featured-products', icon: 'bx bx-star' }
+                ]
+            },
+            {
+                title: 'Shop by need',
+                links: [
+                    { label: 'Shop by category', hint: 'Devices, licensing, desk setup, and accessories.', href: 'index.html#shop-categories', icon: 'bx bx-category' },
+                    { label: 'One buying flow', hint: 'Devices, licenses, and security together.', href: 'index.html#buying-flow', icon: 'bx bx-git-merge' },
+                    { label: 'Team rollouts', hint: 'Equipping a whole team at once.', href: 'index.html#team-rollouts', icon: 'bx bx-group' }
+                ]
+            },
+            {
+                title: 'About ProQ Pilot',
+                links: [
+                    { label: 'Why ProQ Pilot', hint: 'Delivery, warranty, and the latest hardware.', href: 'index.html#why-proq', icon: 'bx bx-badge-check' },
+                    { label: 'Brands we sell', hint: 'HP, Dell, Lenovo, Microsoft, Apple, and more.', href: 'index.html#brands', icon: 'bx bx-purchase-tag' },
+                    { label: 'Contact us', hint: 'Talk to the ProQ Pilot team.', href: 'contact.html', icon: 'bx bx-phone' }
+                ]
+            }
+        ],
+        orders: [
+            {
+                title: 'Order status',
+                links: [
+                    { label: 'Pending orders', hint: 'Awaiting payment or processing.', href: 'user-orders.html?status=pending', icon: 'bx bx-time-five' },
+                    { label: 'Completed orders', hint: 'Paid and fulfilled purchases.', href: 'user-orders.html?status=completed', icon: 'bx bx-check-circle' },
+                    { label: 'Cancelled orders', hint: 'Orders that did not go ahead.', href: 'user-orders.html?status=cancelled', icon: 'bx bx-x-circle' }
+                ]
+            },
+            {
+                title: 'Order history',
+                links: [
+                    { label: 'All orders', hint: 'Your full procurement history.', href: 'user-orders.html?status=all', icon: 'bx bx-receipt' },
+                    { label: 'Last 30 days', hint: 'Recent purchases only.', href: 'user-orders.html?range=30', icon: 'bx bx-calendar' },
+                    { label: 'This year', hint: 'Everything ordered this year.', href: 'user-orders.html?range=year', icon: 'bx bx-calendar-check' }
+                ]
+            },
+            {
+                title: 'Help with orders',
+                links: [
+                    { label: 'Help & Support', hint: 'Phone, email, and office details.', href: 'my-account.html#support', icon: 'bx bx-support' },
+                    { label: 'Send us a message', hint: 'Ask about an order or delivery.', href: 'my-account.html#help-message', icon: 'bx bx-message-square-detail' },
+                    { label: 'FAQs', hint: 'Answers to common order questions.', href: 'my-account.html#faq', icon: 'bx bx-help-circle' }
+                ]
+            }
+        ],
+        account: [
+            {
+                title: 'Your details',
+                links: [
+                    { label: 'My profile', hint: 'Name, email, and contact number.', href: 'my-account.html#profile', icon: 'bx bx-user' },
+                    { label: 'Addresses', hint: 'Delivery addresses for your orders.', href: 'my-account.html#addresses', icon: 'bx bx-map' },
+                    { label: 'Saved shortlist', hint: 'Products you saved for later.', href: 'wishlist.html', icon: 'bx bx-heart' }
+                ]
+            },
+            {
+                title: 'Activity',
+                links: [
+                    { label: 'My orders', hint: 'Orders placed from this account.', href: 'my-account.html#orders', icon: 'bx bx-receipt' },
+                    { label: 'Returns', hint: 'Return requests and their status.', href: 'my-account.html#returns', icon: 'bx bx-undo' },
+                    { label: 'Duo accounts', hint: 'Cisco Duo organisations you own.', href: 'my-duo-accounts.html', icon: 'bx bx-shield-quarter' }
+                ]
+            },
+            {
+                title: 'Help & Support',
+                links: [
+                    { label: 'Help & Support', hint: 'Phone, email, and office details.', href: 'my-account.html#support', icon: 'bx bx-support' },
+                    { label: 'Send us a message', hint: 'We reply within business hours.', href: 'my-account.html#help-message', icon: 'bx bx-message-square-detail' },
+                    { label: 'Contact page', hint: 'Support hours and contact form.', href: 'contact.html', icon: 'bx bx-phone' }
+                ]
+            }
+        ]
+    };
+
+    const escapeHtml = value => String(value).replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
+    const renderColumns = columns => columns.map(column => `
+        <div class="nav-preview-column">
+            <h4>${escapeHtml(column.title)}</h4>
+            ${column.links.map(link => `
+                <a href="${escapeHtml(link.href)}">
+                    <i class='${escapeHtml(link.icon)}'></i>
+                    <span>
+                        <strong>${escapeHtml(link.label)}</strong>
+                        <small>${escapeHtml(link.hint)}</small>
+                    </span>
+                </a>
+            `).join('')}
+        </div>
+    `).join('');
+
     const panel = document.createElement('div');
     panel.className = 'nav-preview-panel';
     panel.setAttribute('aria-hidden', 'true');
@@ -288,22 +399,7 @@ function initHeaderPreview() {
                 <a class="nav-preview-action" href="index.html">Open</a>
             </div>
         </div>
-        <div class="nav-preview-mega">
-            ${megaColumns.map(column => `
-                <div class="nav-preview-column">
-                    <h4>${column.title}</h4>
-                    ${column.links.map(link => `
-                        <a href="${link.href}">
-                            <i class='${link.icon}'></i>
-                            <span>
-                                <strong>${link.label}</strong>
-                                <small>${link.hint}</small>
-                            </span>
-                        </a>
-                    `).join('')}
-                </div>
-            `).join('')}
-        </div>
+        <div class="nav-preview-mega" data-columns="store">${renderColumns(storeColumns)}</div>
     `;
     headerContainer.appendChild(panel);
 
@@ -327,7 +423,8 @@ function initHeaderPreview() {
     const renderPreview = (link) => {
         if (!isDesktop()) return;
 
-        const content = previewContent[getPreviewKey(link)] || previewContent.default;
+        const key = getPreviewKey(link);
+        const content = previewContent[key] || previewContent.default;
         const rect = link.getBoundingClientRect();
         const headerRect = header.getBoundingClientRect();
         const center = rect.left + (rect.width / 2) - headerRect.left;
@@ -337,7 +434,15 @@ function initHeaderPreview() {
         panel.querySelector('.nav-preview-kicker').textContent = content.kicker;
         panel.querySelector('strong').textContent = content.title;
         panel.querySelector('p').textContent = content.body;
-        panel.querySelector('.nav-preview-chips').innerHTML = content.chips.map((chip) => `<span>${chip}</span>`).join('');
+        panel.querySelector('.nav-preview-chips').innerHTML = content.chips.map(chip => typeof chip === 'string'
+            ? `<span>${escapeHtml(chip)}</span>`
+            : `<a href="${escapeHtml(chip.href)}">${escapeHtml(chip.label)}</a>`).join('');
+        const mega = panel.querySelector('.nav-preview-mega');
+        const columnsKey = pageColumns[key] ? key : 'store';
+        if (mega.dataset.columns !== columnsKey) {
+            mega.innerHTML = renderColumns(pageColumns[key] || storeColumns);
+            mega.dataset.columns = columnsKey;
+        }
         const action = panel.querySelector('.nav-preview-action');
         action.textContent = content.action;
         action.href = content.href || link.href;
@@ -368,6 +473,20 @@ function initHeaderPreview() {
     });
 
     panel.addEventListener('mouseenter', () => clearTimeout(hideTimer));
+
+    // A link to the hash you're already on doesn't fire hashchange, so re-trigger it
+    // (My Account opens its sections from the hash). Then close the panel.
+    panel.addEventListener('click', event => {
+        const anchor = event.target.closest('a[href]');
+        if (!anchor) return;
+        const url = new URL(anchor.href, window.location.href);
+        if (url.pathname === window.location.pathname && url.search === window.location.search && url.hash && url.hash === window.location.hash) {
+            window.dispatchEvent(new HashChangeEvent('hashchange'));
+        }
+        panel.classList.remove('visible');
+        headerContainer.classList.remove('nav-preview-open');
+        panel.setAttribute('aria-hidden', 'true');
+    });
     panel.addEventListener('mouseleave', hidePreview);
 
     window.addEventListener('resize', () => {
