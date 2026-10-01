@@ -93,6 +93,11 @@ html body .header-actions .hamburger:hover {
     animation: liquidWobble 0.8s ease-out !important;
 }
 
+html body.signin-page .signin-home:hover {
+    transition-property: border-color, background !important;
+    animation: liquidWobble 0.8s ease-out !important;
+}
+
 @keyframes pulse-green {
     0% { box-shadow: 0 0 0 0 rgba(9, 116, 255, 0.4); }
     70% { box-shadow: 0 0 0 10px rgba(0, 230, 118, 0); }
