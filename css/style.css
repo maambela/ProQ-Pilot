@@ -11625,7 +11625,10 @@ body:has(.cart-container) {
 
 /* Four-brand licensing collage inside the existing category image frame. */
 .licensing-collage-wrapper {
-    background: #101217 !important;
+    border: 1px solid rgba(255, 255, 255, 0.3) !important;
+    background: rgba(255, 255, 255, 0.08) !important;
+    backdrop-filter: blur(22px);
+    -webkit-backdrop-filter: blur(22px);
 }
 
 .licensing-collage {
@@ -11655,8 +11658,8 @@ body:has(.cart-container) {
 
 .license-brand-tile img {
     display: block;
-    width: 78%;
-    height: 72%;
+    width: 58%;
+    height: 58%;
     object-fit: contain;
 }
 
@@ -11673,41 +11676,7 @@ body:has(.cart-container) {
     color: #fff;
 }
 
-.license-brand-onepassword-mark {
-    position: relative;
-    flex: 0 0 34px;
-    width: 34px;
-    height: 34px;
-    border: 3px solid #fff;
-    border-radius: 50%;
-    box-sizing: border-box;
-}
-
-.license-brand-onepassword-mark::before {
-    position: absolute;
-    top: 7px;
-    left: 11px;
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background: #fff;
-    content: "";
-}
-
-.license-brand-onepassword-mark::after {
-    position: absolute;
-    top: 14px;
-    left: 13px;
-    width: 3px;
-    height: 8px;
-    border-radius: 2px;
-    background: #fff;
-    content: "";
-}
-
-.license-brand-tile--vym {
+.license-brand-tile--veeam {
     background: #e7f45a;
     color: #142022;
-    font-size: clamp(1.5rem, 4vw, 3rem);
-    letter-spacing: 0.08em;
 }
