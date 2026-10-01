@@ -11665,16 +11665,14 @@ body:has(.cart-container) {
     border-radius: 0 !important;
 }
 
-.licensing-collage .license-brand-tile--onepassword > img,
-.licensing-collage .license-brand-tile--veeam > img {
+.licensing-collage .license-brand-tile--onepassword > img {
     flex: 0 0 clamp(22px, 4vw, 34px);
     width: clamp(22px, 4vw, 34px) !important;
     height: clamp(22px, 4vw, 34px) !important;
     max-width: none !important;
 }
 
-.license-brand-tile--onepassword > span,
-.license-brand-tile--veeam > span {
+.license-brand-tile--onepassword > span {
     min-width: 0;
     white-space: nowrap;
     font-size: inherit;
@@ -11692,8 +11690,7 @@ body:has(.cart-container) {
         font-size: 0.78rem;
     }
 
-    .licensing-collage .license-brand-tile--onepassword > img,
-    .licensing-collage .license-brand-tile--veeam > img {
+    .licensing-collage .license-brand-tile--onepassword > img {
         flex-basis: 20px;
         width: 20px !important;
         height: 20px !important;
@@ -11716,4 +11713,12 @@ body:has(.cart-container) {
 .license-brand-tile--veeam {
     background: #e7f45a;
     color: #142022;
+}
+
+/* Veeam's image is the full wordmark, so it is shown on its own at a readable size. */
+.licensing-collage .license-brand-tile--veeam > img {
+    width: 58% !important;
+    height: auto !important;
+    max-width: 150px !important;
+    max-height: 40% !important;
 }
