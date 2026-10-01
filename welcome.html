@@ -7,6 +7,11 @@
     <title>ProQ Pilot | Welcome</title>
     <link rel="stylesheet" href="css/style.css?v=page-menus-20261001">
     <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
+    <style>
+        /* Welcome page: these items are display-only (no navigation). */
+        #shop-categories .procurement-path,
+        #shop-categories .license-promo-items a { pointer-events: none; cursor: default; }
+    </style>
 </head>
 <body class="welcome-page">
     <header class="main-header">
@@ -169,15 +174,15 @@
                         <h2>Devices, licenses, and security in one buying flow.</h2>
                         <p>Help your team source the right laptop, pair it with Microsoft cloud licensing, and add Cisco Duo protection before checkout.</p>
                         <div class="procurement-paths">
-                            <a href="store.html?category=laptops" class="procurement-path">
+                            <a class="procurement-path">
                                 <i class='bx bx-laptop'></i>
                                 <span>Device Procurement</span>
                             </a>
-                            <a href="store.html?category=licenses&brand=Microsoft" class="procurement-path">
+                            <a class="procurement-path">
                                 <i class='bx bxl-microsoft'></i>
                                 <span>Microsoft Licenses</span>
                             </a>
-                            <a href="store.html?category=licenses&brand=Duo" class="procurement-path">
+                            <a class="procurement-path">
                                 <i class='bx bx-shield-quarter'></i>
                                 <span>Duo Security</span>
                             </a>
@@ -191,15 +196,15 @@
                         <h2>Rolling this out to a whole team? We handle the rest too.</h2>
                     </div>
                     <div class="license-promo-items">
-                        <a href="store.html">
+                        <a>
                             <i class='bx bx-package'></i>
                             Nationwide delivery
                         </a>
-                        <a href="store.html?category=accessories">
+                        <a>
                             <i class='bx bx-shield-alt-2'></i>
                             Extended device warranty
                         </a>
-                        <a href="contact.html">
+                        <a>
                             <i class='bx bx-support'></i>
                             Dedicated onboarding support
                         </a>
