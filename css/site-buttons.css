@@ -10,7 +10,7 @@ html body :is(
     a[class*="button"],
     a.signin-home,
     a.nav-link
-) {
+):not(.hero-btns > a[href="store.html"]):not(.hero-btns > a[href="brands.html"]) {
     display: inline-flex !important;
     align-items: center !important;
     justify-content: center !important;
@@ -55,7 +55,7 @@ html body :is(
     a[class*="button"],
     a.signin-home,
     a.nav-link
-):hover {
+):not(.hero-btns > a[href="store.html"]):not(.hero-btns > a[href="brands.html"]):hover {
     transform: translateY(-2px) scale(1.02) !important;
     border-color: rgba(255, 255, 255, 0.4) !important;
     color: #fff !important;
@@ -80,7 +80,7 @@ html body :is(
     a[class*="button"],
     a.signin-home,
     a.nav-link
-):focus-visible {
+):not(.hero-btns > a[href="store.html"]):not(.hero-btns > a[href="brands.html"]):focus-visible {
     outline: 2px solid rgba(255, 255, 255, 0.85) !important;
     outline-offset: 3px !important;
 }
@@ -96,7 +96,7 @@ html body :is(
     a[class*="button"],
     a.signin-home,
     a.nav-link
-):disabled {
+):not(.hero-btns > a[href="store.html"]):not(.hero-btns > a[href="brands.html"]):disabled {
     opacity: 0.55 !important;
     cursor: not-allowed !important;
     transform: none !important;
