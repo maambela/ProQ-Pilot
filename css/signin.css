@@ -412,16 +412,25 @@
     .signin-page .auth-card { --card-zoom: 0.67; }
 }
 
-@media (min-width: 1471px) and (max-width: 1720px),
-       (min-width: 1721px) and (max-height: 900px) {
+@media (min-width: 1471px) and (max-width: 1720px) {
     .signin-page .auth-card { --card-zoom: 0.70; }
 }
 
-@media (min-width: 1024px) and (max-width: 1720px),
-       (min-width: 1721px) and (max-height: 900px) {
+@media (min-width: 1024px) and (max-width: 1720px) {
     .signin-page .auth-card {
         zoom: var(--card-zoom);
         height: calc((100vh - 3cm) / var(--card-zoom));
         height: calc((100dvh - 3cm) / var(--card-zoom));
+    }
+}
+
+/* Wide but short screens (>=1721px wide, <=900px tall): full-size content, card fits the height
+   (viewport height - 3cm) and keeps the 480 x 820 design proportions. */
+@media (min-width: 1721px) and (max-height: 900px) {
+    .signin-page .auth-card {
+        height: calc(100vh - 3cm);
+        height: calc(100dvh - 3cm);
+        width: calc((100vh - 3cm) * 480 / 820);
+        width: calc((100dvh - 3cm) * 480 / 820);
     }
 }
