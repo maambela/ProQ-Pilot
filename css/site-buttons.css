@@ -10,7 +10,7 @@ html body :is(
     a[class*="button"],
     a.signin-home,
     a.nav-link
-):not(.hero-btns > a[href="store.html"]):not(.hero-btns > a[href="brands.html"]) {
+) {
     display: inline-flex !important;
     align-items: center !important;
     justify-content: center !important;
@@ -41,7 +41,9 @@ html body :is(
     vertical-align: middle !important;
     cursor: pointer !important;
     transition: all 0.35s ease !important;
-    animation: none !important;
+    position: relative !important;
+    overflow: visible !important;
+    isolation: isolate !important;
 }
 
 html body :is(
@@ -55,8 +57,55 @@ html body :is(
     a[class*="button"],
     a.signin-home,
     a.nav-link
-):not(.hero-btns > a[href="store.html"]):not(.hero-btns > a[href="brands.html"]):hover {
-    transform: translateY(-2px) scale(1.02) !important;
+)::before {
+    content: "" !important;
+    position: absolute !important;
+    inset: -5px !important;
+    border: 1px solid rgba(0, 188, 212, 0.65) !important;
+    border-radius: inherit !important;
+    opacity: 0;
+    pointer-events: none !important;
+    z-index: -1 !important;
+    animation: siteButtonPulse 2s ease-out infinite !important;
+}
+
+html body :is(
+    #site-wide-button-style,
+    button,
+    input[type="button"],
+    input[type="submit"],
+    input[type="reset"],
+    [role="button"],
+    a[class*="btn"],
+    a[class*="button"],
+    a.signin-home,
+    a.nav-link
+)::after {
+    content: "" !important;
+    position: absolute !important;
+    top: 0 !important;
+    bottom: 0 !important;
+    left: -135% !important;
+    width: 75% !important;
+    border-radius: inherit !important;
+    background: linear-gradient(110deg, transparent, rgba(255, 255, 255, 0.62), transparent) !important;
+    pointer-events: none !important;
+    transform: skewX(-20deg) !important;
+    transition: left 0.6s ease !important;
+}
+
+html body :is(
+    #site-wide-button-style,
+    button,
+    input[type="button"],
+    input[type="submit"],
+    input[type="reset"],
+    [role="button"],
+    a[class*="btn"],
+    a[class*="button"],
+    a.signin-home,
+    a.nav-link
+):hover {
     border-color: rgba(255, 255, 255, 0.4) !important;
     color: #fff !important;
     background: linear-gradient(
@@ -67,6 +116,7 @@ html body :is(
     box-shadow:
         0 12px 35px rgba(0, 188, 212, 0.4),
         inset 0 1px 2px rgba(255, 255, 255, 0.5) !important;
+    animation: siteButtonWobble 0.8s ease-out forwards, siteButtonFlash 0.6s ease-out !important;
 }
 
 html body :is(
@@ -80,7 +130,22 @@ html body :is(
     a[class*="button"],
     a.signin-home,
     a.nav-link
-):not(.hero-btns > a[href="store.html"]):not(.hero-btns > a[href="brands.html"]):focus-visible {
+):hover::after {
+    left: 150% !important;
+}
+
+html body :is(
+    #site-wide-button-style,
+    button,
+    input[type="button"],
+    input[type="submit"],
+    input[type="reset"],
+    [role="button"],
+    a[class*="btn"],
+    a[class*="button"],
+    a.signin-home,
+    a.nav-link
+):focus-visible {
     outline: 2px solid rgba(255, 255, 255, 0.85) !important;
     outline-offset: 3px !important;
 }
@@ -96,8 +161,29 @@ html body :is(
     a[class*="button"],
     a.signin-home,
     a.nav-link
-):not(.hero-btns > a[href="store.html"]):not(.hero-btns > a[href="brands.html"]):disabled {
+):disabled {
     opacity: 0.55 !important;
     cursor: not-allowed !important;
     transform: none !important;
+    animation: none !important;
+}
+
+@keyframes siteButtonPulse {
+    0%, 100% { opacity: 0; transform: scale(0.98); }
+    30% { opacity: 0.85; }
+    75% { opacity: 0; transform: scale(1.1); }
+}
+
+@keyframes siteButtonWobble {
+    0% { transform: translateY(-2px) scale(1.02); }
+    20% { transform: translateY(-2px) scale(1.07, 0.95) rotate(-1deg); }
+    40% { transform: translateY(-2px) scale(0.98, 1.05) rotate(1deg); }
+    60% { transform: translateY(-2px) scale(1.04, 0.97) rotate(-0.5deg); }
+    80% { transform: translateY(-2px) scale(0.99, 1.01) rotate(0.5deg); }
+    100% { transform: translateY(-2px) scale(1.02); }
+}
+
+@keyframes siteButtonFlash {
+    0%, 100% { filter: brightness(1); }
+    35% { filter: brightness(1.3); }
 }

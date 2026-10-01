@@ -138,7 +138,8 @@ function createAuthRouter({ db, access, sessions, provider }) {
             }
             await sessions.create(req, res, resolved.user);
             const target = resolved.user.role === 'admin' ? '/admin_dashboard.html' : safeRedirect(stateRecord.redirect_path);
-            res.redirect(`/microsoft-auth-complete.html?redirect=${encodeURIComponent(target.startsWith('/admin_') && resolved.user.role !== 'admin' ? '/index.html' : target)}`);
+            // Go straight to the destination; every page loads the new session itself via js/session.js.
+            res.redirect(target.startsWith('/admin_') && resolved.user.role !== 'admin' ? '/index.html' : target);
         } catch (error) {
             if (connection) { await connection.rollback(); connection.release(); }
             console.error('[Microsoft sign-in] Callback failed:', error.code || error.name);
