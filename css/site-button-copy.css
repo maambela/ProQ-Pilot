@@ -37,11 +37,22 @@ html body :is(
 }
 
 html body .product-card .btn-view-details {
-    width: fit-content !important;
+    width: max-content !important;
     max-width: 100% !important;
     min-width: 0 !important;
     align-self: center !important;
     flex: 0 0 auto !important;
+    white-space: nowrap !important;
+}
+
+html body.store-page .product-grid .product-card .card-body .btn-view-details,
+html body .featured-carousel-card .card-body .btn-view-details {
+    width: max-content !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    align-self: center !important;
+    flex: 0 0 auto !important;
+    white-space: nowrap !important;
 }
 
 html body :is(
