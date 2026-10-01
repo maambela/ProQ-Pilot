@@ -85,20 +85,20 @@
 /* Logo pinned top-left, outside the flow so it doesn't push the centred group down. */
 .signin-brand {
     position: absolute;
-    top: 42px;
-    left: 40px;
+    top: 24px;
+    left: 26px;
     display: flex;
     align-items: center;
 }
 
 .signin-logo {
     display: block;
-    width: 94px;
+    width: 140px;
 }
 
 .signin-logo img {
     display: block;
-    width: 94px;
+    width: 140px;
     height: auto;
     object-fit: contain;
 }
@@ -392,8 +392,13 @@
     }
 
     .signin-brand {
-        top: 28px;
-        left: 24px;
+        top: 18px;
+        left: 18px;
+    }
+
+    .signin-logo,
+    .signin-logo img {
+        width: 120px;
     }
 
     .signin-home {
@@ -419,6 +424,8 @@
 @media (min-width: 1024px) and (max-width: 1720px) {
     .signin-page .auth-card {
         zoom: var(--card-zoom);
+        /* Laptops get 0.4cm extra on each side (0.8cm visible in total) on top of the base width. */
+        width: calc(480px + (0.8cm - 1cm) / var(--card-zoom));
         height: calc((100vh - 3cm) / var(--card-zoom));
         height: calc((100dvh - 3cm) / var(--card-zoom));
     }
