@@ -905,7 +905,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     <div class="price-box">
                         <span class="current-price">R${parseFloat(product.price).toLocaleString()}</span>
                     </div>
-                    <button class="btn btn-primary product-view-cta">View Product</button>
+                    <div class="product-view-cta-row">
+                        <button class="btn btn-primary product-view-cta">View Product</button>
+                    </div>
                 </div>
             `;
 
