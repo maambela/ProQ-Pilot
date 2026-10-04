@@ -9191,6 +9191,10 @@ body.store-page .product-grid .product-card .price-box {
     font-weight: 100 !important;
 }
 
+.brands-section .brand-card img[alt="1Password"] {
+    padding: 4px !important;
+}
+
 .brands-section .brands-grid {
     display: grid !important;
     grid-template-columns: repeat(9, minmax(0, 1fr)) !important;

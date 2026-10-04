@@ -1888,10 +1888,12 @@ function initBrandGrid() {
         { name: 'HP' , logos: ['Images/HP.png'] },
         { name: 'Dell', logos: ['Images/DellLaptops.PNG', 'Images/DellLaptops.png', 'Images/delllaptops.PNG', 'Images/delllaptops.png'] },
         { name: 'Apple', logos: ['Images/Apple.png'] },
-        { name: 'Microsoft', logos: ['Images/Microsoft.png'] },
         { name: 'Acer', logos: ['Images/AcerStick.png', 'Images/AcerStick.PNG', 'Images/acerstick.png', 'Images/acerstick.PNG'] },
         { name: 'Lenovo', logos: ['Images/lenovo.PNG', 'Images/lenovo.png', 'Images/Lenovo.PNG', 'Images/Lenovo.png'] },
-        
+        { name: 'Cisco Duo', logos: ['Images/cisco-duo.png'] },
+        { name: 'Microsoft', logos: ['Images/Microsoft.png'] },
+        { name: 'Veeam', logos: ['Images/Veeam-Logo.png'] },
+        { name: '1Password', logos: ['Images/1password.png'] }
     ];
 
     brandsGrid.innerHTML = brands.map(brand => `
