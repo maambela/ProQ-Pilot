@@ -208,6 +208,37 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    document.querySelectorAll('.procurement-media').forEach((container) => {
+        const procurementSlides = Array.from(container.querySelectorAll('.procurement-slide'));
+        if (procurementSlides.length < 2) return;
+
+        let currentIndex = 0;
+        let slideTimeout;
+
+        function showNextProcurementSlide() {
+            const currentSlide = procurementSlides[currentIndex];
+            currentIndex = (currentIndex + 1) % procurementSlides.length;
+            const nextSlide = procurementSlides[currentIndex];
+
+            currentSlide.classList.remove('is-active');
+            currentSlide.classList.add('is-leaving');
+            nextSlide.classList.remove('is-leaving');
+            nextSlide.classList.add('is-active');
+
+            window.setTimeout(() => currentSlide.classList.remove('is-leaving'), 700);
+            slideTimeout = window.setTimeout(showNextProcurementSlide, 8000);
+        }
+
+        function resumeProcurementSlideshow() {
+            window.clearTimeout(slideTimeout);
+            slideTimeout = window.setTimeout(showNextProcurementSlide, 8000);
+        }
+
+        container.addEventListener('mouseenter', () => window.clearTimeout(slideTimeout));
+        container.addEventListener('mouseleave', resumeProcurementSlideshow);
+        resumeProcurementSlideshow();
+    });
+
     initCustomDropdown();
     // --- UI ELEMENTS ---
     const productGrid = document.querySelector('.product-grid');
