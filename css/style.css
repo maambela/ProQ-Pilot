@@ -9197,18 +9197,39 @@ body.store-page .product-grid .product-card .price-box {
 
 .brands-section .brands-grid {
     display: grid !important;
-    grid-template-columns: repeat(9, minmax(0, 1fr)) !important;
+    grid-template-columns: repeat(10, minmax(0, 1fr)) !important;
     gap: clamp(8px, 1vw, 18px) !important;
     width: 100% !important;
-    max-width: none !important;
+    max-width: 840px !important;
     margin: 0 auto !important;
 }
 
 .brands-section .brands-grid .brand-card {
+    grid-column: span 2;
     width: 100% !important;
     max-width: none !important;
     min-width: 0 !important;
     margin: 0 !important;
+}
+
+.brands-section .brands-grid .brand-card:nth-child(6) {
+    grid-row: 2;
+    grid-column: 2 / span 2;
+}
+
+.brands-section .brands-grid .brand-card:nth-child(7) {
+    grid-row: 2;
+    grid-column: 4 / span 2;
+}
+
+.brands-section .brands-grid .brand-card:nth-child(8) {
+    grid-row: 2;
+    grid-column: 6 / span 2;
+}
+
+.brands-section .brands-grid .brand-card:nth-child(9) {
+    grid-row: 2;
+    grid-column: 8 / span 2;
 }
 
 .site-footer {
@@ -10072,6 +10093,12 @@ li {
     .brands-section .brands-grid {
         grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
         gap: 9px !important;
+    }
+
+    .brands-section .brands-grid .brand-card,
+    .brands-section .brands-grid .brand-card:nth-child(n) {
+        grid-row: auto;
+        grid-column: auto;
     }
 }
 

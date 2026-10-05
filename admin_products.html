@@ -659,7 +659,10 @@
 
                 // 2. Upload images for each created product
                 for (const createdProduct of result.data) {
-                    const originalProduct = productsData.find(p => p.product_number === createdProduct.product_number);
+                    const originalProduct = productsData.find(p => p.tempId === createdProduct.tempId);
+                    if (!originalProduct) {
+                        throw new Error(`Could not match uploaded images to product ${createdProduct.product_number}.`);
+                    }
                     const files = productFiles[originalProduct.tempId];
 
                     if (files && files.length > 0) {

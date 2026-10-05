@@ -3071,6 +3071,89 @@ app.get('/api/v1/products', async (req, res, next) => {
     }
 });
 
+app.post('/api/v1/products', async (req, res, next) => {
+    const submittedProducts = req.body?.products;
+    if (!Array.isArray(submittedProducts) || submittedProducts.length === 0) {
+        return next(new AppError('Add at least one product before saving.', 400));
+    }
+
+    const products = [];
+    for (const [index, product] of submittedProducts.entries()) {
+        if (!product || typeof product !== 'object' || Array.isArray(product)) {
+            return next(new AppError(`Product ${index + 1} is invalid.`, 400));
+        }
+
+        const productNumber = typeof product.product_number === 'string' ? product.product_number.trim() : '';
+        const productName = typeof product.product_name === 'string' ? product.product_name.trim() : '';
+        const description = typeof product.description === 'string' ? product.description.trim() : '';
+        const priceInput = String(product.price ?? '').trim();
+        const quantityInput = String(product.quantity ?? '').trim();
+        const price = Number(priceInput);
+        const quantity = Number(quantityInput);
+
+        if (!productNumber || !productName || !priceInput || !quantityInput ||
+            !Number.isFinite(price) || price < 0 ||
+            !Number.isSafeInteger(quantity) || quantity < 0) {
+            return next(new AppError(`Product ${index + 1} needs a product number, name, valid price, and whole-number quantity.`, 400));
+        }
+
+        products.push({
+            tempId: String(product.tempId ?? ''),
+            product_number: productNumber,
+            product_name: productName,
+            description,
+            price,
+            quantity
+        });
+    }
+
+    let connection;
+    try {
+        connection = await db.getConnection();
+        await connection.beginTransaction();
+
+        const createdProducts = [];
+        for (const product of products) {
+            const [result] = await connection.query(
+                `INSERT INTO products
+                    (product_number, product_name, description, price, warehouse_price, quantity, status, is_active, updated_at)
+                 VALUES (?, ?, ?, ?, ?, ?, NULL, 1, NOW())`,
+                [
+                    product.product_number,
+                    product.product_name,
+                    product.description,
+                    product.price,
+                    product.price,
+                    product.quantity
+                ]
+            );
+            createdProducts.push({
+                id: result.insertId,
+                product_number: product.product_number,
+                tempId: product.tempId
+            });
+        }
+
+        await connection.commit();
+        res.status(201).json({
+            status: 'success',
+            message: 'Products saved successfully.',
+            data: createdProducts
+        });
+    } catch (error) {
+        if (connection) {
+            try {
+                await connection.rollback();
+            } catch (rollbackError) {
+                console.error('[Manual Products API] Rollback failed:', rollbackError.message);
+            }
+        }
+        next(error);
+    } finally {
+        if (connection) connection.release();
+    }
+});
+
 //=============================================================================//
 //                         SMART PRODUCT RECOMMENDATIONS                        //
 //=============================================================================//
