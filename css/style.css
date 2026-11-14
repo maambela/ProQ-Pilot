@@ -11985,6 +11985,23 @@ body:has(.cart-container) {
     font-weight: 100 !important;
 }
 
+/* The Welcome page now represents the full document partner set: 15 marks form
+   three balanced rows without changing the existing liquid-glass brand cards. */
+.welcome-page .brands-section .brands-grid {
+    grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+}
+
+.welcome-page .brands-section .brands-grid .brand-card:nth-child(n) {
+    grid-row: auto;
+    grid-column: auto;
+}
+
+@media (max-width: 760px) {
+    .welcome-page .brands-section .brands-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    }
+}
+
 @media (max-width: 760px) {
     .brands-section {
         padding-top: 8px !important;
