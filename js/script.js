@@ -17,6 +17,7 @@ function enforceDevelopmentGate() {
     const currentPage = (window.location.pathname.split('/').pop() || 'index.html').toLowerCase();
     const publicPages = new Set([
         'welcome.html',
+        'component-guide.html',
         'signin.html',
         'signup.html',
         'resetpassword.html',
@@ -170,6 +171,87 @@ function initCustomDropdown() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+    const guideRail = document.getElementById('build-guides-rail');
+    if (guideRail) {
+        const guideCard = guideRail.querySelector('.guide-preview');
+        const getGuideGap = () => Number.parseFloat(getComputedStyle(guideRail).gap) || 18;
+        const guideStage = guideRail.closest('.build-guides__stage');
+
+        // The wide-screen opening composition intentionally frames the first five guides:
+        // page one and page five are clipped at the physical viewport edges, while
+        // pages two through four sit complete in the centre of the stage. Additional
+        // document cards remain available by moving the rail in either direction.
+        const setInitialFiveGuideComposition = () => {
+            if (!guideCard || guideRail.dataset.fiveGuidePositioned || !window.matchMedia('(min-width: 1200px)').matches) return;
+
+            const cardWidth = guideCard.getBoundingClientRect().width;
+            const startInset = Number.parseFloat(getComputedStyle(guideRail).paddingLeft) || 0;
+            const desiredVisibleEdge = Math.min(
+                cardWidth * 0.51,
+                Math.max(120, Math.min(230, guideRail.clientWidth * 0.12))
+            );
+            const maxScroll = Math.max(0, guideRail.scrollWidth - guideRail.clientWidth);
+            const targetScroll = Math.max(0, startInset + cardWidth - desiredVisibleEdge);
+
+            guideRail.scrollLeft = Math.min(targetScroll, maxScroll);
+
+            // Browser viewport widths and scrollbar reservation vary slightly. Measure the
+            // rendered edge cards after positioning, then make one exact balancing pass so
+            // pages one and five reveal the same deliberate sliver on opposite screen edges.
+            window.requestAnimationFrame(() => {
+                const cards = Array.from(guideRail.querySelectorAll('.guide-preview'));
+                const firstCard = cards[0];
+                const fifthCard = cards[4];
+                const stageBounds = guideStage?.getBoundingClientRect();
+                if (firstCard && fifthCard && stageBounds) {
+                    const firstBounds = firstCard.getBoundingClientRect();
+                    const fifthBounds = fifthCard.getBoundingClientRect();
+                    const firstVisible = Math.max(0, Math.min(firstBounds.right, stageBounds.right) - Math.max(firstBounds.left, stageBounds.left));
+                    const fifthVisible = Math.max(0, Math.min(fifthBounds.right, stageBounds.right) - Math.max(fifthBounds.left, stageBounds.left));
+                    const balanceDelta = (firstVisible - fifthVisible) / 2;
+
+                    if (Math.abs(balanceDelta) > 0.5) {
+                        guideRail.scrollLeft = Math.min(maxScroll, Math.max(0, guideRail.scrollLeft + balanceDelta));
+                    }
+                }
+                guideRail.dataset.fiveGuidePositioned = 'true';
+            });
+        };
+
+        window.requestAnimationFrame(() => window.requestAnimationFrame(setInitialFiveGuideComposition));
+
+        const moveGuideRail = (direction) => {
+            const startInset = Number.parseFloat(getComputedStyle(guideRail).paddingLeft) || 0;
+            const step = guideCard
+                ? Math.max(guideCard.getBoundingClientRect().width + getGuideGap() - startInset, guideCard.getBoundingClientRect().width * 0.55)
+                : guideRail.clientWidth * 0.62;
+            guideRail.scrollBy({ left: direction * step, behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
+        };
+
+        guideRail.querySelectorAll('.guide-preview').forEach((card) => {
+            card.addEventListener('click', (event) => {
+                const stageBounds = guideStage?.getBoundingClientRect();
+                const cardBounds = card.getBoundingClientRect();
+                if (!stageBounds) return;
+
+                const clippedOnLeft = cardBounds.left < stageBounds.left - 1 && cardBounds.right > stageBounds.left + 18;
+                const clippedOnRight = cardBounds.right > stageBounds.right + 1 && cardBounds.left < stageBounds.right - 18;
+
+                if (clippedOnLeft || clippedOnRight) {
+                    event.preventDefault();
+                    moveGuideRail(clippedOnLeft ? -1 : 1);
+                }
+            });
+        });
+
+        guideRail.addEventListener('keydown', (event) => {
+            if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
+                event.preventDefault();
+                moveGuideRail(event.key === 'ArrowLeft' ? -1 : 1);
+            }
+        });
+    }
+
     // --- HERO SLIDESHOW ---
     let slideIndex = 0;
     let slideTimeout;

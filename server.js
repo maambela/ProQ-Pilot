@@ -67,7 +67,7 @@ app.use(async (req, res, next) => {
     try { page = decodeURIComponent(req.path).toLowerCase(); } catch (_) { return res.sendStatus(400); }
     if (page !== '/' && !page.endsWith('.html')) return next();
     res.set('Cache-Control', 'no-store');
-    if (['/welcome.html', '/signin.html', '/microsoft-auth-complete.html', '/contact.html', '/development.html'].includes(page)) return next();
+    if (['/welcome.html', '/component-guide.html', '/signin.html', '/microsoft-auth-complete.html', '/contact.html', '/development.html'].includes(page)) return next();
     try {
         const user = await portal.sessions.authenticate(req);
         if (page.startsWith('/admin_') && user.role !== 'admin') return res.redirect('/index.html');

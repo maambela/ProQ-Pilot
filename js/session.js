@@ -3,7 +3,7 @@
     if (window.ProQSession) return;
     const nativeFetch = window.fetch.bind(window);
     const page = (location.pathname.split('/').pop() || 'index.html').toLowerCase();
-    const publicPages = new Set(['welcome.html', 'signin.html', 'microsoft-auth-complete.html', 'contact.html', 'signup.html', 'resetpassword.html', 'verify-email.html']);
+    const publicPages = new Set(['welcome.html', 'component-guide.html', 'signin.html', 'microsoft-auth-complete.html', 'contact.html', 'signup.html', 'resetpassword.html', 'verify-email.html']);
     const tabId = Array.from(crypto.getRandomValues(new Uint8Array(24)), byte => byte.toString(16).padStart(2, '0')).join('');
     let user = null;
     let heartbeatTimer;

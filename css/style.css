@@ -1036,6 +1036,165 @@ color: #d8d8d8;
 .stat-item span { display: block; font-size: 14px; color: white; }
 
 /* Procurement Homepage Merchandising */
+
+/* A4-style hardware planning document rail */
+.build-guides {
+    width: 100%;
+    margin: 0 auto;
+    padding: clamp(44px, 6vw, 82px) 0 clamp(28px, 4vw, 52px);
+}
+
+.build-guides__intro {
+    width: min(1280px, calc(100% - 64px));
+    margin: 0 auto 24px;
+    display: flex;
+    align-items: end;
+    justify-content: space-between;
+    gap: 28px;
+}
+
+.build-guides__heading {
+    max-width: 640px;
+}
+
+.build-guides__heading h2 {
+    margin: 12px 0 10px;
+    font-size: clamp(1.6rem, 2.7vw, 2.45rem);
+    line-height: 1.08;
+    font-weight: 200;
+}
+
+.build-guides__heading p {
+    margin: 0;
+    color: rgba(255, 255, 255, 0.68);
+    font-size: 0.88rem;
+    line-height: 1.6;
+}
+
+.build-guides__stage {
+    position: relative;
+    width: 100vw;
+    margin-left: calc(50% - 50vw);
+    overflow: hidden;
+}
+
+.build-guides__rail {
+    --guide-gap: clamp(18px, 1.25vw, 24px);
+    --guide-start: clamp(34px, 6.9vw, 132px);
+    display: flex;
+    gap: var(--guide-gap);
+    overflow-x: auto;
+    box-sizing: border-box;
+    padding: 0 0 1px var(--guide-start);
+    scroll-snap-type: x proximity;
+    scroll-padding-left: var(--guide-start);
+    scrollbar-width: none;
+    overscroll-behavior-inline: contain;
+    -ms-overflow-style: none;
+}
+
+.build-guides__rail:focus-visible {
+    outline: 1px solid rgba(68, 255, 224, 0.8);
+    outline-offset: -2px;
+}
+
+.build-guides__rail::-webkit-scrollbar { display: none; }
+
+.guide-preview {
+    /* At 100% zoom, this deliberately matches the user-approved 80% composition. */
+    flex: 0 0 clamp(300px, 23.45vw, 450px);
+    aspect-ratio: 1 / 1.414;
+    min-height: 0;
+    height: auto;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    scroll-snap-align: center;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.32);
+    border-radius: 16px;
+    color: #fff;
+    text-decoration: none;
+    background: rgba(3, 8, 16, 0.9);
+    box-shadow: 0 18px 42px rgba(0, 0, 0, 0.23);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    transition: transform 220ms ease, border-color 220ms ease, box-shadow 220ms ease;
+}
+
+.guide-preview:hover,
+.guide-preview:focus-visible {
+    outline: none;
+    transform: translateY(-7px);
+    border-color: rgba(68, 255, 224, 0.68);
+    box-shadow: 0 24px 48px rgba(0, 0, 0, 0.34), 0 0 30px rgba(68, 255, 224, 0.1);
+}
+
+.guide-preview__page {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    background: #05090f;
+}
+
+.guide-preview__page img {
+    width: 100%;
+    height: 100%;
+    display: block;
+    object-fit: contain;
+    transition: transform 360ms ease;
+}
+
+.guide-preview:hover .guide-preview__page img { transform: scale(1.025); }
+
+.guide-preview__link {
+    position: absolute;
+    z-index: 1;
+    right: clamp(13px, 1.15vw, 19px);
+    bottom: clamp(13px, 1.15vw, 19px);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 10px;
+    border: 1px solid rgba(255, 255, 255, 0.34);
+    border-radius: 999px;
+    color: #fff;
+    background: rgba(6, 11, 21, 0.58);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    font-size: 0.73rem;
+    line-height: 1;
+}
+
+.guide-preview__link i { color: var(--accent-teal, #44ffe0); font-size: 1rem; transition: transform 180ms ease; }
+.guide-preview:hover .guide-preview__link i { transform: translateX(4px); }
+
+@media (min-width: 1200px) {
+    /* The opening frame is positioned precisely in JavaScript: do not let scroll snap
+       nudge the balanced left/right card reveals after that calculation. */
+    .build-guides__rail { scroll-snap-type: none; }
+}
+
+@media (min-width: 701px) and (max-width: 1100px) {
+    .build-guides__rail { --guide-start: 32px; }
+    .guide-preview { flex-basis: min(57vw, 390px); }
+}
+
+@media (max-width: 700px) {
+    .build-guides { padding-top: 38px; }
+    .build-guides__intro { width: calc(100% - 32px); align-items: flex-start; flex-direction: column; gap: 16px; }
+    .build-guides__heading { padding-right: 4px; }
+    .build-guides__heading h2 { font-size: 1.55rem; }
+    .build-guides__heading p { font-size: 0.8rem; }
+    .build-guides__rail { --guide-start: 24px; gap: 14px; padding-left: var(--guide-start); scroll-snap-type: x mandatory; }
+    .guide-preview { flex-basis: min(78vw, 360px); min-height: 500px; aspect-ratio: 1 / 1.414; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .guide-preview, .guide-preview__page img, .guide-preview__link i { transition: none; }
+}
 .procurement-command {
     width: min(1180px, 90%);
     margin: 10px auto 64px;

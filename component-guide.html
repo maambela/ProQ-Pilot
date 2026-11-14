@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script src="js/session.js?v=entra-access-20260917"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ProQ Pilot | Document viewer</title>
+    <link rel="stylesheet" href="css/style.css?v=pdf-document-gallery-20261114">
+    <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
+    <style>
+        .document-viewer { min-height: 100vh; padding: 118px 20px 24px; box-sizing: border-box; background: radial-gradient(circle at 10% 10%, rgba(39, 128, 168, .16), transparent 32%), radial-gradient(circle at 88% 90%, rgba(139, 37, 130, .16), transparent 36%); }
+        .document-viewer__bar { width: min(1320px, 100%); margin: 0 auto 14px; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+        .document-viewer__back, .document-viewer__open { display: inline-flex; align-items: center; gap: 7px; color: rgba(255, 255, 255, .86); text-decoration: none; font-size: .78rem; }
+        .document-viewer__back i, .document-viewer__open i { color: var(--accent-teal, #44ffe0); font-size: 1.05rem; }
+        .document-viewer__open { padding: 9px 13px; border: 1px solid rgba(255, 255, 255, .26); border-radius: 999px; background: rgba(255, 255, 255, .08); }
+        .document-viewer__title { width: min(1320px, 100%); margin: 0 auto 14px; color: #fff; font-size: clamp(1.1rem, 2vw, 1.65rem); font-weight: 300; }
+        .document-viewer__frame { width: min(1320px, 100%); height: calc(100vh - 216px); min-height: 620px; margin: 0 auto; overflow: hidden; border: 1px solid rgba(255, 255, 255, .26); border-radius: 15px; background: #161a20; box-shadow: 0 24px 64px rgba(0, 0, 0, .42); }
+        .document-viewer__frame iframe { width: 100%; height: 100%; display: block; border: 0; background: #161a20; }
+        @media (max-width: 700px) { .document-viewer { padding: 98px 10px 12px; } .document-viewer__bar { padding: 0 4px; } .document-viewer__open { font-size: 0; padding: 10px; } .document-viewer__open i { margin: 0; } .document-viewer__frame { height: calc(100vh - 180px); min-height: 440px; border-radius: 10px; } }
+    </style>
+</head>
+<body class="welcome-page">
+    <header class="main-header">
+        <div class="header-container">
+            <a class="logo-area" href="welcome.html" aria-label="ProQ Pilot home"><span class="logo-icon" aria-hidden="true"></span></a>
+            <div class="header-actions"><a href="welcome.html#build-guides" class="auth-wrapper" aria-label="Back to component planning"><span class="auth-icon"><i class='bx bx-left-arrow-alt'></i></span></a></div>
+        </div>
+    </header>
+    <main class="document-viewer">
+        <div class="document-viewer__bar">
+            <a class="document-viewer__back" href="welcome.html#build-guides"><i class='bx bx-left-arrow-alt' aria-hidden="true"></i> Back to component planning</a>
+            <a class="document-viewer__open" id="openDocument" href="#" target="_blank" rel="noopener noreferrer"><i class='bx bx-link-external' aria-hidden="true"></i> Open PDF</a>
+        </div>
+        <h1 class="document-viewer__title" id="documentTitle">Document viewer</h1>
+        <section class="document-viewer__frame" aria-label="Full PDF document">
+            <iframe id="documentFrame" title="PDF document" loading="eager"></iframe>
+        </section>
+    </main>
+    <script src="js/script.js?v=pdf-document-gallery-20261114"></script>
+    <script>
+        const documents = {
+            'cloudmon-observability': { title: 'Cloudmon Unified Observability', file: 'Brand%20Colleteral/Why-Cloudmon-Platform.pdf' },
+            'cloudmon-solarwinds': { title: 'Cloudmon vs SolarWinds', file: 'Brand%20Colleteral/Cloudmon%20VS%20Solarwinds%20flyer.pdf' },
+            'lto-drives': { title: 'LTO Tape Drives', file: 'Brand%20Colleteral/LTO-Drives-Datasheet-DS00457A.pdf' },
+            'lto-ultrium': { title: 'LTO Ultrium Media', file: 'Brand%20Colleteral/LTO-Ultrium-Datasheet-DS00383A.pdf' },
+            'asus-gx10': { title: 'ASUS Ascent GX10', file: 'Brand%20Colleteral/ASUS%20ASCENT%20GX10_Sales%20Doc_v3.pdf' },
+            'asus-et900n-g3': { title: 'ASUS ExpertCenter Pro ET900N G3', file: 'Brand%20Colleteral/PRO%20ET900N%20G3%20Sales%20kit_251209.pdf' },
+            'active-backup': { title: 'ActiveProtect vs Active Backup', file: 'Brand%20Colleteral/v.s.%20Active%20Backup.pdf' },
+            'veeam': { title: 'ActiveProtect vs Veeam', file: 'Brand%20Colleteral/v.s.%20Veeam.pdf' }
+        };
+
+        const requested = new URLSearchParams(window.location.search).get('document');
+        const documentInfo = documents[requested] || documents['cloudmon-observability'];
+        const pdfUrl = documentInfo.file;
+        document.title = `ProQ Pilot | ${documentInfo.title}`;
+        document.getElementById('documentTitle').textContent = documentInfo.title;
+        document.getElementById('documentFrame').src = `${pdfUrl}#view=FitH`;
+        document.getElementById('documentFrame').title = `${documentInfo.title} PDF`;
+        document.getElementById('openDocument').href = pdfUrl;
+    </script>
+</body>
+</html>
