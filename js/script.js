@@ -1975,7 +1975,13 @@ function initBrandGrid() {
         { name: 'Cisco Duo', logos: ['Images/cisco-duo.png'] },
         { name: 'Microsoft', logos: ['Images/Microsoft.png'] },
         { name: 'Veeam', logos: ['Images/Veeam-Logo.png'] },
-        { name: '1Password', logos: ['Images/1password.png'] }
+        { name: '1Password', logos: ['Images/1password.png'] },
+        { name: 'Cloudmon', logos: ['Images/brand-logos/cloudmon.png'] },
+        { name: 'Quantum', logos: ['Images/brand-logos/quantum.svg'] },
+        { name: 'ASUS', logos: ['Images/brand-logos/asus.svg'] },
+        { name: 'NVIDIA', logos: ['Images/brand-logos/nvidia.svg'] },
+        { name: 'Synology', logos: ['Images/brand-logos/synology.svg'] },
+        { name: 'SolarWinds', logos: ['Images/brand-logos/solarwinds.png'] }
     ];
 
     brandsGrid.innerHTML = brands.map(brand => `
