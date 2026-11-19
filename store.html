@@ -7,7 +7,7 @@
     <title>ProQ Pilot | Onboarding Procurement Catalog</title>
     <script src="js/dev-access.js?v=entra-access-20260917"></script>
     <link rel="stylesheet" href="css/style.css?v=page-menus-20261001">
-    <link rel="stylesheet" href="css/duo-store.css">
+    <link rel="stylesheet" href="css/duo-store.css?v=license-chooser-20261119">
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
     <style>
         /* Store on laptops: lift the catalogue so the first row of products is fully visible without
@@ -269,6 +269,25 @@
                         <div class="loading-state">
                             <p>Loading products...</p>
                         </div>
+                    </div>
+                </section>
+
+                <section class="license-chooser" id="licenseChooser" aria-labelledby="licenseChooserTitle" style="display: none;">
+                    <div class="license-chooser-heading">
+                        <p>Digital licenses</p>
+                        <h2 id="licenseChooserTitle">Choose a license provider</h2>
+                    </div>
+                    <div class="license-chooser-options" role="group" aria-label="Choose a license provider">
+                        <button class="license-brand-choice" type="button" data-license-brand="Microsoft" aria-label="View Microsoft licenses">
+                            <img src="Images/Microsoft.png" alt="" class="license-brand-logo microsoft-brand-logo">
+                            <span>Microsoft</span>
+                            <i class='bx bx-right-arrow-alt' aria-hidden="true"></i>
+                        </button>
+                        <button class="license-brand-choice" type="button" data-license-brand="Duo" aria-label="View Cisco Duo licenses">
+                            <img src="Images/cisco-duo.png" alt="" class="license-brand-logo duo-brand-logo">
+                            <span>Cisco Duo</span>
+                            <i class='bx bx-right-arrow-alt' aria-hidden="true"></i>
+                        </button>
                     </div>
                 </section>
 
@@ -730,7 +749,7 @@
 
     <script src="js/site-footer.js?v=footer-mobile-bg-20260708"></script>
     <script src="js/category-nav.js"></script>
-    <script src="js/script.js?v=store-catalog-20260924"></script>
+    <script src="js/script.js?v=license-chooser-20261119"></script>
     <script src="js/auth-ui.js?v=page-menus-20261001"></script>
     <script src="js/microsoft-license.js"></script>
     <script src="js/duo-store.js?v=modal-guard-20260921"></script>

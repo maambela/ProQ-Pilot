@@ -12,6 +12,137 @@
 }
 
 /* ===== MICROSOFT LICENSE SHOPPING ===== */
+.license-chooser {
+    min-height: 360px;
+    display: grid;
+    align-content: center;
+    gap: 28px;
+    margin-bottom: 50px;
+    padding: clamp(28px, 5vw, 56px);
+    border-radius: 8px;
+    background:
+        linear-gradient(135deg, rgba(105, 215, 255, 0.06), transparent 48%),
+        rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.license-chooser-heading p {
+    margin: 0 0 7px;
+    color: #69d7ff;
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.license-chooser-heading h2 {
+    margin: 0;
+    color: #fff;
+    font-size: clamp(1.55rem, 3vw, 2.35rem);
+    font-weight: 300;
+}
+
+.license-chooser-options {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px;
+}
+
+.license-brand-choice {
+    min-height: 180px;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-rows: 1fr auto;
+    align-items: center;
+    gap: 18px;
+    padding: 26px 28px;
+    color: #fff;
+    cursor: pointer;
+    text-align: left;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: 8px;
+    background: rgba(8, 16, 28, 0.64);
+    box-shadow: 0 18px 40px rgba(0, 0, 0, 0.14);
+    transition: transform 180ms ease, border-color 180ms ease, background 180ms ease, box-shadow 180ms ease;
+}
+
+.license-brand-choice:hover {
+    transform: translateY(-3px);
+    border-color: rgba(105, 215, 255, 0.58);
+    background: rgba(255, 255, 255, 0.09);
+    box-shadow: 0 22px 44px rgba(0, 0, 0, 0.22);
+}
+
+.license-brand-choice:focus-visible {
+    outline: 3px solid #69d7ff;
+    outline-offset: 4px;
+}
+
+.license-brand-choice:active {
+    transform: translateY(-1px);
+}
+
+.license-brand-logo {
+    grid-column: 1 / -1;
+    align-self: end;
+    width: auto;
+    max-width: 190px;
+    height: 58px;
+    object-fit: contain;
+    object-position: left center;
+}
+
+.duo-brand-logo {
+    max-width: 170px;
+}
+
+.license-brand-choice span {
+    font-size: 1.05rem;
+    font-weight: 700;
+}
+
+.license-brand-choice i {
+    font-size: 1.6rem;
+    color: #69d7ff;
+}
+
+body.store-page.license-view-all .products-area,
+body.store-page.license-view-all .store-header {
+    display: none !important;
+}
+
+@media (min-width: 1024px) {
+    body.store-page.license-view .store-container {
+        max-width: none;
+        width: 100%;
+        padding-right: 2%;
+    }
+
+    body.store-page.license-view .store-layout {
+        max-width: none;
+        width: 100%;
+    }
+
+    body.store-page.license-view .main-content {
+        width: 100%;
+    }
+}
+
+@media (max-width: 760px) {
+    .license-chooser {
+        min-height: 0;
+        padding: 22px 16px;
+    }
+
+    .license-chooser-options {
+        grid-template-columns: 1fr;
+    }
+
+    .license-brand-choice {
+        min-height: 150px;
+    }
+}
+
 .microsoft-license-section {
     display: none;
     margin-bottom: 50px;

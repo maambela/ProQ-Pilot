@@ -755,15 +755,17 @@ document.addEventListener('DOMContentLoaded', () => {
         const isMicrosoftLicenses = isLicenseView && selectedBrand === 'Microsoft';
         const isDuoOnly = isLicenseView && selectedBrand === 'Duo';
         const isAllLicenses = isLicenseView && !selectedBrand;
-        const shouldShowMicrosoft = isMicrosoftLicenses || isAllLicenses;
-        const shouldShowDuo = isDuoOnly || isAllLicenses;
+        const chooser = document.getElementById('licenseChooser');
+
+        document.body.classList.toggle('license-view', isLicenseView);
+        document.body.classList.toggle('license-view-all', isAllLicenses);
 
         if (microsoftSection) {
-            microsoftSection.style.display = shouldShowMicrosoft ? 'block' : 'none';
+            microsoftSection.style.display = isMicrosoftLicenses ? 'block' : 'none';
         }
 
         if (duoSection) {
-            duoSection.style.display = shouldShowDuo ? 'block' : 'none';
+            duoSection.style.display = isDuoOnly ? 'block' : 'none';
             
             // Apply compact spacing only when viewing Duo licenses
             if (isDuoOnly) {
@@ -771,6 +773,10 @@ document.addEventListener('DOMContentLoaded', () => {
             } else {
                 duoSection.classList.remove('compact-spacing');
             }
+        }
+
+        if (chooser) {
+            chooser.style.display = isAllLicenses ? 'grid' : 'none';
         }
         
         renderProductsWithUnavailable(filteredProducts, selectedBrand || selectedCategory);
@@ -1544,6 +1550,22 @@ document.addEventListener('DOMContentLoaded', () => {
                 applyFiltersAndSort();
             });
         });
+
+        const licenseChooser = document.getElementById('licenseChooser');
+        if (licenseChooser) {
+            licenseChooser.querySelectorAll('[data-license-brand]').forEach(button => {
+                button.addEventListener('click', () => {
+                    const brand = button.getAttribute('data-license-brand');
+                    if (!brand) return;
+
+                    selectedCategory = 'licenses';
+                    selectedBrand = brand;
+                    window.history.replaceState({}, '', `store.html?category=licenses&brand=${brand}`);
+                    updateSidebarUI();
+                    applyFiltersAndSort();
+                });
+            });
+        }
 
         if (clearFiltersBtn) {
             clearFiltersBtn.addEventListener('click', () => {
