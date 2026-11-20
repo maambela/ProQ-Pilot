@@ -7,7 +7,7 @@
     <title>ProQ Pilot | Onboarding Procurement Catalog</title>
     <script src="js/dev-access.js?v=entra-access-20260917"></script>
     <link rel="stylesheet" href="css/style.css?v=page-menus-20261001">
-    <link rel="stylesheet" href="css/duo-store.css?v=chooser-centered-hover-20261120">
+    <link rel="stylesheet" href="css/duo-store.css?v=store-menu-interactions-20261120">
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
     <style>
         /* Store on laptops: lift the catalogue so the first row of products is fully visible without
@@ -92,10 +92,6 @@
                     <button class="mobile-filter-toggle" id="mobileFilterToggle" type="button" aria-label="Toggle product categories" aria-expanded="false" aria-controls="storeFilterGroups">
                         <i class='bx bx-chevron-down'></i>
                     </button>
-                    <button class="clear-filters-btn" id="clearFilters" type="button" aria-label="Back to the full store" style="display: none;">
-                        <i class='bx bx-arrow-back' aria-hidden="true"></i>
-                        <span>Back</span>
-                    </button>
                 </div>
 
                 <div class="filter-groups" id="storeFilterGroups">
@@ -129,6 +125,12 @@
                         <button class="category-main-btn onboarding-category-btn" data-category="onboarding">
                             <i class='bx bx-user-check'></i>
                             <span>Onboarding Procurement</span>
+                        </button>
+
+                        <button class="clear-filters-btn" id="clearFilters" type="button" aria-label="Back to the full store" title="Back" style="display: none;">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+                                <path d="M19 12H5m7 7-7-7 7-7"></path>
+                            </svg>
                         </button>
 
                     </div>
