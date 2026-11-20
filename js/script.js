@@ -1563,6 +1563,14 @@ document.addEventListener('DOMContentLoaded', () => {
                     window.history.replaceState({}, '', `store.html?category=licenses&brand=${brand}`);
                     updateSidebarUI();
                     applyFiltersAndSort();
+
+                    // The chooser is now hidden; keep keyboard focus in the revealed catalog.
+                    const sectionId = brand === 'Microsoft' ? 'microsoftLicenseSection' : 'duoLicenseSection';
+                    const heading = document.getElementById(sectionId)?.querySelector('h1, h2');
+                    if (heading) {
+                        heading.setAttribute('tabindex', '-1');
+                        heading.focus({ preventScroll: true });
+                    }
                 });
             });
         }
@@ -1662,6 +1670,9 @@ document.addEventListener('DOMContentLoaded', () => {
     initAnimations();
     initSidebarFilters();
     initMobileStoreFilters();
+
+    // Provider selection does not depend on the hardware inventory request.
+    if (selectedCategory === 'licenses') applyFiltersAndSort();
     
     if (productGrid) {
         fetchProducts().then(() => {
