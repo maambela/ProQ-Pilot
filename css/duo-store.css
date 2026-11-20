@@ -1692,15 +1692,27 @@ body.store-page .sidebar .filter-group {
     gap: 12px !important;
 }
 
+body.store-page .sidebar {
+    background: linear-gradient(
+        135deg,
+        rgba(255, 255, 255, 0.045),
+        rgba(220, 240, 255, 0.025),
+        rgba(255, 230, 245, 0.035)
+    );
+}
+
+body.store-page .sidebar-header {
+    justify-content: flex-end;
+    min-height: 0;
+    padding: 0;
+    border: 0;
+}
+
 body.store-page .sidebar .filter-group > .filter-label {
     grid-column: 1 / -1;
     margin: 0 !important;
     font-size: 0.78rem;
     line-height: 1.35;
-}
-
-body.store-page .sidebar .filter-group > .component-filter-label {
-    margin-top: 2px !important;
 }
 
 body.store-page .sidebar .filter-group > .category-main-btn {
@@ -1719,7 +1731,7 @@ body.store-page .sidebar .filter-group > .category-main-btn {
     padding: 12px !important;
     border: 1px solid rgba(255, 255, 255, 0.25);
     border-radius: 20px;
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.02));
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.015));
     backdrop-filter: blur(24px) saturate(180%) brightness(1.1);
     -webkit-backdrop-filter: blur(24px) saturate(180%) brightness(1.1);
     box-shadow:
@@ -1728,7 +1740,7 @@ body.store-page .sidebar .filter-group > .category-main-btn {
         inset 0 -1px 2px rgba(0, 0, 0, 0.1);
     color: rgba(255, 255, 255, 0.95);
     font-size: 0.78rem !important;
-    font-weight: 300;
+    font-weight: 200;
     line-height: 1.25;
     text-align: center;
     transition: transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
@@ -1776,12 +1788,12 @@ body.store-page .sidebar .filter-group > .category-main-btn > span {
 
 body.store-page .sidebar .filter-group > .category-main-btn.onboarding-category-btn {
     border-color: rgba(255, 255, 255, 0.25);
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.02));
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.015));
 }
 
 body.store-page .sidebar .filter-group > .category-main-btn.active {
     border-color: rgba(255, 255, 255, 0.62);
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.06));
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0.035));
     box-shadow:
         0 8px 32px rgba(0, 0, 0, 0.2),
         inset 0 1px 2px rgba(255, 255, 255, 0.55),
