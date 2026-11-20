@@ -1692,6 +1692,19 @@ body.store-page .sidebar .filter-group {
     gap: 12px !important;
 }
 
+@media (min-width: 761px) {
+    body.store-page .sidebar > .filter-groups {
+        display: flex;
+        flex: 1;
+        min-height: 0;
+    }
+
+    body.store-page .sidebar .filter-group {
+        flex: 1;
+        align-content: center;
+    }
+}
+
 body.store-page .sidebar {
     background: linear-gradient(
         135deg,
