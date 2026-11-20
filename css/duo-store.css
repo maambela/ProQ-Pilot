@@ -62,6 +62,7 @@
     color: #fff;
     cursor: pointer;
     text-align: left;
+    text-decoration: none;
     appearance: none;
     border: 1px solid rgba(255, 255, 255, 0.28);
     border-radius: 24px;
@@ -120,6 +121,12 @@
     object-position: center;
 }
 
+.license-brand-icon {
+    display: grid;
+    place-items: center;
+    font-size: 1.8rem;
+}
+
 .duo-brand-logo {
     height: 48px;
 }
@@ -174,8 +181,8 @@
     }
 }
 
-body.store-page.license-view-all .products-area,
-body.store-page.license-view-all .store-header {
+body.store-page.category-menu-view .products-area,
+body.store-page.category-menu-view .store-header {
     display: none !important;
 }
 

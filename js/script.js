@@ -649,6 +649,187 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
+
+    const storeMenuCategories = new Set([
+        'laptops',
+        'desktops',
+        'workstations',
+        'monitors',
+        'accessories',
+        'licenses',
+        'onboarding'
+    ]);
+
+    const storeMenuInfo = {
+        laptops: { eyebrow: 'Laptops', title: 'Choose a laptop brand', categoryLabel: 'laptops', icon: 'bx bx-laptop' },
+        desktops: { eyebrow: 'Desktops', title: 'Choose a desktop brand', categoryLabel: 'desktops', icon: 'bx bx-desktop' },
+        workstations: { eyebrow: 'Workstations', title: 'Choose a workstation brand', categoryLabel: 'workstations', icon: 'bx bx-chip' },
+        monitors: { eyebrow: 'Monitors', title: 'Choose a monitor brand', categoryLabel: 'monitors', icon: 'bx bx-desktop' },
+        accessories: { eyebrow: 'Accessories', title: 'Choose an accessory type', categoryLabel: 'accessories', icon: 'bx bx-package' },
+        licenses: { eyebrow: 'Digital licenses', title: 'Choose a license provider', categoryLabel: 'licenses', icon: 'bx bx-shield-quarter' },
+        onboarding: { eyebrow: 'Procure by outcome', title: 'Choose an onboarding kit', categoryLabel: 'onboarding', icon: 'bx bx-user-check' }
+    };
+
+    const storeBrandLogos = [
+        { name: 'Dell', logo: 'Images/DellLaptops.PNG', pattern: /\bdell\b/i },
+        { name: 'HP', logo: 'Images/HP.png', pattern: /\b(hp|hewlett[ -]?packard)\b/i },
+        { name: 'Lenovo', logo: 'Images/lenovo.PNG', pattern: /\blenovo\b/i },
+        { name: 'Acer', logo: 'Images/AcerStick.png', pattern: /\bacer\b/i },
+        { name: 'Microsoft', logo: 'Images/Microsoft.png', pattern: /\bmicrosoft\b/i },
+        { name: 'Apple', logo: 'Images/Apple.png', pattern: /\b(apple|macbook|mba|mbp)\b/i },
+        { name: 'ASUS', logo: 'Images/brand-logos/asus.svg', pattern: /\basus\b/i },
+        { name: 'NVIDIA', logo: 'Images/brand-logos/nvidia.svg', pattern: /\bnvidia\b/i },
+        { name: 'Synology', logo: 'Images/brand-logos/synology.svg', pattern: /\bsynology\b/i },
+        { name: 'Quantum', logo: 'Images/brand-logos/quantum.svg', pattern: /\bquantum\b/i },
+        { name: 'Cloudmon', logo: 'Images/brand-logos/cloudmon.png', pattern: /\bcloudmon\b/i },
+        { name: 'Veeam', logo: 'Images/Veeam-Logo.png', pattern: /\bveeam\b/i }
+    ];
+
+    function getProductMenuBrand(product) {
+        const productBrand = String(product.brand || '').trim();
+        const knownBrand = storeBrandLogos.find(brand => brand.pattern.test(productBrand)) ||
+            storeBrandLogos.find(brand => brand.pattern.test(product.product_name || ''));
+        if (knownBrand) {
+            return { name: knownBrand.name, brand: knownBrand.name, logo: knownBrand.logo };
+        }
+
+        return productBrand ? { name: productBrand, brand: productBrand, logo: '' } : null;
+    }
+
+    function getStoreMenuOptions(category) {
+        if (category === 'licenses') {
+            return [
+                { name: 'Microsoft', description: 'Productivity & cloud', brand: 'Microsoft', logo: 'Images/Microsoft.png' },
+                { name: 'Cisco Duo', description: 'Identity & security', brand: 'Duo', logo: 'Images/cisco-duo.png' }
+            ];
+        }
+
+        if (category === 'laptops') {
+            return [
+                { name: 'All Laptops', description: 'Browse every laptop brand', brand: 'All', icon: 'bx bx-laptop' },
+                { name: 'Dell', description: 'Dell business laptops', brand: 'Dell', logo: 'Images/DellLaptops.PNG' },
+                { name: 'HP', description: 'HP business laptops', brand: 'HP', logo: 'Images/HP.png' },
+                { name: 'Lenovo', description: 'Lenovo business laptops', brand: 'Lenovo', logo: 'Images/lenovo.PNG' },
+                { name: 'Acer', description: 'Acer business laptops', brand: 'Acer', logo: 'Images/AcerStick.png' },
+                { name: 'Microsoft', description: 'Microsoft Surface laptops', brand: 'Microsoft', logo: 'Images/Microsoft.png' },
+                { name: 'Apple MacBook', description: 'Apple MacBook laptops', brand: 'MacBook', logo: 'Images/Apple.png' }
+            ];
+        }
+
+        if (category === 'accessories') {
+            return [
+                { name: 'All Accessories', description: 'Browse every accessory type', brand: 'All', icon: 'bx bx-package' },
+                { name: 'Mouse', description: 'Mice and pointing devices', category: 'mice', icon: 'bx bx-mouse' },
+                { name: 'Keyboards', description: 'Keyboards and desktop combos', category: 'keyboards', icon: 'bx bx-keyboard' },
+                { name: 'Laptop Bags', description: 'Bags and cases for your devices', category: 'laptop-bags', icon: 'bx bx-briefcase' }
+            ];
+        }
+
+        if (category === 'onboarding') {
+            return [
+                { name: 'New Employee Kit', description: 'One day-one setup', href: 'kit.html?type=new-starter', icon: 'bx bx-user-plus' },
+                { name: 'Remote Team Kit', description: 'Hybrid employee rollout', href: 'kit.html?type=hybrid', icon: 'bx bx-wifi' },
+                { name: 'Secure Business Kit', description: 'Identity-led onboarding', href: 'kit.html?type=secure', icon: 'bx bx-shield-plus' }
+            ];
+        }
+
+        const categoryLabel = storeMenuInfo[category]?.categoryLabel || category;
+        const categoryIcon = storeMenuInfo[category]?.icon || 'bx bx-category';
+        const brands = new Map();
+
+        allProducts
+            .filter(product => getProductStoreCategory(product) === category)
+            .map(getProductMenuBrand)
+            .filter(Boolean)
+            .forEach(brand => {
+                const key = brand.name.toLowerCase();
+                if (!brands.has(key)) brands.set(key, brand);
+            });
+
+        return [
+            {
+                name: `All ${categoryLabel[0].toUpperCase()}${categoryLabel.slice(1)}`,
+                description: `Browse every ${categoryLabel} brand`,
+                brand: 'All',
+                icon: categoryIcon
+            },
+            ...Array.from(brands.values())
+                .sort((a, b) => a.name.localeCompare(b.name))
+                .map(brand => ({
+                    ...brand,
+                    description: `${brand.name} ${categoryLabel.toLowerCase()}`
+                }))
+        ];
+    }
+
+    function createStoreMenuOption(option) {
+        const element = document.createElement(option.href ? 'a' : 'button');
+        element.className = 'license-brand-choice';
+
+        if (option.href) {
+            element.href = option.href;
+        } else {
+            element.type = 'button';
+            if (option.brand) element.dataset.menuBrand = option.brand;
+            if (option.category) element.dataset.menuCategory = option.category;
+        }
+
+        element.setAttribute('aria-label', `${option.name}. ${option.description}`);
+
+        if (option.logo) {
+            const logo = document.createElement('img');
+            logo.className = `license-brand-logo${option.brand === 'Duo' ? ' duo-brand-logo' : ''}`;
+            logo.src = option.logo;
+            logo.alt = '';
+            logo.loading = 'lazy';
+            element.appendChild(logo);
+        } else {
+            const icon = document.createElement('span');
+            icon.className = 'license-brand-logo license-brand-icon';
+            icon.setAttribute('aria-hidden', 'true');
+            const glyph = document.createElement('i');
+            glyph.className = option.icon || 'bx bx-category';
+            icon.appendChild(glyph);
+            element.appendChild(icon);
+        }
+
+        const copy = document.createElement('span');
+        copy.className = 'license-brand-copy';
+
+        const name = document.createElement('span');
+        name.className = 'license-brand-name';
+        name.textContent = option.name;
+
+        const description = document.createElement('span');
+        description.className = 'license-brand-description';
+        description.textContent = option.description;
+
+        copy.append(name, description);
+        element.appendChild(copy);
+
+        const indicator = document.createElement('span');
+        indicator.className = 'license-brand-indicator';
+        indicator.setAttribute('aria-hidden', 'true');
+        element.appendChild(indicator);
+
+        return element;
+    }
+
+    function updateStoreCategoryChooser(category) {
+        const chooser = document.getElementById('storeCategoryChooser');
+        const eyebrow = document.getElementById('storeCategoryChooserEyebrow');
+        const title = document.getElementById('storeCategoryChooserTitle');
+        const options = document.getElementById('storeCategoryChooserOptions');
+        if (!chooser || !eyebrow || !title || !options) return;
+
+        const menuInfo = storeMenuInfo[category];
+        if (!menuInfo) return;
+
+        eyebrow.textContent = menuInfo.eyebrow;
+        title.textContent = menuInfo.title;
+        options.setAttribute('aria-label', menuInfo.title);
+        options.replaceChildren(...getStoreMenuOptions(category).map(createStoreMenuOption));
+    }
     
     // Expose refresh function for store updates from admin panel
     window.refreshStore = function() {
@@ -696,15 +877,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
             } else if (selectedCategory === 'accessories') {
                 filteredProducts = filteredProducts.filter(product =>
-                    ['mice', 'keyboards', 'laptop-bags'].includes(getProductStoreCategory(product))
+                    ['accessories', 'mice', 'keyboards', 'laptop-bags'].includes(getProductStoreCategory(product))
                 );
-            } else {
+            } else if (selectedCategory !== 'onboarding') {
                 filteredProducts = filteredProducts.filter(product => getProductStoreCategory(product) === selectedCategory);
             }
         }
         
         // Apply brand filter with case-insensitive matching
-        if (selectedBrand) {
+        if (selectedBrand && selectedBrand.toLowerCase() !== 'all') {
             const brandLower = selectedBrand.toLowerCase().trim();
             
             if (brandLower === 'macbook' || brandLower === 'apple') {
@@ -754,11 +935,11 @@ document.addEventListener('DOMContentLoaded', () => {
         const isLicenseView = selectedCategory === 'licenses';
         const isMicrosoftLicenses = isLicenseView && selectedBrand === 'Microsoft';
         const isDuoOnly = isLicenseView && selectedBrand === 'Duo';
-        const isAllLicenses = isLicenseView && !selectedBrand;
-        const chooser = document.getElementById('licenseChooser');
+        const isCategoryMenu = storeMenuCategories.has(selectedCategory) && !selectedBrand;
+        const chooser = document.getElementById('storeCategoryChooser');
 
         document.body.classList.toggle('license-view', isLicenseView);
-        document.body.classList.toggle('license-view-all', isAllLicenses);
+        document.body.classList.toggle('category-menu-view', isCategoryMenu);
 
         if (microsoftSection) {
             microsoftSection.style.display = isMicrosoftLicenses ? 'block' : 'none';
@@ -776,7 +957,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         if (chooser) {
-            chooser.style.display = isAllLicenses ? 'grid' : 'none';
+            chooser.style.display = isCategoryMenu ? 'grid' : 'none';
+            if (isCategoryMenu) updateStoreCategoryChooser(selectedCategory);
         }
         
         renderProductsWithUnavailable(filteredProducts, selectedBrand || selectedCategory);
@@ -1127,22 +1309,16 @@ document.addEventListener('DOMContentLoaded', () => {
                         <h2>Currently Unavailable</h2>
                         <p>${displayBrand} ${productType} are not currently available in our store.</p>
                         <p>Please select another brand or category or check back later.</p>
-                        <button class="btn btn-primary" id="backToAllBtn">View All Products</button>
+                        <button class="btn btn-primary" id="backToStoreBtn">Back to Store</button>
                     </div>
                 </div>
             `;
             
-            // Add click handler to go back to all products
-            document.getElementById('backToAllBtn').addEventListener('click', () => {
-                selectedBrand = null;
-                selectedCategory = null;
-                searchQuery = '';
-                if (productSearchInput) productSearchInput.value = '';
-                const allProductsPill = document.getElementById('allProductsPill');
-                if (allProductsPill) {
-                    allProductsPill.click();
+            document.getElementById('backToStoreBtn').addEventListener('click', () => {
+                if (clearFiltersBtn) {
+                    clearFiltersBtn.click();
                 } else {
-                    applyFiltersAndSort();
+                    window.location.href = 'store.html';
                 }
             });
             
@@ -1431,159 +1607,80 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- 6. SIDEBAR FILTER (STORE PAGE) ---
     function initSidebarFilters() {
-        const allProductsPill = document.getElementById('allProductsPill');
-        const accessoriesBtn = document.getElementById('accessoriesBtn');
         const categoryButtons = document.querySelectorAll('.category-main-btn[data-category]');
-        const subcategoryItems = document.querySelectorAll('.subcategory-item');
         const clearFiltersBtn = document.getElementById('clearFilters');
+        const categoryChooser = document.getElementById('storeCategoryChooser');
 
         function updateSidebarUI() {
-            // Remove active class from all
             categoryButtons.forEach(button => button.classList.remove('active'));
-            subcategoryItems.forEach(item => item.classList.remove('active'));
 
-            // Set active based on current filters
-            if (!selectedBrand && !selectedCategory) {
-                if (allProductsPill) allProductsPill.classList.add('active');
-                if (clearFiltersBtn) clearFiltersBtn.style.display = 'none';
-            } else {
-                if (clearFiltersBtn) clearFiltersBtn.style.display = 'block';
-                
-                const matchingCategoryButton = Array.from(categoryButtons).find(button =>
-                    button.getAttribute('data-category') === selectedCategory && !button.hasAttribute('data-toggle')
-                );
-
-                if (matchingCategoryButton) {
-                    matchingCategoryButton.classList.add('active');
-                }
-
-                if (selectedCategory === 'laptops') {
-                    // Expand laptops submenu
-                    window.expandCategory('laptops');
-                    
-                    subcategoryItems.forEach(item => {
-                        const itemCategory = item.getAttribute('data-category');
-                        const itemBrand = item.getAttribute('data-brand');
-                        const isAllLaptops = itemCategory === 'laptops';
-                        const isBrandItem = !itemCategory && itemBrand === selectedBrand;
-                        const isMatch = selectedBrand ? isBrandItem : isAllLaptops;
-                        if (isMatch) item.classList.add('active');
-                    });
-                } else if (selectedCategory === 'licenses') {
-                    // Expand licenses submenu
-                    window.expandCategory('licenses');
-                    
-                    subcategoryItems.forEach(item => {
-                        const itemCategory = item.getAttribute('data-category');
-                        const itemBrand = item.getAttribute('data-brand');
-                        const isAllLicenses = itemCategory === 'licenses' && !itemBrand;
-                        const isBrandItem = itemCategory === 'licenses' && itemBrand === selectedBrand;
-                        const isMatch = selectedBrand ? isBrandItem : isAllLicenses;
-                        if (isMatch) item.classList.add('active');
-                    });
-                } else if (['accessories', 'mice', 'keyboards', 'laptop-bags'].includes(selectedCategory)) {
-                    window.expandCategory('accessories');
-
-                    subcategoryItems.forEach(item => {
-                        const itemCategory = item.getAttribute('data-category');
-                        if (itemCategory === selectedCategory) item.classList.add('active');
-                    });
-                }
+            const accessoryTypes = ['mice', 'keyboards', 'laptop-bags'];
+            const activeCategory = accessoryTypes.includes(selectedCategory) ? 'accessories' : selectedCategory;
+            const activeButton = Array.from(categoryButtons).find(button =>
+                button.getAttribute('data-category') === activeCategory
+            );
+            if (activeButton) activeButton.classList.add('active');
+            if (clearFiltersBtn) {
+                clearFiltersBtn.style.display = selectedCategory || selectedBrand ? 'block' : 'none';
             }
         }
 
-        if (allProductsPill) {
-            allProductsPill.addEventListener('click', () => {
-                selectedBrand = null;
-                selectedCategory = null;
-                updateSidebarUI();
-                window.history.replaceState({}, '', 'store.html');
-                applyFiltersAndSort();
-            });
-        }
+        function selectStoreCategory(category, brand = null) {
+            selectedCategory = category;
+            selectedBrand = brand;
+            searchQuery = '';
+            if (productSearchInput) productSearchInput.value = '';
+            updateSidebarUI();
 
-        if (accessoriesBtn) {
-            accessoriesBtn.addEventListener('click', () => {
-                selectedBrand = null;
-                selectedCategory = 'accessories';
-                updateSidebarUI();
-                window.history.replaceState({}, '', 'store.html?category=accessories');
-                applyFiltersAndSort();
-            });
+            const query = category
+                ? `store.html?category=${encodeURIComponent(category)}${brand ? `&brand=${encodeURIComponent(brand)}` : ''}`
+                : 'store.html';
+            window.history.replaceState({}, '', query);
+            applyFiltersAndSort();
         }
 
         categoryButtons.forEach(button => {
             const category = button.getAttribute('data-category');
-            if (!category || category === 'all' || button.hasAttribute('data-toggle')) return;
+            if (!category) return;
 
             button.addEventListener('click', () => {
-                selectedBrand = null;
-                selectedCategory = category;
-                updateSidebarUI();
-                window.history.replaceState({}, '', `store.html?category=${category}`);
-                applyFiltersAndSort();
-            });
-        });
+                selectStoreCategory(category);
 
-        subcategoryItems.forEach(item => {
-            item.addEventListener('click', () => {
-                const brand = item.getAttribute('data-brand');
-                const category = item.getAttribute('data-category');
-
-                if (category === 'licenses') {
-                    selectedCategory = 'licenses';
-                    selectedBrand = brand || null;
-                    let url = 'store.html?category=licenses';
-                    if (brand) url += `&brand=${brand}`;
-                    window.history.replaceState({}, '', url);
-                } else if (category) {
-                    selectedCategory = category;
-                    selectedBrand = null;
-                    window.history.replaceState({}, '', `store.html?category=${category}`);
-                } else if (brand) {
-                    selectedCategory = 'laptops';
-                    selectedBrand = brand;
-                    window.history.replaceState({}, '', `store.html?category=laptops&brand=${brand}`);
-                }
-
-                updateSidebarUI();
-                applyFiltersAndSort();
-            });
-        });
-
-        const licenseChooser = document.getElementById('licenseChooser');
-        if (licenseChooser) {
-            licenseChooser.querySelectorAll('[data-license-brand]').forEach(button => {
-                button.addEventListener('click', () => {
-                    const brand = button.getAttribute('data-license-brand');
-                    if (!brand) return;
-
-                    selectedCategory = 'licenses';
-                    selectedBrand = brand;
-                    window.history.replaceState({}, '', `store.html?category=licenses&brand=${brand}`);
-                    updateSidebarUI();
-                    applyFiltersAndSort();
-
-                    // The chooser is now hidden; keep keyboard focus in the revealed catalog.
-                    const sectionId = brand === 'Microsoft' ? 'microsoftLicenseSection' : 'duoLicenseSection';
-                    const heading = document.getElementById(sectionId)?.querySelector('h1, h2');
-                    if (heading) {
-                        heading.setAttribute('tabindex', '-1');
-                        heading.focus({ preventScroll: true });
+                if (storeMenuCategories.has(category)) {
+                    const title = document.getElementById('storeCategoryChooserTitle');
+                    if (title) {
+                        title.setAttribute('tabindex', '-1');
+                        title.focus({ preventScroll: true });
                     }
-                });
+                }
+            });
+        });
+
+        if (categoryChooser) {
+            categoryChooser.addEventListener('click', event => {
+                const choice = event.target.closest('[data-menu-brand], [data-menu-category]');
+                if (!choice || !categoryChooser.contains(choice)) return;
+
+                const category = choice.dataset.menuCategory || selectedCategory;
+                const brand = choice.dataset.menuBrand || null;
+                selectStoreCategory(category, brand);
+
+                const sectionId = category === 'licenses'
+                    ? (brand === 'Microsoft' ? 'microsoftLicenseSection' : 'duoLicenseSection')
+                    : null;
+                const heading = sectionId
+                    ? document.getElementById(sectionId)?.querySelector('h1, h2')
+                    : document.querySelector('.results-count');
+                if (heading) {
+                    heading.setAttribute('tabindex', '-1');
+                    heading.focus({ preventScroll: true });
+                }
             });
         }
 
         if (clearFiltersBtn) {
             clearFiltersBtn.addEventListener('click', () => {
-                selectedBrand = null;
-                selectedCategory = null;
-                searchQuery = '';
-                if (productSearchInput) productSearchInput.value = '';
-                updateSidebarUI();
-                window.history.replaceState({}, '', 'store.html');
-                applyFiltersAndSort();
+                selectStoreCategory(null);
             });
         }
 
@@ -1655,13 +1752,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const brandParam = urlParams.get('brand');
     const categoryParam = urlParams.get('category');
     
-    if (brandParam) {
+    if (brandParam && categoryParam !== 'all') {
         selectedBrand = brandParam;
         if (!categoryParam) {
             selectedCategory = 'laptops';
         }
     }
-    if (categoryParam) {
+    if (categoryParam && categoryParam !== 'all') {
         selectedCategory = categoryParam;
     }
     
@@ -1671,8 +1768,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initSidebarFilters();
     initMobileStoreFilters();
 
-    // Provider selection does not depend on the hardware inventory request.
-    if (selectedCategory === 'licenses') applyFiltersAndSort();
+    if (storeMenuCategories.has(selectedCategory)) applyFiltersAndSort();
     
     if (productGrid) {
         fetchProducts().then(() => {

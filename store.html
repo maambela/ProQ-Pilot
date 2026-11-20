@@ -7,7 +7,7 @@
     <title>ProQ Pilot | Onboarding Procurement Catalog</title>
     <script src="js/dev-access.js?v=entra-access-20260917"></script>
     <link rel="stylesheet" href="css/style.css?v=page-menus-20261001">
-    <link rel="stylesheet" href="css/duo-store.css?v=license-glass-20261119">
+    <link rel="stylesheet" href="css/duo-store.css?v=category-menu-20261120">
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
     <style>
         /* Store on laptops: lift the catalogue so the first row of products is fully visible without
@@ -88,12 +88,12 @@
         <div class="store-layout">
             <aside class="sidebar">
                 <div class="sidebar-header">
-                    <h3>Filters</h3>
+                    <h3>Browse</h3>
                     <button class="mobile-filter-toggle" id="mobileFilterToggle" type="button" aria-expanded="false" aria-controls="storeFilterGroups">
-                        <span>Filters</span>
+                        <span>Browse</span>
                         <i class='bx bx-chevron-down'></i>
                     </button>
-                    <button class="clear-filters-btn" id="clearFilters" style="display: none;"><i class='bx bx-trash'></i></button>
+                    <button class="clear-filters-btn" id="clearFilters" type="button" aria-label="Clear selection and return to the full store" style="display: none;"><i class='bx bx-trash'></i></button>
                 </div>
 
                 <div class="filter-groups" id="storeFilterGroups">
@@ -101,50 +101,10 @@
                     <div class="filter-group">
                         <p class="filter-label component-filter-label">Shop individual components</p>
                         
-                        <!-- All Products Button -->
-                        <button class="category-main-btn active" id="allProductsPill" data-category="all">
-                            <i class='bx bx-grid'></i>
-                            <span>All Products</span>
+                        <button class="category-main-btn" data-category="laptops">
+                            <i class='bx bx-laptop'></i>
+                            <span>Laptops</span>
                         </button>
-
-                        <!-- Laptops Collapsible Category -->
-                        <div class="category-tree">
-                            <button class="category-main-btn" data-toggle="laptops-submenu">
-                                <i class='bx bx-laptop'></i>
-                                <span>Laptops</span>
-                                <i class='bx bx-chevron-down'></i>
-                            </button>
-                            <div class="category-submenu" id="laptops-submenu" data-category="laptops" aria-hidden="true">
-                                <button class="subcategory-item" data-category="laptops">
-                                    <span class="item-icon">•</span>
-                                    View All Laptops
-                                </button>
-                                <button class="subcategory-item" data-brand="Dell">
-                                    <span class="item-icon">•</span>
-                                    Dell
-                                </button>
-                                <button class="subcategory-item" data-brand="HP">
-                                    <span class="item-icon">•</span>
-                                    HP
-                                </button>
-                                <button class="subcategory-item" data-brand="Lenovo">
-                                    <span class="item-icon">•</span>
-                                    Lenovo
-                                </button>
-                                <button class="subcategory-item" data-brand="Acer">
-                                    <span class="item-icon">•</span>
-                                    Acer
-                                </button>
-                                <button class="subcategory-item" data-brand="Microsoft">
-                                    <span class="item-icon">•</span>
-                                    Microsoft
-                                </button>
-                                <button class="subcategory-item" data-brand="MacBook">
-                                    <span class="item-icon">•</span>
-                                    Apple MacBook
-                                </button>
-                            </div>
-                        </div>
 
                         <button class="category-main-btn optional-category" data-category="desktops">
                             <i class='bx bx-desktop'></i>
@@ -161,79 +121,22 @@
                             <span>Monitors</span>
                         </button>
 
-                        <!-- Accessories Collapsible Category -->
-                        <div class="category-tree">
-                            <button class="category-main-btn" data-toggle="accessories-submenu">
-                                <i class='bx bx-package'></i>
-                                <span>Accessories</span>
-                                <i class='bx bx-chevron-down'></i>
-                            </button>
-                            <div class="category-submenu" id="accessories-submenu" data-category="accessories" aria-hidden="true">
-                                <button class="subcategory-item" data-category="accessories">
-                                    <span class="item-icon">•</span>
-                                    View All Accessories
-                                </button>
-                                <button class="subcategory-item" data-category="mice">
-                                    <span class="item-icon">•</span>
-                                    Mouse
-                                </button>
-                                <button class="subcategory-item" data-category="keyboards">
-                                    <span class="item-icon">•</span>
-                                    Keyboards
-                                </button>
-                                <button class="subcategory-item" data-category="laptop-bags">
-                                    <span class="item-icon">•</span>
-                                    Laptop Bags
-                                </button>
-                            </div>
-                        </div>
+                        <button class="category-main-btn" data-category="accessories">
+                            <i class='bx bx-package'></i>
+                            <span>Accessories</span>
+                        </button>
 
-                        <!-- Licenses Collapsible Category -->
-                        <div class="category-tree">
-                            <button class="category-main-btn" data-toggle="licenses-submenu">
-                                <i class='bx bx-shield-quarter'></i>
-                                <span>Licenses</span>
-                                <i class='bx bx-chevron-down'></i>
-                            </button>
-                            <div class="category-submenu" id="licenses-submenu" data-category="licenses" aria-hidden="true">
-                                <button class="subcategory-item" data-category="licenses">
-                                    <span class="item-icon">•</span>
-                                    View All Licenses
-                                </button>
-                                <button class="subcategory-item" data-category="licenses" data-brand="Microsoft">
-                                    <span class="item-icon">•</span>
-                                    Microsoft
-                                </button>
-                                <button class="subcategory-item" data-category="licenses" data-brand="Duo">
-                                    <span class="item-icon">•</span>
-                                    Cisco Duo
-                                </button>
-                            </div>
-                        </div>
+                        <button class="category-main-btn" data-category="licenses">
+                            <i class='bx bx-shield-quarter'></i>
+                            <span>Licenses</span>
+                        </button>
 
                         <p class="filter-label outcome-filter-label">Procure by outcome</p>
 
-                        <div class="category-tree onboarding-category-tree">
-                            <button class="category-main-btn onboarding-category-btn" data-toggle="onboarding-submenu">
-                                <i class='bx bx-user-check'></i>
-                                <span>Onboarding Procurement</span>
-                                <i class='bx bx-chevron-down'></i>
-                            </button>
-                            <div class="category-submenu onboarding-submenu" id="onboarding-submenu" aria-hidden="true">
-                                <a class="subcategory-item onboarding-kit-link" href="kit.html?type=new-starter">
-                                    <i class='bx bx-user-plus'></i>
-                                    <span><strong>New Employee Kit</strong><small>One day-one setup</small></span>
-                                </a>
-                                <a class="subcategory-item onboarding-kit-link" href="kit.html?type=hybrid">
-                                    <i class='bx bx-wifi'></i>
-                                    <span><strong>Remote Team Kit</strong><small>Hybrid employee rollout</small></span>
-                                </a>
-                                <a class="subcategory-item onboarding-kit-link" href="kit.html?type=secure">
-                                    <i class='bx bx-shield-plus'></i>
-                                    <span><strong>Secure Business Kit</strong><small>Identity-led onboarding</small></span>
-                                </a>
-                            </div>
-                        </div>
+                        <button class="category-main-btn onboarding-category-btn" data-category="onboarding">
+                            <i class='bx bx-user-check'></i>
+                            <span>Onboarding Procurement</span>
+                        </button>
 
                     </div>
                 </div>
@@ -272,28 +175,12 @@
                     </div>
                 </section>
 
-                <section class="license-chooser" id="licenseChooser" aria-labelledby="licenseChooserTitle" style="display: none;">
+                <section class="license-chooser" id="storeCategoryChooser" aria-labelledby="storeCategoryChooserTitle" style="display: none;">
                     <div class="license-chooser-heading">
-                        <p>Digital licenses</p>
-                        <h2 id="licenseChooserTitle">Choose a license provider</h2>
+                        <p id="storeCategoryChooserEyebrow">Browse products</p>
+                        <h2 id="storeCategoryChooserTitle">Choose a brand or product type</h2>
                     </div>
-                    <div class="license-chooser-options" role="group" aria-label="Choose a license provider">
-                        <button class="license-brand-choice" type="button" data-license-brand="Microsoft" aria-label="View Microsoft licenses">
-                            <img src="Images/Microsoft.png" alt="" class="license-brand-logo microsoft-brand-logo">
-                            <span class="license-brand-copy">
-                                <span class="license-brand-name">Microsoft</span>
-                                <span class="license-brand-description">Productivity &amp; cloud</span>
-                            </span>
-                            <span class="license-brand-indicator" aria-hidden="true"></span>
-                        </button>
-                        <button class="license-brand-choice" type="button" data-license-brand="Duo" aria-label="View Cisco Duo licenses">
-                            <img src="Images/cisco-duo.png" alt="" class="license-brand-logo duo-brand-logo">
-                            <span class="license-brand-copy">
-                                <span class="license-brand-name">Cisco Duo</span>
-                                <span class="license-brand-description">Identity &amp; security</span>
-                            </span>
-                            <span class="license-brand-indicator" aria-hidden="true"></span>
-                        </button>
+                    <div class="license-chooser-options" id="storeCategoryChooserOptions" role="group" aria-label="Choose a brand or product type">
                     </div>
                 </section>
 
@@ -755,7 +642,7 @@
 
     <script src="js/site-footer.js?v=footer-mobile-bg-20260708"></script>
     <script src="js/category-nav.js"></script>
-    <script src="js/script.js?v=license-glass-20261119"></script>
+    <script src="js/script.js?v=category-menu-20261120"></script>
     <script src="js/auth-ui.js?v=page-menus-20261001"></script>
     <script src="js/microsoft-license.js"></script>
     <script src="js/duo-store.js?v=modal-guard-20260921"></script>
