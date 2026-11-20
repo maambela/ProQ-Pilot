@@ -653,7 +653,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const storeMenuCategories = new Set([
         'laptops',
         'desktops',
-        'workstations',
         'monitors',
         'accessories',
         'licenses',
@@ -663,7 +662,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const storeMenuInfo = {
         laptops: { eyebrow: 'Laptops', title: 'Choose a laptop brand', categoryLabel: 'laptops', icon: 'bx bx-laptop' },
         desktops: { eyebrow: 'Desktops', title: 'Choose a desktop brand', categoryLabel: 'desktops', icon: 'bx bx-desktop' },
-        workstations: { eyebrow: 'Workstations', title: 'Choose a workstation brand', categoryLabel: 'workstations', icon: 'bx bx-chip' },
         monitors: { eyebrow: 'Monitors', title: 'Choose a monitor brand', categoryLabel: 'monitors', icon: 'bx bx-desktop' },
         accessories: { eyebrow: 'Accessories', title: 'Choose an accessory type', categoryLabel: 'accessories', icon: 'bx bx-package' },
         licenses: { eyebrow: 'Digital licenses', title: 'Choose a license provider', categoryLabel: 'licenses', icon: 'bx bx-shield-quarter' },
