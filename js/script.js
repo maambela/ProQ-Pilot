@@ -1619,7 +1619,7 @@ document.addEventListener('DOMContentLoaded', () => {
             );
             if (activeButton) activeButton.classList.add('active');
             if (clearFiltersBtn) {
-                clearFiltersBtn.style.display = selectedCategory || selectedBrand ? 'block' : 'none';
+                clearFiltersBtn.style.display = selectedCategory || selectedBrand ? 'inline-flex' : 'none';
             }
         }
 

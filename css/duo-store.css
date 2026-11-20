@@ -1715,10 +1715,32 @@ body.store-page .sidebar {
 }
 
 body.store-page .sidebar-header {
-    justify-content: flex-end;
+    justify-content: flex-start;
     min-height: 0;
     padding: 0;
     border: 0;
+}
+
+body.store-page .clear-filters-btn {
+    order: -1;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    margin: 0;
+    padding: 6px 10px;
+    border: 1px solid rgba(255, 255, 255, 0.24);
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.06);
+    color: rgba(255, 255, 255, 0.92);
+    font-size: 0.76rem;
+    font-weight: 200;
+    line-height: 1;
+}
+
+body.store-page .clear-filters-btn:hover {
+    border-color: rgba(255, 255, 255, 0.42);
+    background: rgba(255, 255, 255, 0.12);
+    color: #fff;
 }
 
 body.store-page .sidebar .filter-group > .filter-label {
