@@ -1695,9 +1695,9 @@ body.store-page .sidebar .filter-group {
 body.store-page .sidebar {
     background: linear-gradient(
         135deg,
-        rgba(255, 255, 255, 0.045),
-        rgba(220, 240, 255, 0.025),
-        rgba(255, 230, 245, 0.035)
+        rgba(255, 255, 255, 0.02),
+        rgba(220, 240, 255, 0.012),
+        rgba(255, 230, 245, 0.018)
     );
 }
 
@@ -1731,7 +1731,7 @@ body.store-page .sidebar .filter-group > .category-main-btn {
     padding: 12px !important;
     border: 1px solid rgba(255, 255, 255, 0.25);
     border-radius: 20px;
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.015));
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.035), rgba(255, 255, 255, 0.008));
     backdrop-filter: blur(24px) saturate(180%) brightness(1.1);
     -webkit-backdrop-filter: blur(24px) saturate(180%) brightness(1.1);
     box-shadow:
@@ -1788,12 +1788,12 @@ body.store-page .sidebar .filter-group > .category-main-btn > span {
 
 body.store-page .sidebar .filter-group > .category-main-btn.onboarding-category-btn {
     border-color: rgba(255, 255, 255, 0.25);
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.015));
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.035), rgba(255, 255, 255, 0.008));
 }
 
 body.store-page .sidebar .filter-group > .category-main-btn.active {
     border-color: rgba(255, 255, 255, 0.62);
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0.035));
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.02));
     box-shadow:
         0 8px 32px rgba(0, 0, 0, 0.2),
         inset 0 1px 2px rgba(255, 255, 255, 0.55),
