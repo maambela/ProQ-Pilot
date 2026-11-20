@@ -7,7 +7,7 @@
     <title>ProQ Pilot | Onboarding Procurement Catalog</title>
     <script src="js/dev-access.js?v=entra-access-20260917"></script>
     <link rel="stylesheet" href="css/style.css?v=page-menus-20261001">
-    <link rel="stylesheet" href="css/duo-store.css?v=category-menu-20261120">
+    <link rel="stylesheet" href="css/duo-store.css?v=menu-glass-grid-20261120">
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
     <style>
         /* Store on laptops: lift the catalogue so the first row of products is fully visible without
@@ -38,11 +38,12 @@
                 width: 290px !important;
                 min-width: 290px !important;
                 flex: 0 0 290px !important;
-                top: 92px !important;
+                margin-top: 58px !important;
+                top: 150px !important;
+                height: calc(100dvh - 150px - 16px) !important;
                 /* Never taller than the space below the header, so its bottom edge is always visible;
                    the filter list scrolls inside the panel instead. */
-                max-height: calc(100vh - 92px - 16px) !important;
-                max-height: calc(100dvh - 92px - 16px) !important;
+                max-height: calc(100dvh - 150px - 16px) !important;
                 overflow-y: auto !important;
             }
         }
@@ -140,6 +141,7 @@
 
                     </div>
                 </div>
+                <span class="store-sidebar-logo" role="img" aria-label="ProQ Pilot logo"></span>
             </aside>
 
             <div class="main-content">
