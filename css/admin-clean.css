@@ -1458,22 +1458,22 @@ header.main-header .header-container,
 
 /* Shared admin header links use the same equal, centered desktop sizing.
    The active appearance remains inherited from the existing admin rules. */
-@media (min-width: 981px) {
-    header.main-header .header-container:not(.nav-preview-open),
-    .main-header .header-container:not(.nav-preview-open) {
+@media (min-width: 969px) {
+    header.main-header .header-container,
+    .main-header .header-container {
         display: grid !important;
         grid-template-columns: minmax(95px, 1fr) auto minmax(95px, 1fr) !important;
         flex-wrap: nowrap !important;
     }
 
-    header.main-header .header-container:not(.nav-preview-open) .logo-area,
-    .main-header .header-container:not(.nav-preview-open) .logo-area {
+    header.main-header .header-container .logo-area,
+    .main-header .header-container .logo-area {
         justify-self: start;
         grid-column: 1;
     }
 
-    header.main-header .header-container:not(.nav-preview-open) .nav-links,
-    .main-header .header-container:not(.nav-preview-open) .nav-links {
+    header.main-header .header-container .nav-links,
+    .main-header .header-container .nav-links {
         justify-self: center;
         grid-column: 2;
         display: flex !important;
@@ -1483,8 +1483,8 @@ header.main-header .header-container,
         width: auto !important;
     }
 
-    header.main-header .header-container:not(.nav-preview-open) .header-actions,
-    .main-header .header-container:not(.nav-preview-open) .header-actions {
+    header.main-header .header-container .header-actions,
+    .main-header .header-container .header-actions {
         justify-self: end;
         grid-column: 3;
     }

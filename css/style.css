@@ -8119,9 +8119,25 @@ color: #d8d8d8;
 /* Header mega-menu version */
 @media (min-width: 969px) {
     .header-container {
-        flex-wrap: wrap;
+        display: grid;
+        grid-template-columns: minmax(95px, 1fr) auto minmax(95px, 1fr);
         row-gap: 0;
         transition: background 0.26s ease, border-color 0.26s ease, box-shadow 0.26s ease, border-radius 0.26s ease, padding 0.26s ease;
+    }
+
+    .header-container .logo-area {
+        grid-column: 1;
+        justify-self: start;
+    }
+
+    .header-container .nav-links {
+        grid-column: 2;
+        justify-self: center;
+    }
+
+    .header-container .header-actions {
+        grid-column: 3;
+        justify-self: end;
     }
 
     .header-container.nav-preview-open {
@@ -8167,6 +8183,11 @@ color: #d8d8d8;
         position: static;
         flex: 0 0 100%;
         width: 100%;
+        min-width: 0;
+        min-height: 0;
+        grid-column: 1 / -1;
+        justify-self: stretch;
+        box-sizing: border-box;
         display: grid;
         grid-template-columns: minmax(260px, 0.9fr) minmax(520px, 1.6fr);
         gap: 18px;
@@ -11999,21 +12020,21 @@ body:has(.cart-container) {
     --header-nav-link-width: 128px;
 }
 
-@media (min-width: 981px) {
-    header.main-header .header-container:not(.nav-preview-open),
-    .main-header .header-container:not(.nav-preview-open) {
+@media (min-width: 969px) {
+    header.main-header .header-container,
+    .main-header .header-container {
         display: grid !important;
         grid-template-columns: minmax(95px, 1fr) auto minmax(95px, 1fr) !important;
     }
 
-    header.main-header .header-container:not(.nav-preview-open) .logo-area,
-    .main-header .header-container:not(.nav-preview-open) .logo-area {
+    header.main-header .header-container .logo-area,
+    .main-header .header-container .logo-area {
         justify-self: start;
         grid-column: 1;
     }
 
-    header.main-header .header-container:not(.nav-preview-open) .nav-links,
-    .main-header .header-container:not(.nav-preview-open) .nav-links {
+    header.main-header .header-container .nav-links,
+    .main-header .header-container .nav-links {
         justify-self: center;
         grid-column: 2;
         display: flex !important;
@@ -12024,8 +12045,8 @@ body:has(.cart-container) {
         margin: 0;
     }
 
-    header.main-header .header-container:not(.nav-preview-open) .header-actions,
-    .main-header .header-container:not(.nav-preview-open) .header-actions {
+    header.main-header .header-container .header-actions,
+    .main-header .header-container .header-actions {
         justify-self: end;
         grid-column: 3;
     }
