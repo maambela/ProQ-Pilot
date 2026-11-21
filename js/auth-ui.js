@@ -123,14 +123,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             navLinks.appendChild(mobileUserName);
         }
 
-        if (!isAdminPage && navLinks && !navLinks.querySelector('.mobile-nav-signout')) {
-            const mobileSignOut = document.createElement('a');
-            mobileSignOut.href = '#';
-            mobileSignOut.className = 'mobile-nav-signout';
-            mobileSignOut.innerHTML = `<i class='bx bx-log-out'></i><span>Sign out</span>`;
-            navLinks.appendChild(mobileSignOut);
-        }
-
         const isAdmin = String(user.role || '').trim().toLowerCase() === 'admin';
         if (isAdminPage && !isAdmin) {
             window.location.href = 'index.html';
@@ -146,7 +138,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         // Logout functionality
         document.getElementById('logoutBtn')?.addEventListener('click', logoutUser);
-        document.querySelector('.mobile-nav-signout')?.addEventListener('click', logoutUser);
     } else {
         // If no user but on admin page, redirect
         if (isAdminPage) {
@@ -465,7 +456,6 @@ function initHeaderPreview() {
     };
 
     navLinks.querySelectorAll('a').forEach((link) => {
-        if (link.classList.contains('mobile-nav-signout')) return;
         link.addEventListener('mouseenter', () => renderPreview(link));
         link.addEventListener('focus', () => renderPreview(link));
         link.addEventListener('mouseleave', hidePreview);

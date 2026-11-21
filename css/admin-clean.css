@@ -1036,12 +1036,9 @@ header.main-header .nav-preview-panel,
 header.main-header .admin-actions,
 .main-header .admin-actions,
 header.main-header .mobile-nav-user,
-header.main-header .mobile-nav-signout,
-.main-header .mobile-nav-user,
-.main-header .mobile-nav-signout {
+.main-header .mobile-nav-user {
     display: none !important;
 }
-
 header.main-header .logo-area,
 .main-header .logo-area {
     min-width: 0 !important;
@@ -1528,12 +1525,4 @@ header.main-header .header-container,
         padding-inline: 8px !important;
         font-size: 13px !important;
     }
-}
-
-html body header.main-header .header-container:not(.nav-preview-open) .nav-links a:not(.active),
-html body .main-header .header-container:not(.nav-preview-open) .nav-links a:not(.active) {
-    color: rgba(255, 255, 255, 0.72) !important;
-    background: rgba(255, 255, 255, 0.035) !important;
-    border: 1px solid rgba(255, 255, 255, 0.1) !important;
-    box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.08) !important;
 }
