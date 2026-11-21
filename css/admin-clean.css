@@ -1489,8 +1489,8 @@ header.main-header .header-container,
         grid-column: 3;
     }
 
-    header.main-header .header-container:not(.nav-preview-open) .nav-links a,
-    .main-header .header-container:not(.nav-preview-open) .nav-links a {
+    header.main-header .nav-links a,
+    .main-header .nav-links a {
         width: 128px !important;
         min-width: 128px !important;
         max-width: 128px !important;
@@ -1517,8 +1517,8 @@ header.main-header .header-container,
         column-gap: 8px !important;
     }
 
-    header.main-header .header-container:not(.nav-preview-open) .nav-links a,
-    .main-header .header-container:not(.nav-preview-open) .nav-links a {
+    header.main-header .nav-links a,
+    .main-header .nav-links a {
         width: 128px !important;
         min-width: 128px !important;
         max-width: 128px !important;

@@ -12030,8 +12030,8 @@ body:has(.cart-container) {
         grid-column: 3;
     }
 
-    header.main-header .header-container:not(.nav-preview-open) .nav-links a,
-    .main-header .header-container:not(.nav-preview-open) .nav-links a {
+    header.main-header .nav-links a,
+    .main-header .nav-links a {
         width: var(--header-nav-link-width) !important;
         min-width: var(--header-nav-link-width) !important;
         max-width: var(--header-nav-link-width) !important;
@@ -12059,8 +12059,8 @@ body:has(.cart-container) {
         column-gap: 8px;
     }
 
-    header.main-header .header-container:not(.nav-preview-open) .nav-links a,
-    .main-header .header-container:not(.nav-preview-open) .nav-links a {
+    header.main-header .nav-links a,
+    .main-header .nav-links a {
         width: var(--header-nav-link-width) !important;
         min-width: var(--header-nav-link-width) !important;
         max-width: var(--header-nav-link-width) !important;
@@ -12070,8 +12070,8 @@ body:has(.cart-container) {
 }
 
 /* Match the header action icons' liquid-glass surface without scaling nav links. */
-html body header.main-header .header-container:not(.nav-preview-open) .nav-links a,
-html body .main-header .header-container:not(.nav-preview-open) .nav-links a {
+html body header.main-header .nav-links a,
+html body .main-header .nav-links a {
     position: relative !important;
     overflow: hidden !important;
     backdrop-filter: blur(20px) saturate(170%) brightness(1.08) !important;
@@ -12079,8 +12079,8 @@ html body .main-header .header-container:not(.nav-preview-open) .nav-links a {
     transition: background 0.3s ease, border-color 0.3s ease, box-shadow 0.35s ease, color 0.25s ease !important;
 }
 
-html body header.main-header .header-container:not(.nav-preview-open) .nav-links a:not(.active),
-html body .main-header .header-container:not(.nav-preview-open) .nav-links a:not(.active) {
+html body header.main-header .nav-links a:not(.active),
+html body .main-header .nav-links a:not(.active) {
     color: rgba(255, 255, 255, 0.72) !important;
     background: linear-gradient(135deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.03)) !important;
     border: 1px solid rgba(255, 255, 255, 0.2) !important;
@@ -12096,8 +12096,8 @@ html body .main-header .nav-links a.active {
     color: #fff !important;
 }
 
-html body header.main-header .header-container:not(.nav-preview-open) .nav-links a::before,
-html body .main-header .header-container:not(.nav-preview-open) .nav-links a::before {
+html body header.main-header .nav-links a::before,
+html body .main-header .nav-links a::before {
     content: "";
     position: absolute;
     inset: 0;
@@ -12111,8 +12111,8 @@ html body .main-header .header-container:not(.nav-preview-open) .nav-links a::be
     mix-blend-mode: screen;
 }
 
-html body header.main-header .header-container:not(.nav-preview-open) .nav-links a::after,
-html body .main-header .header-container:not(.nav-preview-open) .nav-links a::after {
+html body header.main-header .nav-links a::after,
+html body .main-header .nav-links a::after {
     content: "";
     position: absolute;
     top: -50%;
@@ -12127,10 +12127,10 @@ html body .main-header .header-container:not(.nav-preview-open) .nav-links a::af
     transition: transform 0.65s ease, opacity 0.2s ease;
 }
 
-html body header.main-header .header-container:not(.nav-preview-open) .nav-links a:not(.active):hover,
-html body .main-header .header-container:not(.nav-preview-open) .nav-links a:not(.active):hover,
-html body header.main-header .header-container:not(.nav-preview-open) .nav-links a:not(.active):focus-visible,
-html body .main-header .header-container:not(.nav-preview-open) .nav-links a:not(.active):focus-visible {
+html body header.main-header .nav-links a:not(.active):hover,
+html body .main-header .nav-links a:not(.active):hover,
+html body header.main-header .nav-links a:not(.active):focus-visible,
+html body .main-header .nav-links a:not(.active):focus-visible {
     color: #fff !important;
     background: linear-gradient(135deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.08)) !important;
     border-color: rgba(255, 255, 255, 0.42) !important;
@@ -12141,10 +12141,10 @@ html body .main-header .header-container:not(.nav-preview-open) .nav-links a:not
         0 0 20px rgba(255, 255, 255, 0.5) !important;
 }
 
-html body header.main-header .header-container:not(.nav-preview-open) .nav-links a:hover::after,
-html body .main-header .header-container:not(.nav-preview-open) .nav-links a:hover::after,
-html body header.main-header .header-container:not(.nav-preview-open) .nav-links a:focus-visible::after,
-html body .main-header .header-container:not(.nav-preview-open) .nav-links a:focus-visible::after {
+html body header.main-header .nav-links a:hover::after,
+html body .main-header .nav-links a:hover::after,
+html body header.main-header .nav-links a:focus-visible::after,
+html body .main-header .nav-links a:focus-visible::after {
     opacity: 0.7;
     transform: translateX(420%) rotate(18deg);
 }
