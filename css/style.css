@@ -12007,3 +12007,105 @@ body:has(.cart-container) {
         padding-top: 8px !important;
     }
 }
+
+/* Shared header navigation sizing and motion
+   Keep this in the base stylesheet so pages do not depend on button-copy CSS. */
+:root {
+    --header-nav-link-width: 128px;
+}
+
+@media (min-width: 981px) {
+    header.main-header .header-container,
+    .main-header .header-container {
+        display: grid !important;
+        grid-template-columns: minmax(95px, 1fr) auto minmax(95px, 1fr) !important;
+    }
+
+    header.main-header .logo-area,
+    .main-header .logo-area {
+        justify-self: start;
+        grid-column: 1;
+    }
+
+    header.main-header .nav-links,
+    .main-header .nav-links {
+        justify-self: center;
+        grid-column: 2;
+        display: flex !important;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        width: auto;
+        margin: 0;
+    }
+
+    header.main-header .header-actions,
+    .main-header .header-actions {
+        justify-self: end;
+        grid-column: 3;
+    }
+
+    header.main-header .nav-links a,
+    .main-header .nav-links a {
+        width: var(--header-nav-link-width) !important;
+        min-width: var(--header-nav-link-width) !important;
+        max-width: var(--header-nav-link-width) !important;
+        height: 42px !important;
+        min-height: 42px !important;
+        margin: 0 !important;
+        padding: 0 8px !important;
+        box-sizing: border-box !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        text-align: center !important;
+        white-space: nowrap !important;
+        line-height: 1.15 !important;
+    }
+}
+
+@media (min-width: 981px) and (max-width: 1100px) {
+    header.main-header .nav-links,
+    .main-header .nav-links {
+        --header-nav-link-width: 112px;
+        gap: 4px;
+    }
+
+    header.main-header .nav-links a,
+    .main-header .nav-links a {
+        width: var(--header-nav-link-width) !important;
+        min-width: var(--header-nav-link-width) !important;
+        max-width: var(--header-nav-link-width) !important;
+        padding-inline: 4px !important;
+        font-size: 12.5px !important;
+    }
+}
+
+@keyframes proqHeaderWobble {
+    0%   { transform: scale(1) rotate(0deg); }
+    20%  { transform: scale(1.06, 0.96) rotate(-0.8deg); }
+    40%  { transform: scale(0.98, 1.04) rotate(0.8deg); }
+    60%  { transform: scale(1.03, 0.97) rotate(-0.4deg); }
+    80%  { transform: scale(0.99, 1.01) rotate(0.4deg); }
+    100% { transform: scale(1) rotate(0deg); }
+}
+
+html body header.main-header .nav-links a:hover,
+html body .main-header .nav-links a:hover,
+html body header.main-header .nav-links a:focus-visible,
+html body .main-header .nav-links a:focus-visible {
+    animation: proqHeaderWobble 0.8s ease-out !important;
+    transform-origin: center;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    html body header.main-header .nav-links a,
+    html body .main-header .nav-links a,
+    html body header.main-header .nav-links a:hover,
+    html body .main-header .nav-links a:hover,
+    html body header.main-header .nav-links a:focus-visible,
+    html body .main-header .nav-links a:focus-visible {
+        animation: none !important;
+        transition-duration: 0.01ms !important;
+    }
+}

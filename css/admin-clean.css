@@ -1458,3 +1458,71 @@ header.main-header .header-container,
     transform: translateZ(0) !important;
     backface-visibility: hidden !important;
 }
+
+/* Shared admin header links use the same equal, centered desktop sizing.
+   The active appearance remains inherited from the existing admin rules. */
+@media (min-width: 981px) {
+    header.main-header .header-container,
+    .main-header .header-container {
+        display: grid !important;
+        grid-template-columns: minmax(95px, 1fr) auto minmax(95px, 1fr) !important;
+        flex-wrap: nowrap !important;
+    }
+
+    header.main-header .logo-area,
+    .main-header .logo-area {
+        justify-self: start;
+        grid-column: 1;
+    }
+
+    header.main-header .nav-links,
+    .main-header .nav-links {
+        justify-self: center;
+        grid-column: 2;
+        display: flex !important;
+        align-items: center;
+        justify-content: center;
+        gap: 8px !important;
+        width: auto !important;
+    }
+
+    header.main-header .header-actions,
+    .main-header .header-actions {
+        justify-self: end;
+        grid-column: 3;
+    }
+
+    header.main-header .nav-links a,
+    .main-header .nav-links a {
+        width: 128px !important;
+        min-width: 128px !important;
+        max-width: 128px !important;
+        height: 42px !important;
+        min-height: 42px !important;
+        margin: 0 !important;
+        padding: 0 8px !important;
+        box-sizing: border-box !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        text-align: center !important;
+        white-space: nowrap !important;
+        line-height: 1.15 !important;
+    }
+}
+
+@media (min-width: 981px) and (max-width: 1100px) {
+    header.main-header .nav-links,
+    .main-header .nav-links {
+        gap: 4px !important;
+    }
+
+    header.main-header .nav-links a,
+    .main-header .nav-links a {
+        width: 112px !important;
+        min-width: 112px !important;
+        max-width: 112px !important;
+        padding-inline: 4px !important;
+        font-size: 12.5px !important;
+    }
+}
