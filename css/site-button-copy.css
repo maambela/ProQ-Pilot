@@ -8,7 +8,7 @@ html body :is(
     [role="button"],
     a[class*="btn"],
     a[class*="button"]
-):not(.action-btn):not(.qty-btn):not(.btn-wishlist):not(.signin-home):not(.hamburger):not(.checkout-upsell-add):not(.hero-btns > a[href="store.html"]):not(.hero-btns > a[href="brands.html"]) {
+):not(.action-btn):not(.qty-btn):not(.btn-wishlist):not(.signin-home):not(.hamburger):not(.checkout-upsell-add):not(.checkout-upsell-close):not(.hero-btns > a[href="store.html"]):not(.hero-btns > a[href="brands.html"]) {
     display: inline-flex !important;
     align-items: center !important;
     justify-content: center !important;
@@ -99,7 +99,7 @@ html body :is(
     [role="button"],
     a[class*="btn"],
     a[class*="button"]
-):not(.action-btn):not(.qty-btn):not(.btn-wishlist):not(.signin-home):not(.hamburger):not(.checkout-upsell-add):not(.hero-btns > a[href="store.html"]):not(.hero-btns > a[href="brands.html"])::before {
+):not(.action-btn):not(.qty-btn):not(.btn-wishlist):not(.signin-home):not(.hamburger):not(.checkout-upsell-add):not(.checkout-upsell-close):not(.hero-btns > a[href="store.html"]):not(.hero-btns > a[href="brands.html"])::before {
     content: "" !important;
     position: absolute !important;
     top: 0 !important;
@@ -120,7 +120,7 @@ html body :is(
     [role="button"],
     a[class*="btn"],
     a[class*="button"]
-):not(.action-btn):not(.qty-btn):not(.btn-wishlist):not(.signin-home):not(.hamburger):not(.checkout-upsell-add):not(.hero-btns > a[href="store.html"]):not(.hero-btns > a[href="brands.html"]):hover {
+):not(.action-btn):not(.qty-btn):not(.btn-wishlist):not(.signin-home):not(.hamburger):not(.checkout-upsell-add):not(.checkout-upsell-close):not(.hero-btns > a[href="store.html"]):not(.hero-btns > a[href="brands.html"]):hover {
     background: linear-gradient(135deg, rgba(255, 255, 255, 0.25), rgba(255, 255, 255, 0.1)) !important;
     transition-property: background, border-color, box-shadow !important;
     box-shadow: 0 12px 35px rgba(0, 188, 212, 0.4), inset 0 1px 2px rgba(255, 255, 255, 0.5) !important;
@@ -137,7 +137,21 @@ html body :is(
     [role="button"],
     a[class*="btn"],
     a[class*="button"]
-):not(.action-btn):not(.qty-btn):not(.btn-wishlist):not(.signin-home):not(.hamburger):not(.checkout-upsell-add):not(.hero-btns > a[href="store.html"]):not(.hero-btns > a[href="brands.html"]):hover::before {
+):not(.action-btn):not(.qty-btn):not(.btn-wishlist):not(.signin-home):not(.hamburger):not(.checkout-upsell-add):not(.checkout-upsell-close):not(.hero-btns > a[href="store.html"]):not(.hero-btns > a[href="brands.html"]):hover:is(.category-main-btn, .filter-btn) {
+    animation: filterTabWobble 0.8s ease-out !important;
+    transform-origin: center;
+}
+
+html body :is(
+    #site-copy-button-style,
+    button,
+    input[type="button"],
+    input[type="submit"],
+    input[type="reset"],
+    [role="button"],
+    a[class*="btn"],
+    a[class*="button"]
+):not(.action-btn):not(.qty-btn):not(.btn-wishlist):not(.signin-home):not(.hamburger):not(.checkout-upsell-add):not(.checkout-upsell-close):not(.hero-btns > a[href="store.html"]):not(.hero-btns > a[href="brands.html"]):hover::before {
     left: 100% !important;
 }
 
@@ -165,4 +179,27 @@ html body.signin-page .signin-home:hover {
     60% { transform: scale(1.03, 0.97) rotate(-0.5deg); }
     80% { transform: scale(0.99, 1.01) rotate(0.5deg); }
     100% { transform: scale(1) rotate(0deg); }
+}
+
+@keyframes filterTabWobble {
+    0%, 100% { scale: 1; rotate: 0deg; }
+    20% { scale: 1.06 0.96; rotate: -1deg; }
+    40% { scale: 0.98 1.04; rotate: 1deg; }
+    60% { scale: 1.03 0.97; rotate: -0.5deg; }
+    80% { scale: 0.99 1.01; rotate: 0.5deg; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    html body :is(
+        #site-copy-button-style,
+        button,
+        input[type="button"],
+        input[type="submit"],
+        input[type="reset"],
+        [role="button"],
+        a[class*="btn"],
+        a[class*="button"]
+    ):not(.action-btn):not(.qty-btn):not(.btn-wishlist):not(.signin-home):not(.hamburger):not(.checkout-upsell-add):not(.checkout-upsell-close):not(.hero-btns > a[href="store.html"]):not(.hero-btns > a[href="brands.html"]):hover:is(.category-main-btn, .filter-btn) {
+        animation: none !important;
+    }
 }

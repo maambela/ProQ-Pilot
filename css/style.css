@@ -12174,8 +12174,8 @@ html body header.main-header .nav-links a:hover,
 html body .main-header .nav-links a:hover,
 html body header.main-header .nav-links a:focus-visible,
 html body .main-header .nav-links a:focus-visible {
-    animation: none !important;
-    transform: none !important;
+    animation: liquidWobble 0.8s ease-out !important;
+    transform-origin: center;
     transition-property: background, border-color, box-shadow, color !important;
 }
 
