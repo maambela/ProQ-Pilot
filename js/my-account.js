@@ -198,58 +198,361 @@ function formatAccountCurrency(value) {
     })}`;
 }
 
-// Load user addresses
-async function loadUserAddresses() {
+// Delivery address management
+const SA_PROVINCES = [
+    'Eastern Cape',
+    'Free State',
+    'Gauteng',
+    'KwaZulu-Natal',
+    'Limpopo',
+    'Mpumalanga',
+    'Northern Cape',
+    'North West',
+    'Western Cape'
+];
+
+let savedAddresses = [];
+let selectedAddressId = null;
+let addressEditor = null;
+let addressFeedback = '';
+let addressFeedbackError = false;
+
+function escapeAddressHtml(value) {
+    return String(value ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+}
+
+function getStoredSelectedAddress() {
+    try {
+        return JSON.parse(sessionStorage.getItem('selectedAddress') || 'null');
+    } catch (error) {
+        return null;
+    }
+}
+
+function setStoredSelectedAddress(address) {
+    if (!address) {
+        sessionStorage.removeItem('selectedAddress');
+        return;
+    }
+    sessionStorage.setItem('selectedAddress', JSON.stringify(address));
+}
+
+function provinceOptions(selectedProvince) {
+    const preservedOption = selectedProvince && !SA_PROVINCES.includes(selectedProvince)
+        ? `<option value="${escapeAddressHtml(selectedProvince)}" selected>${escapeAddressHtml(selectedProvince)}</option>`
+        : '';
+    return preservedOption + SA_PROVINCES.map(province => `
+        <option value="${escapeAddressHtml(province)}"${province === (selectedProvince || '') ? ' selected' : ''}>
+            ${escapeAddressHtml(province)}
+        </option>
+    `).join('');
+}
+
+function addressEditorMarkup(address = null) {
+    const isEdit = Boolean(address);
+    const id = isEdit ? address.id : 'new';
+    const title = isEdit ? 'Edit address' : 'Add another address';
+
+    return `
+        <div class="address-editor open" data-editor="${escapeAddressHtml(id)}">
+            <div class="address-editor-inner">
+                <form class="address-editor-grid" data-address-form="${escapeAddressHtml(id)}">
+                    <h3 style="grid-column:1/-1;margin:0 0 2px;font-size:0.9rem;font-weight:100;">${title}</h3>
+                    <div class="form-group full">
+                        <label for="address-line1-${escapeAddressHtml(id)}">Street Address</label>
+                        <input id="address-line1-${escapeAddressHtml(id)}" name="line1" value="${escapeAddressHtml(address?.line1 || '')}" required autocomplete="street-address">
+                    </div>
+                    <div class="form-group">
+                        <label for="address-city-${escapeAddressHtml(id)}">City / Town</label>
+                        <input id="address-city-${escapeAddressHtml(id)}" name="city" value="${escapeAddressHtml(address?.city || '')}" required autocomplete="address-level2">
+                    </div>
+                    <div class="form-group">
+                        <label for="address-province-${escapeAddressHtml(id)}">Province</label>
+                        <select id="address-province-${escapeAddressHtml(id)}" name="province" required>
+                            <option value="">Select province</option>
+                            ${provinceOptions(address?.province)}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="address-postal-${escapeAddressHtml(id)}">Postal Code</label>
+                        <input id="address-postal-${escapeAddressHtml(id)}" name="postal_code" value="${escapeAddressHtml(address?.postal_code || '')}" required autocomplete="postal-code">
+                    </div>
+                    <div class="form-group">
+                        <label>Country</label>
+                        <div class="address-country">South Africa</div>
+                        <input type="hidden" name="country" value="South Africa">
+                    </div>
+                    <div class="form-group full">
+                        <label for="address-phone-${escapeAddressHtml(id)}">Contact Number</label>
+                        <input id="address-phone-${escapeAddressHtml(id)}" name="phone" value="${escapeAddressHtml(address?.phone || '')}" required autocomplete="tel" placeholder="+27 76 260 9804">
+                    </div>
+                    <div class="form-group full">
+                        <label for="address-instructions-${escapeAddressHtml(id)}">Delivery Instructions <span style="text-transform:none;color:rgba(255,255,255,.5);">(optional)</span></label>
+                        <textarea id="address-instructions-${escapeAddressHtml(id)}" name="delivery_instructions">${escapeAddressHtml(address?.delivery_instructions || '')}</textarea>
+                    </div>
+                    <div class="form-actions full">
+                        <button type="submit" class="btn btn-primary address-save">${isEdit ? 'Save Changes' : 'Save Address'}</button>
+                        <button type="button" class="btn address-cancel">Cancel</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    `;
+}
+
+function addressCardMarkup(address) {
+    const selected = Number(address.id) === Number(selectedAddressId);
+    const line1 = address.line1 || '';
+    const line2 = address.line2 ? address.line2 : '';
+    const location = [address.city, address.province, address.postal_code].filter(Boolean).join(', ');
+
+    return `
+        <div class="address-card-wrap" data-address-wrap="${escapeAddressHtml(address.id)}">
+            <div class="address-card${selected ? ' selected' : ''}" role="button" tabindex="0" data-address-id="${escapeAddressHtml(address.id)}" aria-pressed="${selected ? 'true' : 'false'}">
+                <div class="address-card-main">
+                    <h3 class="address-card-city">${escapeAddressHtml(address.city || 'Saved address')}</h3>
+                    <p class="address-card-line">${escapeAddressHtml([line1, line2].filter(Boolean).join(', ') || 'Address details unavailable')}</p>
+                    <p class="address-card-location">${escapeAddressHtml(location)} · ${escapeAddressHtml(address.country || 'South Africa')}</p>
+                    ${address.phone ? `<p class="address-card-phone">${escapeAddressHtml(address.phone)}</p>` : ''}
+                    ${selected ? `<span class="address-selected"><i class='bx bx-check-circle'></i> Selected</span>` : ''}
+                </div>
+                <div class="address-card-actions">
+                    <button type="button" class="address-card-action edit" data-address-action="edit" data-address-id="${escapeAddressHtml(address.id)}">Edit</button>
+                    <button type="button" class="address-card-action delete" data-address-action="delete" data-address-id="${escapeAddressHtml(address.id)}">Delete</button>
+                </div>
+            </div>
+            ${addressEditor?.id === address.id ? addressEditorMarkup(address) : ''}
+        </div>
+    `;
+}
+
+function renderAddressManager() {
+    const container = document.getElementById('addressesContainer');
+    if (!container) return;
+
+    if (!savedAddresses.length) {
+        container.innerHTML = `
+            <p class="address-feedback${addressFeedbackError ? ' error' : ''}" role="status" aria-live="polite">${escapeAddressHtml(addressFeedback)}</p>
+            <div class="empty-state" style="background: transparent; box-shadow: none;">
+                <i class='bx bx-map'></i>
+                <h3>No Addresses</h3>
+                <p>You haven't added any addresses yet.</p>
+            </div>
+            ${addressEditor?.mode === 'add' ? addressEditorMarkup() : ''}
+            ${addressEditor?.mode === 'add' ? '' : '<button type="button" class="address-add-button" data-address-action="add">+ Add another address</button>'}
+        `;
+        bindAddressManagerEvents(container);
+        return;
+    }
+
+    container.innerHTML = `
+        <p class="address-feedback${addressFeedbackError ? ' error' : ''}" role="status" aria-live="polite">${escapeAddressHtml(addressFeedback)}</p>
+        <div class="address-list">
+            ${savedAddresses.map(addressCardMarkup).join('')}
+        </div>
+        ${addressEditor?.mode === 'add' ? addressEditorMarkup() : ''}
+        ${addressEditor?.mode === 'add' ? '' : '<button type="button" class="address-add-button" data-address-action="add">+ Add another address</button>'}
+    `;
+    bindAddressManagerEvents(container);
+}
+
+function bindAddressManagerEvents(container) {
+    container.querySelectorAll('.address-card').forEach(card => {
+        const selectCard = () => selectSavedAddress(Number(card.dataset.addressId));
+        card.addEventListener('click', event => {
+            if (event.target.closest('[data-address-action]')) return;
+            selectCard();
+        });
+        card.addEventListener('keydown', event => {
+            if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                selectCard();
+            }
+        });
+    });
+
+    container.querySelectorAll('[data-address-action]').forEach(button => {
+        button.addEventListener('click', event => {
+            event.stopPropagation();
+            const action = button.dataset.addressAction;
+            const id = button.dataset.addressId ? Number(button.dataset.addressId) : null;
+            if (action === 'edit') openAddressEditor(id);
+            if (action === 'delete') deleteSavedAddress(id);
+            if (action === 'add') openAddressEditor(null);
+        });
+    });
+
+    container.querySelectorAll('[data-address-form]').forEach(form => {
+        form.addEventListener('submit', saveAddressFromForm);
+        form.querySelector('.address-cancel')?.addEventListener('click', cancelAddressEditor);
+    });
+}
+
+function selectSavedAddress(id) {
+    const address = savedAddresses.find(item => Number(item.id) === Number(id));
+    if (!address) return;
+    selectedAddressId = Number(address.id);
+    setStoredSelectedAddress(address);
+    addressFeedback = '';
+    addressFeedbackError = false;
+    renderAddressManager();
+}
+
+function openAddressEditor(id) {
+    if (id) {
+        const address = savedAddresses.find(item => Number(item.id) === Number(id));
+        if (!address) return;
+        addressEditor = { mode: 'edit', id: Number(address.id), address };
+    } else {
+        addressEditor = { mode: 'add', id: null };
+    }
+    addressFeedback = '';
+    addressFeedbackError = false;
+    renderAddressManager();
+    const form = document.querySelector('[data-address-form]');
+    form?.querySelector('input, select, textarea')?.focus({ preventScroll: true });
+}
+
+function cancelAddressEditor() {
+    addressEditor = null;
+    addressFeedback = '';
+    addressFeedbackError = false;
+    renderAddressManager();
+}
+
+async function saveAddressFromForm(event) {
+    event.preventDefault();
+    const form = event.currentTarget;
+    if (!form.reportValidity()) return;
+
+    const saveButton = form.querySelector('.address-save');
+    if (saveButton?.disabled) return;
+
+    const editingId = addressEditor?.mode === 'edit' ? addressEditor.id : null;
+    const editingAddress = addressEditor?.mode === 'edit' ? addressEditor.address : null;
+    const payload = {
+        userID: currentUser.userID,
+        line1: form.elements.line1.value.trim(),
+        line2: editingAddress?.line2 || '',
+        city: form.elements.city.value.trim(),
+        province: form.elements.province.value,
+        postal_code: form.elements.postal_code.value.trim(),
+        country: 'South Africa',
+        phone: form.elements.phone.value.trim(),
+        delivery_instructions: form.elements.delivery_instructions.value.trim(),
+        is_default: editingId ? (editingAddress?.is_default || 0) : (savedAddresses.length === 0 ? 1 : 0)
+    };
+
+    saveButton.disabled = true;
+    saveButton.textContent = editingId ? 'Saving...' : 'Saving...';
+
+    try {
+        let savedAddressId = editingId;
+        if (editingId) {
+            await accountAddressRequest(`/api/v1/addresses/${editingId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+        } else {
+            const result = await accountAddressRequest('/api/v1/addresses', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            savedAddressId = result.data?.id;
+        }
+
+        addressEditor = null;
+        addressFeedback = editingId ? 'Address updated.' : 'Address added.';
+        addressFeedbackError = false;
+        await loadUserAddresses(savedAddressId);
+    } catch (error) {
+        addressFeedback = error.message || 'Could not save the address.';
+        addressFeedbackError = true;
+        renderAddressManager();
+    }
+}
+
+async function deleteSavedAddress(id) {
+    const address = savedAddresses.find(item => Number(item.id) === Number(id));
+    if (!address) return;
+    if (!confirm('Delete this saved address?')) return;
+
+    try {
+        await accountAddressRequest(`/api/v1/addresses/${id}`, { method: 'DELETE' });
+        addressFeedback = 'Address deleted.';
+        addressFeedbackError = false;
+        addressEditor = null;
+        await loadUserAddresses();
+    } catch (error) {
+        addressFeedback = error.message || 'Could not delete the address.';
+        addressFeedbackError = true;
+        renderAddressManager();
+    }
+}
+
+async function accountAddressRequest(url, options = {}) {
+    const response = await fetch(url, options);
+    const payload = response.status === 204
+        ? {}
+        : await response.json().catch(() => ({}));
+    if (!response.ok) {
+        throw new Error(payload.message || payload.error || 'Address request failed.');
+    }
+    return payload;
+}
+
+async function loadUserAddresses(preferredAddressId = null) {
+    const container = document.getElementById('addressesContainer');
+    if (container) {
+        container.innerHTML = '<p class="address-feedback" role="status">Loading addresses...</p>';
+    }
+
     try {
         const response = await fetch(`/api/v1/addresses/${currentUser.userID}`);
-        if (response.ok) {
-            const data = await response.json();
-            const addresses = data.data || [];
-            
-            let html = '';
-            if (addresses.length === 0) {
-                html = `
-                    <div class="empty-state" style="background: transparent; box-shadow: none;">
-                        <i class='bx bx-map'></i>
-                        <h3>No Addresses</h3>
-                        <p>You haven't added any addresses yet.</p>
-                        <button onclick="addNewAddress()" class="btn btn-primary">
-                            Add New Address
-                        </button>
-                    </div>
-                `;
-            } else {
-                html = `
-                    <div style="display: grid; gap: 15px; margin-bottom: 20px;">
-                        ${addresses.map(addr => `
-                            <div style="padding: 20px; border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 10px; background: rgba(255, 255, 255, 0.02);">
-                                <h4 style="margin: 0 0 10px 0; color: var(--white); font-family: 'Inter', sans-serif;">${addr.type || 'Address'}</h4>
-                                <p style="margin: 5px 0; color: rgba(255, 255, 255, 0.7);">${addr.line1}</p>
-                                ${addr.line2 ? `<p style="margin: 5px 0; color: rgba(255, 255, 255, 0.7);">${addr.line2}</p>` : ''}
-                                <p style="margin: 5px 0; color: rgba(255, 255, 255, 0.7);">${addr.city}, ${addr.province} ${addr.postal_code}</p>
-                                <p style="margin: 10px 0 0 0; color: rgba(255, 255, 255, 0.5); font-size: 0.9rem;">${addr.country}</p>
-                            </div>
-                        `).join('')}
-                    </div>
-                    <button onclick="addNewAddress()" class="btn btn-primary">
-                        Add New Address
-                    </button>
-                `;
-            }
-            document.getElementById('addressesContainer').innerHTML = html;
+        if (!response.ok) throw new Error('Could not load saved addresses.');
+        const data = await response.json();
+        savedAddresses = data.data || [];
+
+        if (!savedAddresses.length) {
+            selectedAddressId = null;
+            setStoredSelectedAddress(null);
+            renderAddressManager();
+            return;
         }
+
+        const stored = getStoredSelectedAddress();
+        const preferred = savedAddresses.find(address =>
+            Number(address.id) === Number(preferredAddressId)
+        );
+        const storedMatch = savedAddresses.find(address =>
+            Number(address.id) === Number(stored?.id)
+        );
+        const defaultAddress = savedAddresses.find(address => Number(address.is_default) === 1);
+        const selected = preferred || storedMatch || defaultAddress || savedAddresses[0];
+        selectedAddressId = Number(selected.id);
+        setStoredSelectedAddress(selected);
+        renderAddressManager();
     } catch (error) {
         console.error('Error loading addresses:', error);
-        document.getElementById('addressesContainer').innerHTML = `
-            <div class="empty-state" style="background: transparent; box-shadow: none;">
-                <p style="color: #ff4757;">Error loading addresses</p>
-            </div>
-        `;
+        savedAddresses = [];
+        if (container) {
+            container.innerHTML = `
+                <p class="address-feedback error" role="alert">Could not load saved addresses.</p>
+                <button type="button" class="address-add-button" onclick="loadUserAddresses()">Try again</button>
+            `;
+        }
     }
 }
 
 function addNewAddress() {
-    alert('Address management coming soon!');
+    openAddressEditor(null);
 }
 
 // Help form submission

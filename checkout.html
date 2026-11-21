@@ -172,9 +172,8 @@
                         <input class="form-input" name="line2" placeholder="Address line 2 (optional)" />
                         <input class="form-input" name="city" placeholder="City" required />
                         <input class="form-input" name="postal_code" placeholder="Postal code" required />
-                        <select id="countrySelect" name="country" class="form-select" required>
-                            <option value="">Select country</option>
-                        </select>
+                        <div class="form-input" aria-label="Country" style="display:flex;align-items:center;">South Africa</div>
+                        <input type="hidden" id="countrySelect" name="country" value="South Africa">
                         <div id="provinceContainer">
                             <input class="form-input" name="province" placeholder="Province/State" />
                         </div>

@@ -408,6 +408,245 @@
             margin-top: 4px;
         }
 
+        .address-manager {
+            min-width: 0;
+        }
+
+        .address-list {
+            display: grid;
+            gap: 10px;
+        }
+
+        .address-card {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) auto;
+            gap: 12px;
+            width: 100%;
+            padding: 16px 18px;
+            border: 1px solid rgba(255, 255, 255, 0.13);
+            border-radius: 16px;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.065), rgba(255, 255, 255, 0.025));
+            box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.08), 0 8px 24px rgba(0, 0, 0, 0.12);
+            cursor: pointer;
+            transition: border-color 0.22s ease, background 0.22s ease, box-shadow 0.22s ease;
+        }
+
+        .address-card:hover,
+        .address-card:focus-visible {
+            border-color: rgba(68, 255, 224, 0.38);
+            background: rgba(255, 255, 255, 0.09);
+            box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.12), 0 10px 28px rgba(0, 0, 0, 0.16);
+            outline: none;
+        }
+
+        .address-card.selected {
+            border-color: rgba(68, 255, 224, 0.48);
+            background: linear-gradient(135deg, rgba(68, 255, 224, 0.09), rgba(255, 255, 255, 0.045));
+        }
+
+        .address-card-main {
+            min-width: 0;
+        }
+
+        .address-card-city {
+            margin: 0 0 3px;
+            color: #fff;
+            font-size: 1rem;
+            font-weight: 100;
+        }
+
+        .address-card-line,
+        .address-card-location,
+        .address-card-phone {
+            margin: 0;
+            color: rgba(255, 255, 255, 0.72);
+            font-size: 0.82rem;
+            line-height: 1.45;
+        }
+
+        .address-card-location,
+        .address-card-phone {
+            color: rgba(255, 255, 255, 0.58);
+        }
+
+        .address-selected {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            margin-top: 8px;
+            color: var(--accent-blue);
+            font-size: 0.78rem;
+        }
+
+        .address-card-actions {
+            display: flex;
+            align-items: flex-start;
+            gap: 6px;
+        }
+
+        .address-card-action {
+            min-height: 32px;
+            padding: 5px 9px;
+            border: 0;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.055);
+            color: rgba(255, 255, 255, 0.78);
+            font: inherit;
+            font-size: 0.72rem;
+            cursor: pointer;
+        }
+
+        .address-card-action:hover,
+        .address-card-action:focus-visible {
+            background: rgba(255, 255, 255, 0.12);
+            color: #fff;
+            outline: 1px solid rgba(255, 255, 255, 0.22);
+        }
+
+        .address-card-action.delete:hover,
+        .address-card-action.delete:focus-visible {
+            color: #ff9ba2;
+            outline-color: rgba(255, 139, 148, 0.38);
+        }
+
+        .address-editor {
+            display: grid;
+            grid-template-rows: 0fr;
+            margin: 0;
+            transition: grid-template-rows 0.24s ease, margin 0.24s ease;
+        }
+
+        .address-editor.open {
+            grid-template-rows: 1fr;
+            margin: 10px 0 2px;
+        }
+
+        .address-editor-inner {
+            min-height: 0;
+            overflow: hidden;
+        }
+
+        .address-editor.open .address-editor-inner {
+            padding: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 16px;
+            background: rgba(8, 10, 18, 0.22);
+        }
+
+        .address-editor-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 10px 12px;
+        }
+
+        .address-editor-grid .form-group.full,
+        .address-editor-grid .form-actions.full {
+            grid-column: 1 / -1;
+        }
+
+        .address-editor-grid .form-group input,
+        .address-editor-grid .form-group select,
+        .address-editor-grid .form-group textarea {
+            min-height: 42px;
+            padding: 10px 12px;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            background: rgba(255, 255, 255, 0.07);
+            color: #fff;
+            font: inherit;
+            font-size: 0.82rem;
+            outline: none;
+        }
+
+        .address-editor-grid .form-group select option {
+            color: #171722;
+        }
+
+        .address-editor-grid .form-group textarea {
+            min-height: 76px;
+            resize: vertical;
+        }
+
+        .address-editor-grid .form-group input:focus,
+        .address-editor-grid .form-group select:focus,
+        .address-editor-grid .form-group textarea:focus {
+            border-color: rgba(68, 255, 224, 0.72);
+            box-shadow: 0 0 0 3px rgba(68, 255, 224, 0.07);
+        }
+
+        .address-country {
+            min-height: 42px;
+            display: flex;
+            align-items: center;
+            padding: 10px 12px;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.04);
+            color: rgba(255, 255, 255, 0.72);
+            font-size: 0.82rem;
+        }
+
+        .address-add-button {
+            width: 100%;
+            min-height: 42px;
+            margin-top: 12px;
+            border: 1px dashed rgba(68, 255, 224, 0.28);
+            border-radius: 12px;
+            background: rgba(68, 255, 224, 0.025);
+            color: var(--accent-blue);
+            font: inherit;
+            font-size: 0.82rem;
+            cursor: pointer;
+        }
+
+        .address-add-button:hover,
+        .address-add-button:focus-visible {
+            border-style: solid;
+            border-color: rgba(68, 255, 224, 0.48);
+            background: rgba(68, 255, 224, 0.07);
+            outline: none;
+        }
+
+        .address-feedback {
+            min-height: 18px;
+            margin: 0 0 10px;
+            color: rgba(68, 255, 224, 0.92);
+            font-size: 0.78rem;
+        }
+
+        .address-feedback.error {
+            color: #ff9ba2;
+        }
+
+        @media (max-width: 760px) {
+            .address-card {
+                grid-template-columns: 1fr;
+                padding: 14px;
+            }
+
+            .address-card-actions {
+                justify-content: flex-end;
+            }
+
+            .address-editor-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .address-editor-grid .form-group.full,
+            .address-editor-grid .form-actions.full {
+                grid-column: 1;
+            }
+
+            .address-editor.open .address-editor-inner {
+                padding: 12px;
+            }
+
+            .address-editor-grid .form-actions {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
         .support-layout {
             display: grid;
             grid-template-columns: minmax(240px, 0.9fr) minmax(0, 1.1fr);
@@ -796,7 +1035,7 @@
                 <i class='bx bx-map'></i>
                 <h2>My Addresses</h2>
             </div>
-            <div id="addressesContainer" style="background: linear-gradient(135deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02)); backdrop-filter: blur(24px); border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 20px; padding: 30px; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);">
+            <div id="addressesContainer" class="profile-details address-manager">
                 <p style="text-align: center; color: rgba(255, 255, 255, 0.6);">Loading your addresses...</p>
             </div>
         </div>
@@ -888,6 +1127,6 @@
     <script src="js/site-footer.js?v=footer-mobile-bg-20260708"></script>
     <script src="js/script.js?v=store-catalog-20260924"></script>
     <script src="js/auth-ui.js?v=page-menus-20261001"></script>
-    <script src="js/my-account.js?v=page-menus-20261001"></script>
+    <script src="js/my-account.js?v=address-card-ui-20261122"></script>
 </body>
 </html>

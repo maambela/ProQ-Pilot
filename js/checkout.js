@@ -378,16 +378,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         'France': ['Auvergne-Rhone-Alpes','Bourgogne-Franche-Comte','Brittany','Centre-Val de Loire','Corsica','Grand Est','Hauts-de-France','Ile-de-France','Normandy','Nouvelle-Aquitaine','Occitanie','Pays de la Loire','Provence-Alpes-Cote d\'Azur']
     };
 
-    // populate country select
-    countries.forEach(c => {
-        const opt = document.createElement('option'); opt.value = c; opt.textContent = c; countrySelect.appendChild(opt);
-    });
-
     function setProvinceFieldForCountry(country) {
         const provinces = provincesMap[country];
         provinceContainer.innerHTML = '';
         if (provinces && provinces.length) {
-            const sel = document.createElement('select'); sel.name = 'province'; sel.style.width = '100%'; sel.style.padding = '10px'; sel.style.marginBottom='8px';
+            const sel = document.createElement('select'); sel.name = 'province'; sel.required = true; sel.style.width = '100%'; sel.style.padding = '10px'; sel.style.marginBottom='8px';
             const empty = document.createElement('option'); empty.value=''; empty.textContent='Select province / state'; sel.appendChild(empty);
             provinces.forEach(p => { const o = document.createElement('option'); o.value = p; o.textContent = p; sel.appendChild(o); });
             provinceContainer.appendChild(sel);
@@ -488,7 +483,16 @@ document.addEventListener('DOMContentLoaded', async () => {
         form.postal_code.value = a.postal_code || '';
         if (a.country) { countrySelect.value = a.country; setProvinceFieldForCountry(a.country); }
         const provinceField = form.querySelector('[name="province"]');
-        if (provinceField) provinceField.value = a.province || '';
+        if (provinceField) {
+            provinceField.value = a.province || '';
+            if (provinceField.tagName === 'SELECT' && a.province && !Array.from(provinceField.options).some(option => option.value === a.province)) {
+                const preserved = document.createElement('option');
+                preserved.value = a.province;
+                preserved.textContent = a.province;
+                provinceField.appendChild(preserved);
+                provinceField.value = a.province;
+            }
+        }
         form.phone.value = a.phone || '';
         form.delivery_instructions.value = a.delivery_instructions || '';
         document.getElementById('addressSubmit').textContent = 'Save Changes';
