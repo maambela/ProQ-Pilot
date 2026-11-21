@@ -253,7 +253,7 @@ body {
     font-size: 14px;
 }
 
-.nav-links a {
+.nav-links a.active {
     background: linear-gradient(
         135deg,
         rgba(0, 0, 0, 0.25),
@@ -7991,7 +7991,7 @@ color: #d8d8d8;
     min-height: 38px;
     padding: 0 12px;
     border-radius: 999px;
-    border: 1px solid rgba(0, 0, 0, 0.4);
+    border: 1px solid transparent;
     font-weight: 200;
 }
 
@@ -12015,20 +12015,20 @@ body:has(.cart-container) {
 }
 
 @media (min-width: 981px) {
-    header.main-header .header-container,
-    .main-header .header-container {
+    header.main-header .header-container:not(.nav-preview-open),
+    .main-header .header-container:not(.nav-preview-open) {
         display: grid !important;
         grid-template-columns: minmax(95px, 1fr) auto minmax(95px, 1fr) !important;
     }
 
-    header.main-header .logo-area,
-    .main-header .logo-area {
+    header.main-header .header-container:not(.nav-preview-open) .logo-area,
+    .main-header .header-container:not(.nav-preview-open) .logo-area {
         justify-self: start;
         grid-column: 1;
     }
 
-    header.main-header .nav-links,
-    .main-header .nav-links {
+    header.main-header .header-container:not(.nav-preview-open) .nav-links,
+    .main-header .header-container:not(.nav-preview-open) .nav-links {
         justify-self: center;
         grid-column: 2;
         display: flex !important;
@@ -12039,14 +12039,14 @@ body:has(.cart-container) {
         margin: 0;
     }
 
-    header.main-header .header-actions,
-    .main-header .header-actions {
+    header.main-header .header-container:not(.nav-preview-open) .header-actions,
+    .main-header .header-container:not(.nav-preview-open) .header-actions {
         justify-self: end;
         grid-column: 3;
     }
 
-    header.main-header .nav-links a,
-    .main-header .nav-links a {
+    header.main-header .header-container:not(.nav-preview-open) .nav-links a,
+    .main-header .header-container:not(.nav-preview-open) .nav-links a {
         width: var(--header-nav-link-width) !important;
         min-width: var(--header-nav-link-width) !important;
         max-width: var(--header-nav-link-width) !important;
@@ -12065,8 +12065,8 @@ body:has(.cart-container) {
 }
 
 @media (min-width: 981px) and (max-width: 1100px) {
-    header.main-header .nav-links,
-    .main-header .nav-links {
+    header.main-header .header-container:not(.nav-preview-open) .nav-links,
+    .main-header .header-container:not(.nav-preview-open) .nav-links {
         --header-nav-link-width: 128px;
         max-width: 808px;
         flex-wrap: wrap;
@@ -12074,8 +12074,8 @@ body:has(.cart-container) {
         column-gap: 8px;
     }
 
-    header.main-header .nav-links a,
-    .main-header .nav-links a {
+    header.main-header .header-container:not(.nav-preview-open) .nav-links a,
+    .main-header .header-container:not(.nav-preview-open) .nav-links a {
         width: var(--header-nav-link-width) !important;
         min-width: var(--header-nav-link-width) !important;
         max-width: var(--header-nav-link-width) !important;
@@ -12086,8 +12086,8 @@ body:has(.cart-container) {
 
 /* The shared glass chip shape remains identical; inactive links stay visually quieter
    than the existing orange-tinted current-page active link. */
-html body header.main-header .nav-links a:not(.active),
-html body .main-header .nav-links a:not(.active) {
+html body header.main-header .header-container:not(.nav-preview-open) .nav-links a:not(.active),
+html body .main-header .header-container:not(.nav-preview-open) .nav-links a:not(.active) {
     color: rgba(255, 255, 255, 0.72) !important;
     background: rgba(255, 255, 255, 0.035) !important;
     border: 1px solid rgba(255, 255, 255, 0.1) !important;
