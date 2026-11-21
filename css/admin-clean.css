@@ -803,8 +803,8 @@ header.main-header .nav-links a,
     white-space: nowrap !important;
 }
 
-header.main-header .nav-links a.active,
-.main-header .nav-links a.active {
+header.main-header .nav-links a,
+.main-header .nav-links a {
     color: #fff !important;
 }
 
@@ -1098,8 +1098,8 @@ header.main-header .nav-links a:hover,
     border-color: rgba(255, 255, 255, 0.14) !important;
 }
 
-header.main-header .nav-links a.active,
-.main-header .nav-links a.active {
+header.main-header .nav-links a,
+.main-header .nav-links a {
     color: #fff !important;
     background: linear-gradient(135deg, rgba(255, 255, 255, 0.16), rgba(255, 168, 54, 0.12)) !important;
     border-color: rgba(255, 255, 255, 0.2) !important;
