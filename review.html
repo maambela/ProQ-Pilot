@@ -42,8 +42,155 @@
         .account-item-label{ font-weight:200; color:rgba(255, 255, 255, 0.7); }
         .account-item-value{ color:#ffffff; word-break:break-all; }
         .test-result-error{ background:rgba(255, 107, 107, 0.1); border:1px solid rgba(255, 107, 107, 0.3); padding:12px; border-radius:8px; color:#ff6b6b; font-size:0.9rem; }
+
+        #productModal.modal-overlay {
+            padding: 20px;
+        }
+
+        #productModal .product-modal {
+            width: min(960px, 92vw);
+            max-height: calc(100vh - 40px);
+            border: 1px solid rgba(255, 255, 255, 0.7);
+            border-radius: 18px;
+            background: #fff;
+            overflow: hidden;
+        }
+
+        #productModal .modal-body {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) 380px;
+            gap: 20px;
+            max-height: calc(100vh - 84px);
+            padding: 20px;
+            align-items: start;
+        }
+
+        #productModal .modal-left {
+            min-width: 0;
+        }
+
+        #productModal .modal-gallery {
+            min-width: 0;
+        }
+
+        #productModal .modal-gallery .main {
+            width: 100%;
+            height: 300px;
+            border: 1px solid rgba(15, 23, 42, 0.08);
+            border-radius: 12px;
+            background: #f7f8fa;
+        }
+
+        #productModal .modal-gallery .thumbs {
+            max-width: 100%;
+            overflow-x: auto;
+            padding: 2px 0;
+        }
+
+        #productModal .modal-gallery .thumbs img {
+            width: 58px;
+            height: 58px;
+            flex: 0 0 58px;
+            border: 1px solid rgba(15, 23, 42, 0.08);
+            object-fit: contain;
+            background: #fff;
+        }
+
+        #productModal .modal-right {
+            min-width: 0;
+            max-height: calc(100vh - 124px);
+            overflow-y: auto;
+            padding-right: 4px;
+            color: #1f2937;
+        }
+
+        #productModal .modal-right h3 {
+            max-width: 100%;
+            margin: 0 0 10px;
+            color: #111827;
+            font-size: 1.08rem;
+            line-height: 1.35;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            overflow-wrap: anywhere;
+        }
+
+        #productModal .modal-specs {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 8px;
+        }
+
+        #productModal .modal-specs .spec {
+            min-width: 0;
+            border: 1px solid #e3e7ec;
+            border-radius: 10px;
+            background: #f7f9fc;
+            color: #1f2937;
+            font-size: 0.78rem;
+            line-height: 1.35;
+            overflow-wrap: anywhere;
+        }
+
+        #productModal .modal-specs .spec strong {
+            display: block;
+            margin-bottom: 3px;
+            color: #111827;
+        }
+
+        #productModal .modal-description {
+            max-height: 118px;
+            overflow: hidden;
+            color: #4b5563;
+            font-size: 0.82rem;
+            line-height: 1.45;
+            display: -webkit-box;
+            -webkit-line-clamp: 5;
+            -webkit-box-orient: vertical;
+        }
+
+        #productModal .modal-close {
+            z-index: 2;
+            width: 32px;
+            height: 32px;
+            min-height: 32px;
+            padding: 0;
+            border: 1px solid rgba(15, 23, 42, 0.12);
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.96);
+            color: #111827;
+            font-size: 20px;
+        }
+
+        @media (max-width: 900px) {
+            #productModal.modal-overlay {
+                align-items: flex-start;
+                overflow-y: auto;
+            }
+
+            #productModal .product-modal {
+                margin: 12px 0;
+                max-height: calc(100vh - 24px);
+            }
+
+            #productModal .modal-body {
+                grid-template-columns: 1fr;
+                max-height: calc(100vh - 68px);
+                overflow-y: auto;
+            }
+
+            #productModal .modal-gallery .main {
+                height: min(42vh, 260px);
+            }
+
+            #productModal .modal-right {
+                max-height: none;
+                overflow: visible;
+            }
+        }
     </style>
-    <link href="css/site-button-copy.css?v=exact-copy-20261001d" rel="stylesheet">
+    <link href="css/site-button-copy.css?v=review-modal-20261122" rel="stylesheet">
 </head>
 <body>
     <header class="main-header">
@@ -160,6 +307,6 @@
 
     <script src="js/site-footer.js?v=footer-mobile-bg-20260708"></script>
     <script src="js/auth-ui.js?v=page-menus-20261001"></script>
-    <script src="js/review.js?v=recs-engine-fix-20260921"></script>
+    <script src="js/review.js?v=review-modal-20261122"></script>
 </body>
 </html>

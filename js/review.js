@@ -624,7 +624,9 @@ document.addEventListener('DOMContentLoaded', async ()=>{
 
     function openProductModal(product, images){
         if (!modal) return;
-        modalTitle.innerText = product.product_name || product.name || 'Product Details';
+        const title = String(product.product_name || product.name || 'Product Details').trim();
+        modalTitle.innerText = title;
+        modalTitle.title = title;
 
         // Gallery
         const imgList = (images && images.length) ? images.map(i=> i.image_url || i) : [];
