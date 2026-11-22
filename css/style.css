@@ -12282,3 +12282,23 @@ html body :not(i):not(.bx):not(svg):not(path):not(use):not(symbol) {
     font-synthesis: none !important;
     font-variation-settings: 'wght' 100 !important;
 }
+
+/* Restore the navigation link typography independently of the thin-text pass. */
+html body .main-header .nav-links a {
+    font-size: 20px !important;
+    font-weight: 200 !important;
+    font-variation-settings: 'wght' 200 !important;
+}
+
+@media (max-width: 968px) {
+    html body .main-header .nav-links a {
+        font-size: 0.78rem !important;
+    }
+}
+
+@media (min-width: 969px) and (max-width: 1600px) and (max-height: 1000px),
+       (min-width: 981px) and (max-width: 1100px) {
+    html body .main-header .nav-links a {
+        font-size: 13px !important;
+    }
+}
