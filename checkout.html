@@ -16,7 +16,7 @@
         .checkout-actions { margin-top: 16px; display:flex; gap:10px; }
 
         /* Checkout layout helpers */
-        .checkout-grid { display: grid; grid-template-columns: 1fr 380px; gap:20px; align-items:start; }
+        .checkout-grid { display: grid; grid-template-columns: minmax(0, 1fr) 520px; gap:24px; align-items:start; }
         .address-card { min-width: 0; }
         .address-card .meta.small { font-size: 0.9rem; color: rgba(255, 255, 255, 0.75); margin-top:4px; }
 
@@ -120,8 +120,9 @@
             align-items: center;
             gap: 10px;
             min-width: 0;
+            width: 100%;
             padding: 14px;
-            border-radius: 14px;
+            border-radius: 8px;
             border: 1px solid rgba(255, 255, 255, 0.16);
             background: linear-gradient(135deg, rgba(255, 255, 255, 0.09), rgba(255, 255, 255, 0.035));
             box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.12), 0 10px 26px rgba(0, 0, 0, 0.14);
@@ -218,7 +219,7 @@
             min-height: 42px;
             margin-top: 10px;
             border: 1px dashed rgba(68, 255, 224, 0.32);
-            border-radius: 12px;
+            border-radius: 8px;
             background: rgba(68, 255, 224, 0.03);
             color: var(--accent-blue);
             font: inherit;
@@ -282,6 +283,11 @@
             min-height: 18px !important;
             margin: 2px 0 0 !important;
             font-size: 0.78rem;
+        }
+        @media (min-width: 901px) and (max-width: 1200px) {
+            .checkout-grid {
+                grid-template-columns: minmax(0, 1fr) 460px;
+            }
         }
         @media (max-width: 900px) {
             #addressList .address-card {
@@ -352,7 +358,7 @@
         </div>
     </header>
 
-    <main style="max-width:1100px; margin: 140px auto 60px; padding: 0 20px;">
+    <main class="checkout-main" style="max-width:1380px; margin: 140px auto 60px; padding: 0 24px;">
         <h2 style="color: #ffffff;">Choose Delivery Address</h2>
         <p style="color: rgba(255, 255, 255, 0.7);">Select an existing address or add a new one for delivery.</p>
 
