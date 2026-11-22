@@ -12282,9 +12282,9 @@ html body :not(i):not(.bx):not(svg):not(path):not(use):not(symbol) {
     font-variation-settings: 'wght' 100 !important;
 }
 
-/* Restore the navigation link typography independently of the thin-text pass. */
+/* Keep navigation links independent of the thin-text pass. */
 html body .main-header .nav-links a {
-    font-size: 20px !important;
+    font-size: 16px !important;
     font-weight: 200 !important;
     font-variation-settings: 'wght' 200 !important;
 }
