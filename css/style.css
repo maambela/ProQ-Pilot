@@ -10089,7 +10089,8 @@ h6 {
 }
 
 .account-page *,
-.orders-page * {
+.orders-page *,
+.order-details-page * {
     font-family: 'Inter', sans-serif !important;
     font-weight: 100 !important;
     font-synthesis: none !important;
@@ -10097,7 +10098,9 @@ h6 {
 }
 
 .orders-page .btn-primary,
-.orders-page .btn-secondary {
+.orders-page .btn-secondary,
+.order-details-page .order-container .btn-primary,
+.order-details-page .order-container .btn-secondary {
     font-weight: 100 !important;
     font-variation-settings: 'wght' 100 !important;
 }

@@ -10,7 +10,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/style.css?v=account-orders-font-weight-100-20261122">
-    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>    <style>
+    <style>
         .account-container {
             max-width: 1000px;
             margin: 0 auto;
@@ -118,6 +118,37 @@
             transition: all 0.3s ease;
             position: relative;
             z-index: 1;
+        }
+
+        .thin-account-icon {
+            display: inline-block;
+            width: 1em;
+            height: 1em;
+            fill: none;
+            stroke: currentColor;
+            stroke-width: 1.4;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            flex-shrink: 0;
+            vertical-align: middle;
+        }
+
+        .account-icon-sprite {
+            position: absolute;
+            width: 0;
+            height: 0;
+            overflow: hidden;
+        }
+
+        .section-header .thin-account-icon {
+            color: var(--accent-blue);
+            font-size: 1.35rem;
+        }
+
+        .support-contact-item .thin-account-icon {
+            color: var(--accent-blue);
+            font-size: 1.25rem;
+            margin-top: 2px;
         }
 
         .dashboard-card h3 {
@@ -338,11 +369,6 @@
             align-items: center;
             gap: 10px;
             margin: 8px 0 18px;
-        }
-
-        .section-header i {
-            color: var(--accent-blue);
-            font-size: 1.35rem;
         }
 
         .account-panel,
@@ -678,12 +704,6 @@
             border: 1px solid rgba(255, 255, 255, 0.12);
         }
 
-        .support-contact-item i {
-            color: var(--accent-blue);
-            font-size: 1.25rem;
-            margin-top: 2px;
-        }
-
         .support-contact-item span {
             display: block;
             color: rgba(255, 255, 255, 0.62);
@@ -876,6 +896,20 @@
     <link href="css/site-button-copy.css?v=account-orders-font-weight-100-20261122" rel="stylesheet">
 </head>
 <body class="account-page">
+    <svg aria-hidden="true" focusable="false" class="account-icon-sprite">
+        <symbol id="account-icon-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"></circle><path d="M5 21v-2a7 7 0 0 1 14 0v2"></path></symbol>
+        <symbol id="account-icon-package" viewBox="0 0 24 24"><path d="m12 3 8 4.5v9L12 21l-8-4.5v-9L12 3Z"></path><path d="m4 7.5 8 4.5 8-4.5M12 12v9M9 4.7l8 4.6v3"></path></symbol>
+        <symbol id="account-icon-map" viewBox="0 0 24 24"><path d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0Z"></path><circle cx="12" cy="10" r="2.5"></circle></symbol>
+        <symbol id="account-icon-return" viewBox="0 0 24 24"><path d="m9 14-5-5 5-5"></path><path d="M4 9h10a6 6 0 0 1 0 12h-2"></path></symbol>
+        <symbol id="account-icon-help" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"></circle><path d="M9.6 9a2.5 2.5 0 1 1 4.8 1.2c0 1.5-2.4 2-2.4 3.8M12 17.5h.01"></path></symbol>
+        <symbol id="account-icon-logout" viewBox="0 0 24 24"><path d="m10 17 5-5-5-5M15 12H3"></path><path d="M12 3h7a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-7"></path></symbol>
+        <symbol id="account-icon-heart" viewBox="0 0 24 24"><path d="M20.8 8.6c0 5.2-8.8 10.4-8.8 10.4S3.2 13.8 3.2 8.6a4.6 4.6 0 0 1 8.8-2 4.6 4.6 0 0 1 8.8 2Z"></path></symbol>
+        <symbol id="account-icon-cart" viewBox="0 0 24 24"><path d="M3 3h2l2.4 11.4a2 2 0 0 0 2 1.6h8.8a2 2 0 0 0 2-1.6L22 7H6"></path><circle cx="10" cy="20" r="1"></circle><circle cx="18" cy="20" r="1"></circle></symbol>
+        <symbol id="account-icon-chevron" viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"></path></symbol>
+        <symbol id="account-icon-phone" viewBox="0 0 24 24"><path d="M22 16.9v3a2 2 0 0 1-2.2 2A19.8 19.8 0 0 1 3.1 5.2 2 2 0 0 1 5.1 3h3a2 2 0 0 1 2 1.7l.5 3a2 2 0 0 1-.6 1.7L8.1 11a16 16 0 0 0 4.9 4.9l1.6-1.9a2 2 0 0 1 1.7-.6l3 .5a2 2 0 0 1 1.7 2Z"></path></symbol>
+        <symbol id="account-icon-mail" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"></rect><path d="m3 7 9 6 9-6"></path></symbol>
+        <symbol id="account-icon-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></symbol>
+    </svg>
     <header class="main-header">
         <div class="header-container">
             <div class="logo-area">
@@ -890,14 +924,14 @@
             </nav>
             <div class="header-actions">
                 <a href="wishlist.html" class="wishlist-wrapper">
-                    <span class="wishlist-icon"><i class='bx bx-heart'></i></span>
+                    <span class="wishlist-icon"><svg class="thin-account-icon" aria-hidden="true"><use href="#account-icon-heart"></use></svg></span>
                     <span class="wishlist-badge">0</span>
                 </a>
                 <a href="signin.html" class="auth-wrapper">
-                    <span class="auth-icon"><i class='bx bx-user'></i></span>
+                    <span class="auth-icon"><svg class="thin-account-icon" aria-hidden="true"><use href="#account-icon-user"></use></svg></span>
                 </a>
                 <a href="cart.html" class="cart-wrapper">
-                    <span class="cart-icon"><i class='bx bx-cart'></i></span>
+                    <span class="cart-icon"><svg class="thin-account-icon" aria-hidden="true"><use href="#account-icon-cart"></use></svg></span>
                     <span class="cart-badge" id="cart-count">0</span>
                 </a>
                 <div class="hamburger" id="hamburger">
@@ -913,7 +947,7 @@
         <!-- Dashboard Section -->
         <div id="dashboard-section" class="account-section active">
             <div class="account-header">
-                <div class="account-avatar" id="userAvatar"><i class='bx bx-user'></i></div>
+                <div class="account-avatar" id="userAvatar"><svg class="thin-account-icon" aria-hidden="true"><use href="#account-icon-user"></use></svg></div>
                 <div class="account-info">
                     <h1 id="userName">Welcome</h1>
                     <p id="userEmail">Loading...</p>
@@ -922,37 +956,37 @@
 
             <div class="dashboard-grid">
                 <a href="#" class="dashboard-card" onclick="switchSection('profile'); return false;">
-                    <div class="dashboard-card-icon"><i class='bx bx-user'></i></div>
+                    <div class="dashboard-card-icon"><svg class="thin-account-icon" aria-hidden="true"><use href="#account-icon-user"></use></svg></div>
                     <h3>My Profile</h3>
                     <p>View and edit your personal information</p>
                 </a>
 
                 <a href="user-orders.html" class="dashboard-card">
-                    <div class="dashboard-card-icon"><i class='bx bx-package'></i></div>
+                    <div class="dashboard-card-icon"><svg class="thin-account-icon" aria-hidden="true"><use href="#account-icon-package"></use></svg></div>
                     <h3>My Orders</h3>
                     <p>Track and manage your orders</p>
                 </a>
 
                 <a href="#" class="dashboard-card" onclick="switchSection('addresses'); return false;">
-                    <div class="dashboard-card-icon"><i class='bx bx-map'></i></div>
+                    <div class="dashboard-card-icon"><svg class="thin-account-icon" aria-hidden="true"><use href="#account-icon-map"></use></svg></div>
                     <h3>Addresses</h3>
                     <p>Manage your delivery addresses</p>
                 </a>
 
                 <a href="#" class="dashboard-card" onclick="switchSection('returns'); return false;">
-                    <div class="dashboard-card-icon"><i class='bx bx-redo'></i></div>
+                    <div class="dashboard-card-icon"><svg class="thin-account-icon" aria-hidden="true"><use href="#account-icon-return"></use></svg></div>
                     <h3>Returns</h3>
                     <p>View and manage returns</p>
                 </a>
 
                 <a href="#" class="dashboard-card" onclick="switchSection('help'); return false;">
-                    <div class="dashboard-card-icon"><i class='bx bx-help-circle'></i></div>
+                    <div class="dashboard-card-icon"><svg class="thin-account-icon" aria-hidden="true"><use href="#account-icon-help"></use></svg></div>
                     <h3>Help & Support</h3>
                     <p>Contact us or get support</p>
                 </a>
 
                 <a href="#" class="dashboard-card" onclick="logout(); return false;">
-                    <div class="dashboard-card-icon"><i class='bx bx-log-out'></i></div>
+                    <div class="dashboard-card-icon"><svg class="thin-account-icon" aria-hidden="true"><use href="#account-icon-logout"></use></svg></div>
                     <h3>Logout</h3>
                     <p>Sign out from your account</p>
                 </a>
@@ -961,9 +995,9 @@
 
         <!-- Profile Section -->
         <div id="profile-section" class="account-section">
-            <button class="back-btn" onclick="switchSection('dashboard')"><i class='bx bx-chevron-left'></i> Back</button>
+            <button class="back-btn" onclick="switchSection('dashboard')"><svg class="thin-account-icon" aria-hidden="true"><use href="#account-icon-chevron"></use></svg> Back</button>
             <div class="section-header">
-                <i class='bx bx-user'></i>
+                <svg class="thin-account-icon" aria-hidden="true"><use href="#account-icon-user"></use></svg>
                 <h2>My Profile</h2>
             </div>
 
@@ -1021,9 +1055,9 @@
 
         <!-- Orders Section -->
         <div id="orders-section" class="account-section">
-            <button class="back-btn" onclick="switchSection('dashboard')"><i class='bx bx-chevron-left'></i> Back</button>
+            <button class="back-btn" onclick="switchSection('dashboard')"><svg class="thin-account-icon" aria-hidden="true"><use href="#account-icon-chevron"></use></svg> Back</button>
             <div class="section-header">
-                <i class='bx bx-package'></i>
+                <svg class="thin-account-icon" aria-hidden="true"><use href="#account-icon-package"></use></svg>
                 <h2>My Orders</h2>
             </div>
             <div id="ordersContainer" class="profile-details">
@@ -1033,9 +1067,9 @@
 
         <!-- Addresses Section -->
         <div id="addresses-section" class="account-section">
-            <button class="back-btn" onclick="switchSection('dashboard')"><i class='bx bx-chevron-left'></i> Back</button>
+            <button class="back-btn" onclick="switchSection('dashboard')"><svg class="thin-account-icon" aria-hidden="true"><use href="#account-icon-chevron"></use></svg> Back</button>
             <div class="section-header">
-                <i class='bx bx-map'></i>
+                <svg class="thin-account-icon" aria-hidden="true"><use href="#account-icon-map"></use></svg>
                 <h2>My Addresses</h2>
             </div>
             <div id="addressesContainer" class="profile-details address-manager">
@@ -1045,13 +1079,13 @@
 
         <!-- Returns Section -->
         <div id="returns-section" class="account-section">
-            <button class="back-btn" onclick="switchSection('dashboard')"><i class='bx bx-chevron-left'></i> Back</button>
+            <button class="back-btn" onclick="switchSection('dashboard')"><svg class="thin-account-icon" aria-hidden="true"><use href="#account-icon-chevron"></use></svg> Back</button>
             <div class="section-header">
-                <i class='bx bx-redo'></i>
+                <svg class="thin-account-icon" aria-hidden="true"><use href="#account-icon-return"></use></svg>
                 <h2>Returns</h2>
             </div>
             <div id="returnsContainer" class="empty-state" style="background: linear-gradient(135deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02)); backdrop-filter: blur(24px); border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 20px;">
-                <i class='bx bx-redo' style="font-size: 3rem; color: rgba(255, 255, 255, 0.1); display: block; margin-bottom: 20px;"></i>
+                <svg class="thin-account-icon" aria-hidden="true" style="font-size: 3rem; color: rgba(255, 255, 255, 0.1); display: block; margin-bottom: 20px;"><use href="#account-icon-return"></use></svg>
                 <h3>No Returns</h3>
                 <p>You haven't initiated any returns yet.</p>
                 <a href="store.html" class="btn btn-primary">Continue Shopping →</a>
@@ -1060,9 +1094,9 @@
 
         <!-- Help Section -->
         <div id="help-section" class="account-section" data-anchor="support">
-            <button class="back-btn" onclick="switchSection('dashboard')"><i class='bx bx-chevron-left'></i> Back</button>
+            <button class="back-btn" onclick="switchSection('dashboard')"><svg class="thin-account-icon" aria-hidden="true"><use href="#account-icon-chevron"></use></svg> Back</button>
             <div class="section-header">
-                <i class='bx bx-help-circle'></i>
+                <svg class="thin-account-icon" aria-hidden="true"><use href="#account-icon-help"></use></svg>
                 <h2>Help & Support</h2>
             </div>
             
@@ -1071,19 +1105,19 @@
                     <h3>Contact ProQ Pilot</h3>
                     <div class="support-contact-list">
                         <div class="support-contact-item">
-                            <i class='bx bx-phone'></i>
+                            <svg class="thin-account-icon" aria-hidden="true"><use href="#account-icon-phone"></use></svg>
                             <div><span>Phone</span><a href="tel:0115689337">011 568 9337</a></div>
                         </div>
                         <div class="support-contact-item">
-                            <i class='bx bx-envelope'></i>
+                            <svg class="thin-account-icon" aria-hidden="true"><use href="#account-icon-mail"></use></svg>
                             <div><span>Email</span><a href="mailto:support@stackopsit.co.za">support@stackopsit.co.za</a></div>
                         </div>
                         <div class="support-contact-item">
-                            <i class='bx bx-map'></i>
+                            <svg class="thin-account-icon" aria-hidden="true"><use href="#account-icon-map"></use></svg>
                             <div><span>Office</span><strong>Mia Drive, Waterfall City, Johannesburg, 1685</strong></div>
                         </div>
                         <div class="support-contact-item">
-                            <i class='bx bx-time-five'></i>
+                            <svg class="thin-account-icon" aria-hidden="true"><use href="#account-icon-clock"></use></svg>
                             <div><span>Hours</span><strong>Mon-Fri, 9AM-6PM SAST</strong></div>
                         </div>
                     </div>
