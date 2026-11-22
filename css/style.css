@@ -10051,6 +10051,43 @@ li {
     font-variation-settings: 'wght' 200 !important;
 }
 
+/* Shared heading weight: match the Shopping cart title. */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+    font-family: 'Inter', sans-serif !important;
+    font-weight: 200 !important;
+    font-synthesis: none !important;
+    font-variation-settings: 'wght' 200 !important;
+}
+
+.checkout-page h1,
+.checkout-page h2,
+.checkout-page h3,
+.checkout-page h4,
+.checkout-page h5,
+.checkout-page h6 {
+    font-family: 'Inter', sans-serif !important;
+    font-weight: 200 !important;
+    font-synthesis: none !important;
+    font-variation-settings: 'wght' 200 !important;
+}
+
+.review-page h1,
+.review-page h2,
+.review-page h3,
+.review-page h4,
+.review-page h5,
+.review-page h6 {
+    font-family: 'Inter', sans-serif !important;
+    font-weight: 200 !important;
+    font-synthesis: none !important;
+    font-variation-settings: 'wght' 200 !important;
+}
+
 /* Category images: shared thin white glass frame. */
 .category-image-wrapper,
 .preferred-category-panel .category-image-wrapper {
