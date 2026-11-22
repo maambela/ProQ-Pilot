@@ -12,7 +12,7 @@ const {
     sendSupportEmail,
     verifyGraphEmailConfig
 } = require('./utils/email');
-const { cleanPublicBaseUrl, createEmail, createPlainText, detailsTable, section, notice, itemList, formatCurrency, richParagraph, escapeHtml } = require('./utils/emailTemplates');
+const { cleanPublicBaseUrl, createEmail, createPlainText, detailsTable, section, notice, itemList, formatCurrency, richParagraph, escapeHtml, createPaymentDeclineEmail } = require('./utils/emailTemplates');
 const duoApi = require('./utils/duoApi'); // Path to your duoApi.js file
 
 const db = require('./utils/db');
@@ -122,6 +122,11 @@ function isYocoWebhookSignatureValid(req) {
             const actual = Buffer.from(signature);
             return actual.length === expected.length && crypto.timingSafeEqual(actual, expected);
         });
+}
+
+function isYocoPaymentDeclinedEvent(event) {
+    const type = String(event?.type || '').toLowerCase();
+    return ['checkout.failed', 'checkout.declined', 'checkout.payment_failed'].includes(type);
 }
 
 function setLongLivedAssetCache(res) {
@@ -396,6 +401,12 @@ function isStitchPaymentSuccessful(payload) {
     return ['paid', 'complete', 'completed', 'success', 'successful', 'settled'].includes(status);
 }
 
+function isStitchPaymentDeclined(payload) {
+    const payment = unwrapStitchPaymentNode(payload) || {};
+    const status = String(payment.status || payment.state || payment.paymentStatus || '').trim().toLowerCase();
+    return ['failed', 'declined', 'rejected'].includes(status);
+}
+
 async function processStitchPaymentNode(payload, options = {}) {
     const payment = unwrapStitchPaymentNode(payload) || {};
     const paymentId = String(options.paymentId || payment.id || payment.paymentId || '');
@@ -422,7 +433,8 @@ async function processStitchPaymentNode(payload, options = {}) {
                    OR JSON_UNQUOTE(JSON_EXTRACT(provider_response, '$.stitch_payment_request_id')) = ?
                )
              ORDER BY id DESC
-             LIMIT 1`,
+               LIMIT 1
+               FOR UPDATE`,
             [externalReference, paymentId]
         );
 
@@ -432,14 +444,35 @@ async function processStitchPaymentNode(payload, options = {}) {
 
         const localPayment = payments[0];
         const successful = isStitchPaymentSuccessful(payment);
-        const nextPaymentStatus = successful ? 'completed' : String(payment.status || payment.state || 'pending').toLowerCase();
+        const declined = isStitchPaymentDeclined(payment);
+        const currentStatus = String(localPayment.status || '').toLowerCase();
+        const alreadyPaid = ['completed', 'paid', 'complete', 'success', 'successful', 'settled'].includes(currentStatus);
+        const alreadyFailed = ['failed', 'declined', 'rejected'].includes(currentStatus);
+        const effectiveSuccessful = successful && !alreadyPaid;
+        const effectiveDeclined = declined && !alreadyPaid;
+        const nextPaymentStatus = effectiveSuccessful ? 'completed' : (effectiveDeclined ? 'failed' : String(payment.status || payment.state || 'pending').toLowerCase());
 
-        await connection.query(
-            'UPDATE Payments SET status = ?, provider_response = ? WHERE id = ?',
-            [nextPaymentStatus, providerResponse, localPayment.id]
+        if (alreadyPaid || (alreadyFailed && !successful)) {
+            await connection.commit();
+            return {
+                orderId: localPayment.order_id,
+                paymentId,
+                externalReference,
+                paid: alreadyPaid,
+                declined: alreadyFailed && declined,
+                status: localPayment.status,
+                transitioned: false
+            };
+        }
+
+        const [updateResult] = await connection.query(
+            'UPDATE Payments SET status = ?, provider_response = ? WHERE id = ? AND status <> ?',
+            [nextPaymentStatus, providerResponse, localPayment.id, nextPaymentStatus]
         );
 
-        if (successful) {
+        const transitioned = updateResult.affectedRows > 0;
+
+        if (effectiveSuccessful && transitioned) {
             await connection.query('UPDATE Orders SET status = ? WHERE id = ?', ['paid', localPayment.order_id]);
         }
 
@@ -450,7 +483,9 @@ async function processStitchPaymentNode(payload, options = {}) {
             paymentId,
             externalReference,
             paid: successful,
-            status: nextPaymentStatus
+            declined: effectiveDeclined,
+            status: nextPaymentStatus,
+            transitioned
         };
     } catch (error) {
         if (connection) await connection.rollback();
@@ -690,8 +725,16 @@ app.get('/api/v1/stitch-payment/verify', async (req, res) => {
             externalReference,
             paymentId: paymentRequestId
         });
-        if (result.paid) await provisionDuoAfterStitch(result.orderId);
+        if (result.paid) {
+            await provisionDuoAfterStitch(result.orderId);
+            await sendPaidOrderNotifications(result.orderId, 'STITCH');
+        } else if (result.declined) {
+            await sendPaymentDeclinedNotification(result.orderId, 'STITCH');
+        }
         if (!String(req.get('accept') || '').includes('application/json')) {
+            if (result.declined) {
+                return res.redirect(302, '/review.html?payment=declined&orderId=' + encodeURIComponent(result.orderId));
+            }
             return res.redirect(302, '/order-success.html?orderId=' + encodeURIComponent(result.orderId));
         }
         res.json({ status: 'success', data: result });
@@ -717,7 +760,12 @@ app.post('/webhook/stitch', async (req, res) => {
         }
 
         const result = await processStitchPaymentNode(event, { paymentId: String(event.id) });
-        if (result.paid) await provisionDuoAfterStitch(result.orderId);
+        if (result.paid) {
+            await provisionDuoAfterStitch(result.orderId);
+            await sendPaidOrderNotifications(result.orderId, 'STITCH');
+        } else if (result.declined) {
+            await sendPaymentDeclinedNotification(result.orderId, 'STITCH');
+        }
         res.status(200).json({ status: 'success' });
     } catch (error) {
         console.error('[STITCH] Webhook error:', error.message);
@@ -1045,17 +1093,19 @@ app.post('/webhook/payfast', async (req, res) => {
 
             // 1. Update Payment status
             console.log('[PAYFAST WEBHOOK] Step 1: Updating payment status...');
-            await connection.query(
-                'UPDATE Payments SET status = ?, provider_response = ? WHERE order_id = ?',
-                ['completed', JSON.stringify(pfData), orderId]
+            const [paymentUpdate] = await connection.query(
+                'UPDATE Payments SET status = ?, provider_response = ? WHERE order_id = ? AND status NOT IN (?, ?)',
+                ['completed', JSON.stringify(pfData), orderId, 'completed', 'paid']
             );
-
+            const paymentTransitioned = paymentUpdate.affectedRows > 0;
+            if (paymentTransitioned) {
+                await connection.query(
+                    'UPDATE Orders SET status = ? WHERE id = ?',
+                    ['paid', orderId]
+                );
+            }
             // 2. Update Order status
             console.log('[PAYFAST WEBHOOK] Step 2: Updating order status...');
-            await connection.query(
-                'UPDATE Orders SET status = ? WHERE id = ?',
-                ['paid', orderId]
-            );
 
             // 3. Get order info for email and Duo provisioning
             console.log('[PAYFAST WEBHOOK] Step 3: Fetching order details...');
@@ -1101,8 +1151,7 @@ app.post('/webhook/payfast', async (req, res) => {
             // 5. Send Confirmation Email (Async)
             if (order) {
                 console.log('[PAYFAST WEBHOOK] Step 6: Queuing confirmation email...');
-                // You can reuse your existing email logic here
-                // sendOrderConfirmationEmail(order).catch(err => console.error('Email error:', err));
+                await sendPaidOrderNotifications(orderId, 'PAYFAST');
             }
 
             console.log('\n[PAYFAST WEBHOOK] ===============================================');
@@ -1114,6 +1163,27 @@ app.post('/webhook/payfast', async (req, res) => {
             if (connection) await connection.rollback();
             console.error('[PAYFAST WEBHOOK] ❌ Database error:', err.message);
             console.error('[PAYFAST WEBHOOK] ===============================================\n');
+            res.status(500).send('Internal Error');
+        } finally {
+            if (connection) connection.release();
+        }
+    } else if (String(paymentStatus).toUpperCase() === 'FAILED') {
+        let connection;
+        try {
+            connection = await db.getConnection();
+            await connection.beginTransaction();
+            await connection.query(
+                'UPDATE Payments SET status = ?, provider_response = ? WHERE order_id = ? AND status NOT IN (?, ?, ?, ?)',
+                ['failed', JSON.stringify(pfData), orderId, 'failed', 'declined', 'completed', 'paid']
+            );
+            await connection.commit();
+            connection.release();
+            connection = null;
+            await sendPaymentDeclinedNotification(orderId, 'PAYFAST');
+            res.status(200).send('OK');
+        } catch (error) {
+            if (connection) await connection.rollback();
+            console.error('[PAYFAST WEBHOOK] Failed-payment processing error:', error.message);
             res.status(500).send('Internal Error');
         } finally {
             if (connection) connection.release();
@@ -4913,6 +4983,8 @@ function getEmailProductImagePath(imageUrl) {
 async function sendCustomerEmail(order, customer, items, address) {
     console.log(`[EMAIL] Starting to send customer email to ${customer.email}`);
 
+    const deliveryFee = order.addressID ? 75 : 0;
+    const subtotal = Number(order.total_amount || 0) - deliveryFee;
     const publicBaseUrl = cleanPublicBaseUrl();
     const orderDetailsUrl = publicBaseUrl
         ? `${publicBaseUrl}/order-details.html?orderId=${encodeURIComponent(String(order.id))}`
@@ -4926,7 +4998,7 @@ async function sendCustomerEmail(order, customer, items, address) {
         ],
         amount: formatCurrency(Number(item.price || 0) * Number(item.quantity || 0))
     }));
-    const orderItemsHtml = itemList(orderItems, { showImages: true, publicBaseUrl });
+    const orderItemsHtml = itemList(orderItems, { showImages: false, publicBaseUrl });
     const title = `Order #${order.id} confirmed`;
     const customerName = customer.username || 'there';
     const customerHtml = createEmail({
@@ -4945,8 +5017,8 @@ async function sendCustomerEmail(order, customer, items, address) {
                 { label: 'Delivery instructions', value: address.delivery_instructions }
             ]))
             + section('Payment summary', detailsTable([
-                { label: 'Subtotal', value: formatCurrency(Number(order.total_amount || 0) - 2) },
-                { label: 'Delivery fee', value: formatCurrency(2) },
+                { label: 'Subtotal', value: formatCurrency(subtotal) },
+                { label: 'Delivery fee', value: formatCurrency(deliveryFee) },
                 { label: 'Total amount paid', value: formatCurrency(order.total_amount) }
             ]))
             + notice('Expected delivery: within one week.', 'info'),
@@ -4965,8 +5037,8 @@ async function sendCustomerEmail(order, customer, items, address) {
             lines: [
                 ...orderItems.map(item => `${item.title} — ${item.meta.join(', ')} — ${item.amount}`),
                 `Delivery address: ${[address.line1, address.line2, address.city, address.province, address.postal_code, address.country].filter(Boolean).join(', ')}`,
-                `Subtotal: ${formatCurrency(Number(order.total_amount || 0) - 2)}`,
-                `Delivery fee: ${formatCurrency(2)}`,
+                `Subtotal: ${formatCurrency(subtotal)}`,
+                `Delivery fee: ${formatCurrency(deliveryFee)}`,
                 `Total amount paid: ${formatCurrency(order.total_amount)}`,
                 'Expected delivery: within one week.'
             ],
@@ -4987,6 +5059,8 @@ async function sendCustomerEmail(order, customer, items, address) {
 async function sendAdminEmail(order, customer, items, address) {
     console.log(`[EMAIL] Starting to send admin email for order #${order.id}`);
 
+    const deliveryFee = order.addressID ? 75 : 0;
+    const subtotal = Number(order.total_amount || 0) - deliveryFee;
     const getVendorName = item => {
         const source = String(item.supplier_source || '').trim();
         if (/tarsus|tarson/i.test(source)) return 'Tarsus';
@@ -5033,8 +5107,8 @@ async function sendAdminEmail(order, customer, items, address) {
             ]))
             + section('Order items', itemList(orderItems))
             + section('Order totals', detailsTable([
-                { label: 'Subtotal', value: formatCurrency(Number(order.total_amount || 0) - 75) },
-                { label: 'Delivery', value: formatCurrency(75) },
+                { label: 'Subtotal', value: formatCurrency(subtotal) },
+                { label: 'Delivery', value: formatCurrency(deliveryFee) },
                 { label: 'Total', value: formatCurrency(order.total_amount) }
             ])),
         footerNote: 'Automated order notification. Reply only if follow-up is required.'
@@ -5053,8 +5127,8 @@ async function sendAdminEmail(order, customer, items, address) {
                 `Phone: ${address.phone || 'Not provided'}`,
                 `Delivery address: ${[address.line1, address.line2, address.city, address.province, address.postal_code, address.country].filter(Boolean).join(', ')}`,
                 ...orderItems.map(item => `${item.title} — ${item.meta.join(', ')} — ${item.amount}`),
-                `Subtotal: ${formatCurrency(Number(order.total_amount || 0) - 75)}`,
-                `Delivery: ${formatCurrency(75)}`,
+                `Subtotal: ${formatCurrency(subtotal)}`,
+                `Delivery: ${formatCurrency(deliveryFee)}`,
                 `Total: ${formatCurrency(order.total_amount)}`
             ]
         })
@@ -5067,6 +5141,121 @@ async function sendAdminEmail(order, customer, items, address) {
     } catch (err) {
         console.error(`[EMAIL] Error sending admin email for order #${order.id}:`, err);
         throw err;
+    }
+}
+
+async function claimOutcomeEmail(orderId, provider, outcome) {
+    const connection = await db.getConnection();
+    try {
+        const path = outcome === 'declined' ? '$.email.payment_decline_status' : '$.email.confirmation_status';
+        const eligibleStatus = outcome === 'declined'
+            ? "status IN ('failed', 'declined', 'rejected')"
+            : "status IN ('completed', 'paid')";
+        const [result] = await connection.query(
+            `UPDATE Payments
+             SET provider_response = JSON_SET(COALESCE(provider_response, JSON_OBJECT()), ?, 'sending')
+             WHERE order_id = ? AND provider = ?
+               AND ${eligibleStatus}
+               AND (JSON_EXTRACT(COALESCE(provider_response, JSON_OBJECT()), ?) IS NULL
+                    OR JSON_UNQUOTE(JSON_EXTRACT(COALESCE(provider_response, JSON_OBJECT()), ?)) = 'failed')`,
+            [path, orderId, provider, path, path]
+        );
+        return result.affectedRows > 0;
+    } finally {
+        connection.release();
+    }
+}
+
+async function setOutcomeEmailStatus(orderId, provider, outcome, status) {
+    const connection = await db.getConnection();
+    try {
+        const path = outcome === 'declined' ? '$.email.payment_decline_status' : '$.email.confirmation_status';
+        await connection.query(
+            `UPDATE Payments
+             SET provider_response = JSON_SET(COALESCE(provider_response, JSON_OBJECT()), ?, ?)
+             WHERE order_id = ? AND provider = ?
+               AND JSON_UNQUOTE(JSON_EXTRACT(COALESCE(provider_response, JSON_OBJECT()), ?)) = 'sending'`,
+            [path, status, orderId, provider, path]
+        );
+    } finally {
+        connection.release();
+    }
+}
+
+async function fetchOrderEmailData(orderId) {
+    const connection = await db.getConnection();
+    try {
+        const [orders] = await connection.query(
+            `SELECT o.*, u.email, CONCAT(u.firstName, ' ', u.lastName) AS username,
+                    a.line1, a.line2, a.city, a.province, a.postal_code, a.country, a.phone, a.delivery_instructions
+             FROM Orders o
+             JOIN users u ON o.userID = u.userID
+             LEFT JOIN Addresses a ON o.addressID = a.id
+             WHERE o.id = ?
+             LIMIT 1`,
+            [orderId]
+        );
+        if (!orders.length) return null;
+
+        const [items] = await connection.query(
+            `SELECT oi.*, p.product_name, p.product_number, p.warehouse_price, p.supplier_source, p.brand,
+                    (SELECT image_url FROM product_images WHERE product_id = p.id LIMIT 1) AS image_url
+             FROM OrderItems oi
+             JOIN products p ON oi.product_id = p.id
+             WHERE oi.order_id = ?`,
+            [orderId]
+        );
+        return { order: orders[0], items };
+    } finally {
+        connection.release();
+    }
+}
+
+async function sendPaidOrderNotifications(orderId, provider) {
+    const data = await fetchOrderEmailData(orderId);
+    if (!data) return;
+    if (!await claimOutcomeEmail(orderId, provider, 'confirmed')) return;
+    try {
+        await Promise.all([
+            sendCustomerEmail(data.order, { username: data.order.username, email: data.order.email }, data.items, data.order),
+            sendAdminEmail(data.order, { username: data.order.username, email: data.order.email }, data.items, data.order)
+        ]);
+        await setOutcomeEmailStatus(orderId, provider, 'confirmed', 'sent');
+    } catch (error) {
+        await setOutcomeEmailStatus(orderId, provider, 'confirmed', 'failed');
+        console.error(`[EMAIL] Paid order notification failed for order #${orderId}:`, error.message);
+        throw error;
+    }
+}
+
+async function sendPaymentDeclinedNotification(orderId, provider) {
+    const data = await fetchOrderEmailData(orderId);
+    if (!data?.order?.email) return;
+    if (!await claimOutcomeEmail(orderId, provider, 'declined')) return;
+    try {
+        const publicBaseUrl = cleanPublicBaseUrl(
+            process.env.PUBLIC_BASE_URL || process.env.APP_BASE_URL || process.env.BASE_URL
+        );
+        const retryUrl = publicBaseUrl ? `${publicBaseUrl}/review.html` : '';
+        const decline = createPaymentDeclineEmail({
+            customerName: data.order.username,
+            orderId,
+            amount: data.order.total_amount,
+            retryUrl
+        });
+
+        await transporter.sendMail({
+            from: `"${STORE_DETAILS.name}" <${EMAIL_SENDERS.sales}>`,
+            to: data.order.email,
+            subject: `Payment declined — Order #${orderId} — ProQ Pilot`,
+            html: decline.html,
+            text: decline.text
+        });
+        await setOutcomeEmailStatus(orderId, provider, 'declined', 'sent');
+    } catch (error) {
+        await setOutcomeEmailStatus(orderId, provider, 'declined', 'failed');
+        console.error(`[EMAIL] Payment decline notification failed for order #${orderId}:`, error.message);
+        throw error;
     }
 }
 
@@ -5284,7 +5473,10 @@ app.post('/webhook/yoco-order', async (req, res) => {
             const [payments] = await connection.query(
                 `SELECT p.id as paymentId, p.order_id, p.userID, p.status
                  FROM Payments p
-                 WHERE JSON_UNQUOTE(JSON_EXTRACT(provider_response, "$.yoco_checkout_id")) = ?`,
+                 WHERE p.provider = 'YOCO'
+                   AND JSON_UNQUOTE(JSON_EXTRACT(p.provider_response, "$.yoco_checkout_id")) = ?
+                 LIMIT 1
+                 FOR UPDATE`,
                 [checkoutId]
             );
 
@@ -5298,7 +5490,7 @@ app.post('/webhook/yoco-order', async (req, res) => {
             const { order_id: orderId, userID, paymentId } = payments[0];
             console.log(`[YOCO WEBHOOK] ✅ Found payment: ID ${paymentId}, Order #${orderId}, User #${userID}`);
 
-            if (payments[0].status === 'paid') {
+            if (['paid', 'completed'].includes(String(payments[0].status || '').toLowerCase())) {
                 console.log(`[YOCO WEBHOOK] ℹ️ Payment ${paymentId} already marked paid. Acknowledging duplicate webhook.`);
                 await connection.rollback();
                 connection.release();
@@ -5307,13 +5499,18 @@ app.post('/webhook/yoco-order', async (req, res) => {
 
             // 2. Update statuses to PAID
             console.log('[YOCO WEBHOOK] Step 2: Updating payment and order status to PAID...');
-            await connection.query(
+            const [paymentUpdate] = await connection.query(
                 `UPDATE Payments
                  SET status = "paid",
                      provider_response = JSON_SET(COALESCE(provider_response, JSON_OBJECT()), "$.last_webhook_event", ?)
-                 WHERE id = ?`,
+                 WHERE id = ? AND status NOT IN ('paid', 'completed')`,
                 [JSON.stringify(event), paymentId]
             );
+            if (paymentUpdate.affectedRows === 0) {
+                await connection.rollback();
+                connection.release();
+                return res.sendStatus(200);
+            }
             await connection.query('UPDATE Orders SET status = "paid" WHERE id = ?', [orderId]);
             console.log(`[YOCO WEBHOOK] ✅ Order #${orderId} marked as PAID`);
 
@@ -5401,6 +5598,55 @@ app.post('/webhook/yoco-order', async (req, res) => {
             console.error(`[YOCO WEBHOOK] Stack:`, err.stack);
             console.error('[YOCO WEBHOOK] ===============================================\n');
             res.sendStatus(200); // Acknowledge Yoco regardless
+        } finally {
+            if (connection) connection.release();
+        }
+    } else if (isYocoPaymentDeclinedEvent(event)) {
+        const checkoutId = eventCheckoutId;
+        let connection;
+        if (!checkoutId) return res.sendStatus(200);
+
+        try {
+            connection = await db.getConnection();
+            await connection.beginTransaction();
+            const [payments] = await connection.query(
+                `SELECT id, order_id, status
+                 FROM Payments
+                 WHERE provider = 'YOCO'
+                   AND JSON_UNQUOTE(JSON_EXTRACT(provider_response, '$.yoco_checkout_id')) = ?
+                 LIMIT 1
+                 FOR UPDATE`,
+                [checkoutId]
+            );
+            if (!payments.length) {
+                await connection.rollback();
+                return res.sendStatus(200);
+            }
+
+            const payment = payments[0];
+            const currentStatus = String(payment.status || '').toLowerCase();
+            if (['paid', 'completed'].includes(currentStatus)) {
+                await connection.rollback();
+            } else {
+                if (!['failed', 'declined'].includes(currentStatus)) {
+                    await connection.query(
+                        `UPDATE Payments
+                         SET status = 'failed',
+                             provider_response = JSON_SET(COALESCE(provider_response, JSON_OBJECT()), '$.last_webhook_event', ?)
+                         WHERE id = ?`,
+                        [JSON.stringify(event), payment.id]
+                    );
+                }
+                await connection.commit();
+                connection.release();
+                connection = null;
+                await sendPaymentDeclinedNotification(payment.order_id, 'YOCO');
+            }
+            res.sendStatus(200);
+        } catch (error) {
+            if (connection) await connection.rollback();
+            console.error('[YOCO WEBHOOK] Decline processing error:', error.message);
+            res.sendStatus(200);
         } finally {
             if (connection) connection.release();
         }

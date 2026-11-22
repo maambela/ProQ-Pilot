@@ -10115,7 +10115,16 @@ h6 {
 .account-page .mobile-nav a,
 .orders-list-page .main-header .nav-links a,
 .orders-list-page .mobile-menu a,
-.orders-list-page .mobile-nav a {
+.orders-list-page .mobile-nav a,
+.cart-page .main-header .nav-links a,
+.cart-page .mobile-menu a,
+.cart-page .mobile-nav a,
+.checkout-page .main-header .nav-links a,
+.checkout-page .mobile-menu a,
+.checkout-page .mobile-nav a,
+.review-page .main-header .nav-links a,
+.review-page .mobile-menu a,
+.review-page .mobile-nav a {
     font-weight: 400 !important;
     font-variation-settings: normal !important;
 }

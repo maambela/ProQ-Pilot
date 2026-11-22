@@ -2,6 +2,7 @@ const BRAND = {
     name: 'ProQ Pilot',
     ink: '#0B1524',
     navy: '#10253D',
+    emailHeader: '#000000',
     blue: '#2C8EFF',
     porcelain: '#F7F9FC',
     graphite: '#253244',
@@ -10,7 +11,7 @@ const BRAND = {
     success: '#157A64',
     warning: '#A76A00',
     danger: '#B94444',
-    logoUrl: 'https://i.postimg.cc/rpCKP67v/Proq2.png'
+    logoUrl: 'https://i.postimg.cc/74WHX5qj/Proq-2.png'
 };
 
 const VARIANTS = {
@@ -96,7 +97,7 @@ function detailsTable(rows = []) {
             return `
                 <tr>
                     <td valign="top" style="width:38%;padding:9px 12px 9px 0;border-bottom:1px solid ${BRAND.platinum};color:${BRAND.muted};font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:1.45;">${escapeHtml(row.label)}</td>
-                    <td valign="top" style="padding:9px 0;border-bottom:1px solid ${BRAND.platinum};color:${BRAND.graphite};font-family:Arial,Helvetica,sans-serif;font-size:14px;font-weight:600;line-height:1.45;word-break:break-word;">${value}</td>
+                    <td valign="top" style="padding:9px 0;border-bottom:1px solid ${BRAND.platinum};color:${BRAND.graphite};font-family:Arial,Helvetica,sans-serif;font-size:14px;font-weight:300;line-height:1.45;word-break:break-word;">${value}</td>
                 </tr>`;
         })
         .join('');
@@ -112,7 +113,7 @@ function section(title, content) {
         <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="width:100%;margin:0 0 16px;border-collapse:collapse;">
             <tr>
                 <td style="padding:0;">
-                    ${title ? `<h2 style="margin:0 0 9px;color:${BRAND.ink};font-family:Arial,Helvetica,sans-serif;font-size:16px;font-weight:700;line-height:1.35;letter-spacing:0;">${escapeHtml(title)}</h2>` : ''}
+                    ${title ? `<h2 style="margin:0 0 9px;color:${BRAND.ink};font-family:Arial,Helvetica,sans-serif;font-size:16px;font-weight:300;line-height:1.35;letter-spacing:0;">${escapeHtml(title)}</h2>` : ''}
                     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="width:100%;border:1px solid ${BRAND.platinum};border-collapse:separate;border-radius:4px;background:#FFFFFF;">
                         <tr><td style="padding:14px 16px;">${content}</td></tr>
                     </table>
@@ -139,7 +140,7 @@ function button({ href, label, ariaLabel }) {
         <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="border-collapse:separate;margin:4px 0 18px;">
             <tr>
                 <td align="center" bgcolor="${BRAND.navy}" style="border-radius:3px;background:${BRAND.navy};">
-                    <a href="${safeUrl}" target="_blank" aria-label="${escapeAttribute(ariaLabel || label)}" style="display:inline-block;padding:12px 18px;border:1px solid ${BRAND.navy};border-radius:3px;background:${BRAND.navy};color:#FFFFFF;font-family:Arial,Helvetica,sans-serif;font-size:15px;font-weight:700;line-height:1.2;text-align:center;text-decoration:none;">${escapeHtml(label)}</a>
+                    <a href="${safeUrl}" target="_blank" aria-label="${escapeAttribute(ariaLabel || label)}" style="display:inline-block;padding:12px 18px;border:1px solid ${BRAND.navy};border-radius:3px;background:${BRAND.navy};color:#FFFFFF;font-family:Arial,Helvetica,sans-serif;font-size:15px;font-weight:300;line-height:1.2;text-align:center;text-decoration:none;">${escapeHtml(label)}</a>
                 </td>
             </tr>
         </table>`;
@@ -162,10 +163,10 @@ function itemList(items = [], { showImages = false, publicBaseUrl } = {}) {
                         <tr>
                             ${imageCell}
                             <td valign="top" style="padding:0;">
-                                <p style="margin:0 0 3px;color:${BRAND.ink};font-family:Arial,Helvetica,sans-serif;font-size:14px;font-weight:700;line-height:1.4;word-break:break-word;">${escapeHtml(item.title || '')}</p>
+                                <p style="margin:0 0 3px;color:${BRAND.ink};font-family:Arial,Helvetica,sans-serif;font-size:14px;font-weight:300;line-height:1.4;word-break:break-word;">${escapeHtml(item.title || '')}</p>
                                 ${metadata ? `<p style="margin:0;line-height:1.5;">${metadata}</p>` : ''}
                             </td>
-                            ${item.amount ? `<td class="proq-item-amount" valign="top" align="right" style="padding:0 0 0 10px;color:${BRAND.graphite};font-family:Arial,Helvetica,sans-serif;font-size:14px;font-weight:700;line-height:1.4;white-space:nowrap;">${escapeHtml(item.amount)}</td>` : ''}
+                            ${item.amount ? `<td class="proq-item-amount" valign="top" align="right" style="padding:0 0 0 10px;color:${BRAND.graphite};font-family:Arial,Helvetica,sans-serif;font-size:14px;font-weight:300;line-height:1.4;white-space:nowrap;">${escapeHtml(item.amount)}</td>` : ''}
                         </tr>
                     </table>
                 </td>
@@ -207,6 +208,7 @@ function createEmail({
     <title>${escapeHtml(title || BRAND.name)}</title>
     <!--[if mso]><style>table { border-collapse: collapse; }</style><![endif]-->
     <style>
+        h1, h2, h3, h4, h5, h6, b, strong, th { font-weight: 300 !important; }
         @media screen and (max-width: 620px) {
             .proq-page-gutter { padding: 12px 8px !important; }
             .proq-shell { width: 100% !important; }
@@ -239,23 +241,21 @@ function createEmail({
         <tr>
             <td class="proq-page-gutter" align="center" style="padding:20px 12px;">
                 <table class="proq-shell" role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="width:100%;max-width:600px;border-collapse:collapse;background:#FFFFFF;">
-                    <tr><td style="height:4px;background:${tone.accent};font-size:0;line-height:0;">&nbsp;</td></tr>
                     <tr>
-                        <td class="proq-header" bgcolor="${BRAND.ink}" style="padding:16px 24px;background:${BRAND.ink};">
+                        <td class="proq-header" bgcolor="${BRAND.emailHeader}" style="padding:16px 24px;background:${BRAND.emailHeader};">
                             <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="width:100%;border-collapse:collapse;">
                                 <tr>
                                     <td valign="middle" style="padding:0;">
-                                        ${logoUrl ? `<img class="proq-logo" src="${escapeAttribute(logoUrl)}" width="112" alt="ProQ Pilot" style="display:block;width:112px;max-width:112px;height:auto;border:0;vertical-align:middle;">` : '<span style="display:inline-block;width:28px;height:28px;border-radius:3px;background:#FFFFFF;color:#0B1524;font-family:Arial,Helvetica,sans-serif;font-size:11px;font-weight:700;line-height:28px;text-align:center;">PQ</span>'}
+                                        ${logoUrl ? `<img class="proq-logo" src="${escapeAttribute(logoUrl)}" width="140" alt="ProQ Pilot" style="display:block;width:140px;max-width:140px;height:auto;border:0;vertical-align:middle;">` : '<span style="display:inline-block;width:28px;height:28px;border-radius:3px;background:#FFFFFF;color:#0B1524;font-family:Arial,Helvetica,sans-serif;font-size:11px;font-weight:300;line-height:28px;text-align:center;">PQ</span>'}
                                     </td>
-                                    <td valign="middle" style="padding:0 0 0 10px;color:#FFFFFF;font-family:Arial,Helvetica,sans-serif;font-size:16px;font-weight:700;letter-spacing:.2px;">ProQ Pilot</td>
                                 </tr>
                             </table>
                         </td>
                     </tr>
                     <tr>
                         <td class="proq-content" style="padding:27px 28px 25px;">
-                            <p style="margin:0 0 9px;color:${tone.accent};font-family:Arial,Helvetica,sans-serif;font-size:11px;font-weight:700;letter-spacing:1.25px;line-height:1.25;">${eyebrowText}</p>
-                            <h1 class="proq-title" style="margin:0 0 13px;color:${BRAND.ink};font-family:Arial,Helvetica,sans-serif;font-size:28px;font-weight:700;letter-spacing:-.35px;line-height:1.22;">${escapeHtml(title || BRAND.name)}</h1>
+                            <p style="margin:0 0 9px;color:${tone.accent};font-family:Arial,Helvetica,sans-serif;font-size:11px;font-weight:300;letter-spacing:1.25px;line-height:1.25;">${eyebrowText}</p>
+                            <h1 class="proq-title" style="margin:0 0 13px;color:${BRAND.ink};font-family:Arial,Helvetica,sans-serif;font-size:28px;font-weight:300;letter-spacing:-.35px;line-height:1.22;">${escapeHtml(title || BRAND.name)}</h1>
                             ${introHtml}
                             ${body}
                             ${ctaHtml}
@@ -264,7 +264,7 @@ function createEmail({
                     </tr>
                     <tr>
                         <td class="proq-footer" style="padding:18px 28px 20px;border-top:1px solid ${BRAND.platinum};background:#FBFCFE;">
-                            <p style="margin:0;color:${BRAND.muted};font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:1.55;">Need assistance? Contact <a href="mailto:${helpAddress}" style="color:${BRAND.graphite};font-weight:700;text-decoration:underline;">ProQ Pilot Support</a>.</p>
+                            <p style="margin:0;color:${BRAND.muted};font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:1.55;">Need assistance? Contact <a href="mailto:${helpAddress}" style="color:${BRAND.graphite};font-weight:300;text-decoration:underline;">ProQ Pilot Support</a>.</p>
                             <p style="margin:8px 0 0;color:#8A98AA;font-family:Arial,Helvetica,sans-serif;font-size:11px;line-height:1.45;">&copy; ${new Date().getFullYear()} ProQ Pilot. Precision technology, thoughtfully delivered.</p>
                         </td>
                     </tr>
@@ -277,9 +277,22 @@ function createEmail({
 }
 
 function createBrandedEmailHtml(html, { subject, preview } = {}) {
-    const source = String(html || '').trim();
+    let source = String(html || '').trim();
     if (!source) return '';
     if (/class=["'][^"']*\bproq-shell\b/i.test(source)) return source;
+    source = source
+        .replace(/font-weight\s*:\s*(?:bold|bolder|[5-9]\d{2})/gi, 'font-weight:300')
+        .replace(/<\s*(b|strong|h[1-6])\b([^>]*)>/gi, (element, tag, attributes) => {
+            const styleAttribute = attributes.match(/\sstyle\s*=\s*(?:"([^"]*)"|'([^']*)')/i);
+            if (!styleAttribute) return `<${tag}${attributes} style="font-weight:300 !important;">`;
+
+            const styles = (styleAttribute[1] ?? styleAttribute[2] ?? '')
+                .replace(/font-weight\s*:\s*[^;]+;?/gi, '')
+                .trim();
+            const normalizedStyles = `${styles}${styles && !styles.endsWith(';') ? ';' : ''}font-weight:300 !important;`;
+            const normalizedAttributes = attributes.replace(styleAttribute[0], ` style="${normalizedStyles}"`);
+            return `<${tag}${normalizedAttributes}>`;
+        });
 
     const bodyMatch = source.match(/<body\b[^>]*>([\s\S]*?)<\/body\s*>/i);
     const content = bodyMatch
@@ -307,6 +320,51 @@ function createPlainText({ title, intro, lines = [], cta, footerNote } = {}) {
     return output.join('\n\n');
 }
 
+function createPaymentDeclineEmail({
+    customerName,
+    orderId,
+    amount,
+    retryUrl
+} = {}) {
+    const title = 'Payment declined';
+    const reference = orderId ? `Order reference: #${orderId}` : '';
+    const amountText = amount !== undefined && amount !== null && amount !== ''
+        ? `Amount: ${formatCurrency(amount)}`
+        : '';
+    const intro = `We couldn’t complete your payment${customerName ? `, ${customerName}` : ''}.`;
+    const body = section('Payment details', detailsTable([
+        ...(orderId ? [{ label: 'Order reference', value: `#${orderId}` }] : []),
+        ...(amountText ? [{ label: 'Amount', value: formatCurrency(amount) }] : [])
+    ])) + notice('No payment was completed. Your order has not been confirmed.', 'alert');
+    const cta = retryUrl
+        ? { href: retryUrl, label: 'Retry checkout', ariaLabel: 'Retry your ProQ Pilot checkout' }
+        : null;
+
+    return {
+        html: createEmail({
+            variant: 'alert',
+            eyebrow: 'PAYMENT DECLINED',
+            title,
+            preview: 'We couldn’t complete your payment.',
+            intro,
+            body,
+            cta,
+            footerNote: 'You can safely try another payment method or contact support for help.'
+        }),
+        text: createPlainText({
+            title,
+            intro,
+            lines: [
+                reference,
+                amountText,
+                'No payment was completed. Your order has not been confirmed.',
+                'Please try another payment method or contact ProQ Pilot Support for assistance.'
+            ].filter(Boolean),
+            cta
+        })
+    };
+}
+
 module.exports = {
     BRAND,
     escapeHtml,
@@ -322,5 +380,6 @@ module.exports = {
     itemList,
     createEmail,
     createBrandedEmailHtml,
-    createPlainText
+    createPlainText,
+    createPaymentDeclineEmail
 };
