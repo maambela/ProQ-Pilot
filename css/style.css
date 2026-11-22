@@ -12301,3 +12301,11 @@ html body .main-header .nav-links a {
         font-size: 13px !important;
     }
 }
+
+html body .product-card .product-title,
+html body .featured-carousel-card .product-title,
+html body .product-card .current-price,
+html body .featured-carousel-card .current-price {
+    font-weight: 200 !important;
+    font-variation-settings: 'wght' 200 !important;
+}
