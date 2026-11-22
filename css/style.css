@@ -12309,3 +12309,8 @@ html body .featured-carousel-card .current-price {
     font-weight: 200 !important;
     font-variation-settings: 'wght' 200 !important;
 }
+
+html body .welcome-page main :not(i):not(.bx):not(svg):not(path):not(use):not(symbol) {
+    font-weight: 200 !important;
+    font-variation-settings: 'wght' 200 !important;
+}
