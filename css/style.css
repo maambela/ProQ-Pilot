@@ -10029,6 +10029,28 @@ li {
     text-shadow: none !important;
 }
 
+/* Cart typography: keep all cart copy light and consistent. */
+.cart-page,
+.cart-page .cart-item-details,
+.cart-page .cart-item-details h4,
+.cart-page .cart-item-details p,
+.cart-page .cart-item-details .item-price,
+.cart-page .qty-controls,
+.cart-page .qty-controls span,
+.cart-page .summary-card,
+.cart-page .summary-card h3,
+.cart-page .summary-card .summary-row,
+.cart-page .summary-card .summary-row span,
+.cart-page .secure-checkout,
+.cart-page .secure-checkout .secure-item,
+.cart-page .secure-checkout .secure-item span,
+.cart-page .btn-checkout {
+    font-family: 'Inter', sans-serif !important;
+    font-weight: 200 !important;
+    font-synthesis: none !important;
+    font-variation-settings: 'wght' 200 !important;
+}
+
 /* Category images: shared thin white glass frame. */
 .category-image-wrapper,
 .preferred-category-panel .category-image-wrapper {
