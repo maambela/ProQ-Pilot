@@ -10110,6 +10110,16 @@ h6 {
     --site-button-font-weight: 100;
 }
 
+.account-page .main-header .nav-links a,
+.account-page .mobile-menu a,
+.account-page .mobile-nav a,
+.orders-list-page .main-header .nav-links a,
+.orders-list-page .mobile-menu a,
+.orders-list-page .mobile-nav a {
+    font-weight: 400 !important;
+    font-variation-settings: normal !important;
+}
+
 /* Category images: shared thin white glass frame. */
 .category-image-wrapper,
 .preferred-category-panel .category-image-wrapper {
