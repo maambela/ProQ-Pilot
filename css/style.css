@@ -10088,6 +10088,25 @@ h6 {
     font-variation-settings: 'wght' 200 !important;
 }
 
+.account-page *,
+.orders-page * {
+    font-family: 'Inter', sans-serif !important;
+    font-weight: 100 !important;
+    font-synthesis: none !important;
+    font-variation-settings: 'wght' 100 !important;
+}
+
+.orders-page .btn-primary,
+.orders-page .btn-secondary {
+    font-weight: 100 !important;
+    font-variation-settings: 'wght' 100 !important;
+}
+
+.account-page,
+.orders-list-page {
+    --site-button-font-weight: 100;
+}
+
 /* Category images: shared thin white glass frame. */
 .category-image-wrapper,
 .preferred-category-panel .category-image-wrapper {

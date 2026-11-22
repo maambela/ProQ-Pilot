@@ -26,7 +26,7 @@ html body :is(
     -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
     font-family: inherit !important;
     font-size: 0.8rem !important;
-    font-weight: 100 !important;
+    font-weight: var(--site-button-font-weight, 100) !important;
     line-height: 1.6 !important;
     text-align: center !important;
     text-decoration: none !important;
