@@ -41,108 +41,140 @@ document.addEventListener('DOMContentLoaded', async () => {
         return payload;
     }
 
-    function selectAddress(address, card) {
-        document.querySelectorAll('.deliver-radio').forEach(radio => radio.classList.remove('selected'));
-        const deliverButton = card?.querySelector('.deliver-radio');
-        if (deliverButton) deliverButton.classList.add('selected');
-        sessionStorage.setItem('selectedAddress', JSON.stringify(address));
+    let checkoutAddressMode = 'view';
+    let checkoutAddresses = [];
+    let checkoutEditingId = null;
 
-        const block = card?.querySelector('[data-full]');
-        const icon = card?.querySelector('.view-more i');
-        if (block) block.style.display = 'block';
-        if (icon) icon.classList.add('bx-rotate-180');
+    function setAddressMode(mode) {
+        checkoutAddressMode = mode;
+        const addButton = document.getElementById('addAddressButton');
+        if (mode === 'view') {
+            addressForm.hidden = true;
+            if (addButton) addButton.hidden = checkoutAddresses.length === 0;
+            showAddressStatus('');
+            return;
+        }
+        addressForm.hidden = false;
+        if (addButton) addButton.hidden = true;
+    }
+
+    function selectAddress(address, card) {
+        document.querySelectorAll('#addressList .address-card').forEach(item => {
+            item.classList.remove('selected');
+            item.setAttribute('aria-pressed', 'false');
+            item.querySelector('.deliver-radio')?.classList.remove('selected');
+            item.querySelector('.address-selected')?.remove();
+        });
+        card?.classList.add('selected');
+        card?.setAttribute('aria-pressed', 'true');
+        card?.querySelector('.deliver-radio')?.classList.add('selected');
+        const main = card?.querySelector('.address-card-main');
+        if (main && !main.querySelector('.address-selected')) {
+            const selected = document.createElement('span');
+            selected.className = 'address-selected';
+            selected.innerHTML = '<i class="bx bx-check"></i> Selected';
+            main.appendChild(selected);
+        }
+        sessionStorage.setItem('selectedAddress', JSON.stringify(address));
     }
 
     async function loadAddresses(preferredAddressId = null) {
-        let data;
         try {
-            data = await requestJson(`/api/v1/addresses/${user.userID}`);
+            const data = await requestJson(`/api/v1/addresses/${user.userID}`);
+            checkoutAddresses = data.data || [];
+            addressList.innerHTML = '';
+
+            if (!checkoutAddresses.length) {
+                sessionStorage.removeItem('selectedAddress');
+                addressList.innerHTML = '<p style="color:rgba(255,255,255,.65);font-size:.82rem;">No saved addresses. Add your first address below.</p>';
+                setAddressMode('add');
+                resetAddressForm();
+                document.getElementById('addressSubmit').textContent = 'Add Address';
+                return;
+            }
+
+            const previouslySelected = (() => {
+                try { return JSON.parse(sessionStorage.getItem('selectedAddress')); } catch (error) { return null; }
+            })();
+            const preferred = checkoutAddresses.find(address =>
+                Number(address.id) === Number(preferredAddressId)
+            );
+            const previous = checkoutAddresses.find(address =>
+                Number(address.id) === Number(previouslySelected?.id)
+            );
+            const defaultAddress = checkoutAddresses.find(address => Number(address.is_default) === 1);
+            const addressToSelect = preferred || previous || defaultAddress || checkoutAddresses[0];
+
+            checkoutAddresses.forEach(address => {
+                const card = document.createElement('article');
+                card.className = 'address-card';
+                card.tabIndex = 0;
+                card.setAttribute('role', 'button');
+                card.setAttribute('aria-pressed', 'false');
+                card.dataset.addressId = String(address.id);
+
+                const line2 = address.line2 ? `, ${address.line2}` : '';
+                const location = [address.city, address.province, address.postal_code].filter(Boolean).join(', ');
+                card.innerHTML = `
+                    <div class="deliver-pin">
+                        <button type="button" class="deliver-radio" data-action="deliver" data-id="${address.id}" aria-label="Select this address">
+                            <span class="dot"></span>
+                        </button>
+                    </div>
+                    <div class="address-card-main">
+                        <h4 class="address-card-city">${escapeHtml(address.city || 'Saved address')}</h4>
+                        <p class="address-card-line">${escapeHtml(address.line1 || '')}${escapeHtml(line2)}</p>
+                        <p class="address-card-location">${escapeHtml(location)} · ${escapeHtml(address.country || 'South Africa')}</p>
+                        ${address.phone ? `<p class="address-card-phone">${escapeHtml(address.phone)}</p>` : ''}
+                    </div>
+                    <div class="actions-right">
+                        <button type="button" class="btn-icon btn-edit" data-action="edit" data-id="${address.id}" title="Edit address" aria-label="Edit address"><i class="bx bx-pencil"></i></button>
+                        <button type="button" class="btn-icon btn-delete" data-action="delete" data-id="${address.id}" title="Delete address" aria-label="Delete address"><i class="bx bx-trash"></i></button>
+                    </div>
+                `;
+                addressList.appendChild(card);
+
+                card.addEventListener('click', event => {
+                    if (event.target.closest('[data-action="edit"], [data-action="delete"]')) return;
+                    selectAddress(address, card);
+                });
+                card.addEventListener('keydown', event => {
+                    if (event.key === 'Enter' || event.key === ' ') {
+                        event.preventDefault();
+                        selectAddress(address, card);
+                    }
+                });
+                card.querySelector('[data-action="deliver"]').addEventListener('click', event => {
+                    event.stopPropagation();
+                    selectAddress(address, card);
+                });
+                card.querySelector('[data-action="edit"]').addEventListener('click', event => {
+                    event.stopPropagation();
+                    startEditAddress(address);
+                });
+                card.querySelector('[data-action="delete"]').addEventListener('click', async event => {
+                    event.stopPropagation();
+                    if (!confirm('Delete this saved address?')) return;
+                    try {
+                        await requestJson(`/api/v1/addresses/${address.id}`, { method: 'DELETE' });
+                        const selected = JSON.parse(sessionStorage.getItem('selectedAddress') || 'null');
+                        if (Number(selected?.id) === Number(address.id)) sessionStorage.removeItem('selectedAddress');
+                        await loadAddresses();
+                    } catch (error) {
+                        showAddressStatus(error.message, true);
+                    }
+                });
+            });
+
+            if (addressToSelect) {
+                const selectedCard = Array.from(addressList.querySelectorAll('.address-card'))
+                    .find(card => Number(card.dataset.addressId) === Number(addressToSelect.id));
+                if (selectedCard) selectAddress(addressToSelect, selectedCard);
+            }
+            setAddressMode('view');
         } catch (error) {
             addressList.innerHTML = `<p style="color:#ff8b94;">${escapeHtml(error.message)}</p>`;
             showAddressStatus(error.message, true);
-            return;
-        }
-
-        const addresses = data.data || [];
-        if (!addresses.length) {
-            addressList.innerHTML = '<p>No saved addresses. Add one below.</p>';
-            sessionStorage.removeItem('selectedAddress');
-            return;
-        }
-        addressList.innerHTML = '';
-        const previouslySelected = (() => {
-            try { return JSON.parse(sessionStorage.getItem('selectedAddress')); } catch(e){ return null; }
-        })();
-
-        addresses.forEach(a => {
-            const div = document.createElement('div');
-            div.className = 'address-card';
-            div.innerHTML = `
-                <div class="deliver-pin"><button class="deliver-radio" data-action="deliver" data-id="${a.id}" title="Deliver"><span class="dot"></span></button></div>
-                <div style="min-width:0">
-                    <div class="meta"><strong>${escapeHtml(a.line1)}</strong></div>
-                    <div class="meta small">${escapeHtml(a.line2 || '')}</div>
-                    <div class="meta small">${escapeHtml(a.city)}, ${escapeHtml(a.province || '')} ${escapeHtml(a.postal_code)}</div>
-                    <div class="meta small">${escapeHtml(a.country)}</div>
-                    <div class="meta small" style="margin-top:6px; display:none;" data-full>
-                        <div>Phone: ${escapeHtml(a.phone || 'Not supplied')}</div>
-                        <div>Instructions: ${escapeHtml(a.delivery_instructions || 'None')}</div>
-                    </div>
-                </div>
-                <div class="actions-right">
-                    <button class="btn-icon btn-edit" data-action="edit" data-id="${a.id}" title="Edit"><i class="bx bx-pencil"></i></button>
-                    <button class="btn-icon btn-delete" data-action="delete" data-id="${a.id}" title="Delete"><i class="bx bx-trash"></i></button>
-                </div>
-                <div class="view-more" data-action="view" title="View details"><i class="bx bx-chevron-down"></i></div>`;
-            addressList.appendChild(div);
-            // view toggle (view-more rectangle)
-            const viewBtn = div.querySelector('.view-more');
-            viewBtn.addEventListener('click', ()=>{
-                const block = div.querySelector('[data-full]');
-                const icon = viewBtn.querySelector('i');
-                if (!block) return;
-                const showing = block.style.display !== 'none' && block.style.display !== '';
-                block.style.display = showing ? 'none' : 'block';
-                if (icon) icon.classList.toggle('bx-rotate-180', !showing);
-            });
-
-            // deliver pin (left side)
-            const deliverBtn = div.querySelector('.deliver-radio');
-            deliverBtn.addEventListener('click', ()=>{
-                selectAddress(a, div);
-                showAddressStatus('Delivery address selected.');
-            });
-
-            // edit
-            div.querySelector('[data-action="edit"]').addEventListener('click', ()=> startEditAddress(a));
-
-            // delete
-            div.querySelector('[data-action="delete"]').addEventListener('click', async ()=>{
-                if (!confirm('Delete this address?')) return;
-                try {
-                    await requestJson(`/api/v1/addresses/${a.id}`, { method: 'DELETE' });
-                    const selected = JSON.parse(sessionStorage.getItem('selectedAddress') || 'null');
-                    if (Number(selected?.id) === Number(a.id)) {
-                        sessionStorage.removeItem('selectedAddress');
-                    }
-                    showAddressStatus('Address deleted.');
-                    await loadAddresses();
-                } catch (error) {
-                    showAddressStatus(error.message, true);
-                }
-            });
-        });
-
-        // if user had previously selected an address, mark it open
-        const addressToSelect = addresses.find(address =>
-            Number(address.id) === Number(preferredAddressId || previouslySelected?.id)
-        );
-        if (addressToSelect) {
-            const el = addressList.querySelector(`[data-id="${addressToSelect.id}"]`);
-            if (el) {
-                const card = el.closest('.address-card');
-                if (card) selectAddress(addressToSelect, card);
-            }
         }
     }
 
@@ -383,6 +415,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         provinceContainer.innerHTML = '';
         if (provinces && provinces.length) {
             const sel = document.createElement('select'); sel.name = 'province'; sel.required = true; sel.style.width = '100%'; sel.style.padding = '10px'; sel.style.marginBottom='8px';
+            sel.className = 'form-select';
             const empty = document.createElement('option'); empty.value=''; empty.textContent='Select province / state'; sel.appendChild(empty);
             provinces.forEach(p => { const o = document.createElement('option'); o.value = p; o.textContent = p; sel.appendChild(o); });
             provinceContainer.appendChild(sel);
@@ -399,9 +432,18 @@ document.addEventListener('DOMContentLoaded', async () => {
         addressForm.reset();
         countrySelect.value = 'South Africa';
         setProvinceFieldForCountry('South Africa');
+
+        const checkoutCityInput = document.getElementById('checkoutCity');
+        checkoutCityInput?.addEventListener('blur', () => {
+            if (checkoutCityInput.value.trim().toLowerCase() === 'thohoyandou') {
+                const provinceField = addressForm.querySelector('[name="province"]');
+                if (provinceField?.tagName === 'SELECT' && !provinceField.value) {
+                    provinceField.value = 'Limpopo';
+                }
+            }
+        });
         document.getElementById('addressSubmit').textContent = 'Add Address';
-        document.getElementById('cancelAdd').style.display = 'inline-flex';
-        document.getElementById('cancelEdit').style.display = 'none';
+        checkoutEditingId = null;
     }
 
     countrySelect.value = 'South Africa';
@@ -410,22 +452,27 @@ document.addEventListener('DOMContentLoaded', async () => {
     addressForm.addEventListener('submit', async (e)=>{
         e.preventDefault();
         const form = e.target;
+        if (!form.reportValidity()) return;
         // read province from dynamic field
         const provinceField = form.querySelector('[name="province"]');
+        const editingId = form.getAttribute('data-editing-id');
+        const existingAddress = editingId
+            ? checkoutAddresses.find(address => Number(address.id) === Number(editingId))
+            : null;
         const payload = {
             userID: user.userID,
-            line1: form.line1.value,
-            line2: form.line2.value,
-            city: form.city.value,
+            line1: form.line1.value.trim(),
+            line2: form.line2.value.trim(),
+            city: form.city.value.trim(),
             province: provinceField ? provinceField.value : '',
-            postal_code: form.postal_code.value,
-            country: form.country ? form.country.value : countrySelect.value,
-            phone: form.phone.value,
-            delivery_instructions: form.delivery_instructions.value,
-            is_default: 0
+            postal_code: form.postal_code.value.trim(),
+            country: 'South Africa',
+            phone: form.phone.value.trim(),
+            delivery_instructions: form.delivery_instructions.value.trim(),
+            is_default: existingAddress ? (existingAddress.is_default || 0) : (checkoutAddresses.length === 0 ? 1 : 0)
         };
-        const editingId = form.getAttribute('data-editing-id');
         const submitButton = document.getElementById('addressSubmit');
+        if (submitButton.disabled) return;
         submitButton.disabled = true;
         submitButton.textContent = editingId ? 'Saving...' : 'Adding...';
 
@@ -448,7 +495,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             resetAddressForm();
             await loadAddresses(selectedAddressId);
-            showAddressStatus(editingId ? 'Address updated and selected.' : 'Address added and selected.');
+            setAddressMode('view');
         } catch (error) {
             showAddressStatus(error.message, true);
         } finally {
@@ -457,31 +504,42 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     });
 
-    document.getElementById('cancelAdd').addEventListener('click', ()=>{
+    document.getElementById('cancelAddressForm').addEventListener('click', ()=>{
         resetAddressForm();
-        showAddressStatus('Address form cleared.');
+        setAddressMode('view');
+    });
+
+    document.getElementById('addAddressButton').addEventListener('click', ()=>{
+        resetAddressForm();
+        setAddressMode('add');
+        document.getElementById('addressSubmit').textContent = 'Add Address';
+        document.getElementById('checkoutLine1').focus({ preventScroll: true });
     });
 
     continueBtn.addEventListener('click', ()=>{
         // ensure selectedAddress exists
         const sel = sessionStorage.getItem('selectedAddress');
         if (!sel) return alert('Please choose an address first');
+        try {
+            const selected = JSON.parse(sel);
+            if (!selected?.isDigital && !selected?.id) return alert('Please choose a valid address before continuing');
+        } catch (error) {
+            return alert('Please choose a valid address before continuing');
+        }
         window.location.href = '/review.html';
-    });
-
-    document.getElementById('cancelEdit').addEventListener('click', ()=>{
-        resetAddressForm();
-        showAddressStatus('Editing cancelled.');
     });
 
     function startEditAddress(a) {
         const form = document.getElementById('addressForm');
+        resetAddressForm();
         form.setAttribute('data-editing-id', a.id);
+        checkoutEditingId = Number(a.id);
         form.line1.value = a.line1 || '';
         form.line2.value = a.line2 || '';
         form.city.value = a.city || '';
         form.postal_code.value = a.postal_code || '';
-        if (a.country) { countrySelect.value = a.country; setProvinceFieldForCountry(a.country); }
+        countrySelect.value = 'South Africa';
+        setProvinceFieldForCountry('South Africa');
         const provinceField = form.querySelector('[name="province"]');
         if (provinceField) {
             provinceField.value = a.province || '';
@@ -492,13 +550,18 @@ document.addEventListener('DOMContentLoaded', async () => {
                 provinceField.appendChild(preserved);
                 provinceField.value = a.province;
             }
+            if (String(a.city || '').trim().toLowerCase() === 'thohoyandou' &&
+                String(a.province || '').trim().toLowerCase() === 'gauteng') {
+                provinceField.value = 'Limpopo';
+                showAddressStatus('Province mismatch found: Thohoyandou is in Limpopo. Review before saving.', false);
+            }
         }
         form.phone.value = a.phone || '';
         form.delivery_instructions.value = a.delivery_instructions || '';
         document.getElementById('addressSubmit').textContent = 'Save Changes';
-        document.getElementById('cancelAdd').style.display = 'none';
-        document.getElementById('cancelEdit').style.display = 'inline-block';
-        window.scrollTo({ top: form.offsetTop - 80, behavior: 'smooth' });
+        setAddressMode('edit');
+        document.getElementById('checkoutLine1').focus({ preventScroll: true });
+        form.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
 
     window.addEventListener('stack:cart-updated', loadSummary);

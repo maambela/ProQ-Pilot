@@ -100,6 +100,211 @@
             background: rgba(255, 255, 255, 0.12);
         }
         .form-textarea { min-height: 80px; resize: vertical; }
+        #addressManager {
+            min-width: 0;
+        }
+        .checkout-address-heading {
+            margin: 0 0 12px;
+            color: #ffffff;
+            font-size: 1.05rem;
+            font-weight: 100;
+        }
+        #addressList.address-list {
+            display: grid;
+            gap: 10px;
+        }
+        #addressList .address-card {
+            position: relative;
+            display: grid;
+            grid-template-columns: 42px minmax(0, 1fr) auto;
+            align-items: center;
+            gap: 10px;
+            min-width: 0;
+            padding: 14px;
+            border-radius: 14px;
+            border: 1px solid rgba(255, 255, 255, 0.16);
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.09), rgba(255, 255, 255, 0.035));
+            box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.12), 0 10px 26px rgba(0, 0, 0, 0.14);
+            cursor: pointer;
+            transition: border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+        }
+        #addressList .address-card:hover,
+        #addressList .address-card:focus-visible {
+            border-color: rgba(68, 255, 224, 0.42);
+            background: rgba(255, 255, 255, 0.105);
+            outline: none;
+        }
+        #addressList .address-card.selected {
+            border-color: rgba(68, 255, 224, 0.52);
+            background: linear-gradient(135deg, rgba(68, 255, 224, 0.1), rgba(255, 255, 255, 0.045));
+        }
+        #addressList .deliver-pin,
+        #addressList .actions-right,
+        #addressList .view-more {
+            position: static;
+            left: auto;
+            right: auto;
+            top: auto;
+            bottom: auto;
+            transform: none;
+        }
+        #addressList .deliver-pin {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        #addressList .deliver-radio {
+            width: 20px;
+            height: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.45);
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.06);
+        }
+        #addressList .deliver-radio.selected {
+            border-color: var(--accent-blue);
+            background: rgba(68, 255, 224, 0.16);
+        }
+        #addressList .deliver-radio.selected .dot {
+            width: 8px;
+            height: 8px;
+            background: var(--accent-blue);
+        }
+        #addressList .address-card-main {
+            min-width: 0;
+        }
+        #addressList .address-card-city {
+            margin: 0 0 2px;
+            color: #ffffff;
+            font-size: 0.92rem;
+            font-weight: 100;
+        }
+        #addressList .address-card-line,
+        #addressList .address-card-location,
+        #addressList .address-card-phone {
+            margin: 0;
+            color: rgba(255, 255, 255, 0.72);
+            font-size: 0.78rem;
+            line-height: 1.42;
+        }
+        #addressList .address-card-location,
+        #addressList .address-card-phone {
+            color: rgba(255, 255, 255, 0.58);
+        }
+        #addressList .address-selected {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            margin-top: 5px;
+            color: var(--accent-blue);
+            font-size: 0.72rem;
+        }
+        #addressList .actions-right {
+            display: flex;
+            gap: 6px;
+        }
+        #addressList .btn-icon {
+            width: 34px;
+            height: 34px;
+            min-height: 34px;
+            padding: 0;
+            border-radius: 50%;
+            font-size: 15px;
+        }
+        #addressList .view-more {
+            display: none;
+        }
+        .checkout-address-add {
+            width: 100%;
+            min-height: 42px;
+            margin-top: 10px;
+            border: 1px dashed rgba(68, 255, 224, 0.32);
+            border-radius: 12px;
+            background: rgba(68, 255, 224, 0.03);
+            color: var(--accent-blue);
+            font: inherit;
+            font-size: 0.82rem;
+            cursor: pointer;
+        }
+        .checkout-address-add:hover,
+        .checkout-address-add:focus-visible {
+            border-style: solid;
+            border-color: rgba(68, 255, 224, 0.52);
+            background: rgba(68, 255, 224, 0.07);
+            outline: none;
+        }
+        #addressForm.checkout-address-form {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 8px 10px;
+            margin-top: 10px;
+            padding: 14px;
+            border: 1px solid rgba(255, 255, 255, 0.14);
+            border-radius: 14px;
+            background: rgba(255, 255, 255, 0.035);
+        }
+        #addressForm.checkout-address-form[hidden] {
+            display: none;
+        }
+        #addressForm .checkout-form-full,
+        #addressForm .checkout-form-actions,
+        #addressForm #addressStatus {
+            grid-column: 1 / -1;
+        }
+        #addressForm .form-input,
+        #addressForm .form-select,
+        #addressForm .form-textarea {
+            min-height: 42px;
+            margin: 0;
+            padding: 10px 12px;
+            font-size: 0.82rem;
+            border-radius: 10px;
+        }
+        #addressForm .form-textarea {
+            min-height: 64px;
+        }
+        #addressForm > label {
+            align-self: end;
+            margin: 0 0 -4px;
+            color: rgba(255, 255, 255, 0.62);
+            font-size: 0.72rem;
+        }
+        #addressForm .checkout-form-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 2px;
+        }
+        #addressForm .checkout-form-actions .btn {
+            min-height: 40px;
+            padding: 8px 14px;
+            font-size: 0.8rem;
+        }
+        #addressStatus {
+            min-height: 18px !important;
+            margin: 2px 0 0 !important;
+            font-size: 0.78rem;
+        }
+        @media (max-width: 900px) {
+            #addressList .address-card {
+                grid-template-columns: 30px minmax(0, 1fr);
+                padding: 12px;
+            }
+            #addressList .actions-right {
+                grid-column: 2;
+                justify-content: flex-end;
+            }
+            #addressForm.checkout-address-form {
+                grid-template-columns: 1fr;
+            }
+            #addressForm .checkout-form-full,
+            #addressForm .checkout-form-actions,
+            #addressForm #addressStatus {
+                grid-column: 1;
+            }
+            #addressForm .checkout-form-actions {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+            }
+        }
         /* Mini summary styles (checkout) */
         .summary-items { display:flex; flex-direction:column; gap:10px; max-height:320px; overflow:auto; }
         .summary-item { display:flex; align-items:center; gap:10px; padding:8px 0; border-bottom:1px dashed rgba(255,255,255,0.15); }
@@ -110,7 +315,7 @@
         .spec { background: rgba(255, 255, 255, 0.15); padding:4px 8px; border-radius:8px; font-size:0.75rem; color:rgba(255, 255, 255, 0.9); }
         .summary-qty { font-weight:600; color:#ffffff; margin-left:8px; }
     </style>
-    <link href="css/site-button-copy.css?v=exact-copy-20261001d" rel="stylesheet">
+    <link href="css/site-button-copy.css?v=checkout-address-ui-20261122" rel="stylesheet">
 </head>
 <body>
     <header class="main-header">
@@ -162,29 +367,36 @@
                 </div>
 
                 <div id="addressManager">
+                    <h3 class="checkout-address-heading">Delivery Address</h3>
                     <div class="address-list" id="addressList">
                         <p style="color: rgba(255, 255, 255, 0.7);">Loading addresses...</p>
                     </div>
-
-                    <h3 style="margin-top:18px; color: #ffffff;">Add New Address</h3>
-                    <form id="addressForm">
-                        <input class="form-input" name="line1" placeholder="Address line 1" required />
-                        <input class="form-input" name="line2" placeholder="Address line 2 (optional)" />
-                        <input class="form-input" name="city" placeholder="City" required />
-                        <input class="form-input" name="postal_code" placeholder="Postal code" required />
-                        <div class="form-input" aria-label="Country" style="display:flex;align-items:center;">South Africa</div>
+                    <button type="button" id="addAddressButton" class="checkout-address-add">+ Add New Address</button>
+                    <form id="addressForm" class="checkout-address-form" hidden>
+                        <label class="checkout-form-full" for="checkoutLine1">Address Line 1</label>
+                        <input id="checkoutLine1" class="form-input checkout-form-full" name="line1" placeholder="Address line 1" required />
+                        <label class="checkout-form-full" for="checkoutLine2">Address Line 2 <span style="color:rgba(255,255,255,.55)">(optional)</span></label>
+                        <input id="checkoutLine2" class="form-input checkout-form-full" name="line2" placeholder="Address line 2 (optional)" />
+                        <label for="checkoutCity">City / Town</label>
+                        <input id="checkoutCity" class="form-input" name="city" placeholder="City / Town" required />
+                        <label for="checkoutPostalCode">Postal Code</label>
+                        <input id="checkoutPostalCode" class="form-input" name="postal_code" placeholder="Postal code" required />
+                        <label for="countrySelect">Country</label>
+                        <div id="countrySelectDisplay" class="form-input" aria-label="Country">South Africa</div>
                         <input type="hidden" id="countrySelect" name="country" value="South Africa">
-                        <div id="provinceContainer">
+                        <label for="provinceContainer">Province</label>
+                        <div id="provinceContainer" class="checkout-form-full">
                             <input class="form-input" name="province" placeholder="Province/State" />
                         </div>
-                        <input class="form-input" name="phone" placeholder="Phone number (e.g. +27 12 345 6789)" />
-                        <textarea class="form-textarea" name="delivery_instructions" placeholder="Delivery instructions (e.g. gate code, landmarks)"></textarea>
-                        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                        <label class="checkout-form-full" for="checkoutPhone">Phone Number</label>
+                        <input id="checkoutPhone" class="form-input checkout-form-full" name="phone" placeholder="Phone number (e.g. +27 12 345 6789)" required />
+                        <label class="checkout-form-full" for="checkoutInstructions">Delivery Instructions <span style="color:rgba(255,255,255,.55)">(optional)</span></label>
+                        <textarea id="checkoutInstructions" class="form-textarea checkout-form-full" name="delivery_instructions" placeholder="Delivery instructions (e.g. gate code, landmarks)"></textarea>
+                        <div class="checkout-form-actions">
                             <button class="btn btn-primary" type="submit" id="addressSubmit">Add Address</button>
-                            <button type="button" id="cancelAdd" class="btn">Cancel</button>
-                            <button type="button" id="cancelEdit" class="btn" style="display:none;">Cancel Edit</button>
+                            <button type="button" id="cancelAddressForm" class="btn">Cancel</button>
                         </div>
-                        <p id="addressStatus" role="status" aria-live="polite" style="min-height:24px; margin-top:10px; color:rgba(255,255,255,0.8);"></p>
+                        <p id="addressStatus" role="status" aria-live="polite"></p>
                     </form>
                 </div>
             </section>
@@ -203,7 +415,7 @@
     </main>
 
     <script src="js/recommendations.js?v=store-catalog-20260924"></script>
-    <script src="js/checkout.js?v=recs-restructure-20260921"></script>
+    <script src="js/checkout.js?v=checkout-address-ui-20261122"></script>
     <script src="js/auth-ui.js?v=page-menus-20261001"></script>
 </body>
 </html>
