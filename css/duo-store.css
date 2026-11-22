@@ -30,7 +30,7 @@
     margin: 0 0 7px;
     color: #c0dce5;
     font-size: 0.8rem;
-    font-weight: 300;
+    font-weight: 100;
     letter-spacing: 0.12em;
     text-transform: uppercase;
 }
@@ -39,7 +39,7 @@
     margin: 0;
     color: #fff;
     font-size: clamp(1.55rem, 3vw, 2.35rem);
-    font-weight: 300;
+    font-weight: 100;
 }
 
 .license-chooser-options {
@@ -149,7 +149,7 @@
 
 .license-brand-choice .license-brand-name {
     font-size: 1.1rem !important;
-    font-weight: 300 !important;
+    font-weight: 100 !important;
     font-variation-settings: 'wght' 300 !important;
     line-height: 1.3 !important;
 }
@@ -310,7 +310,7 @@ body.store-page.category-menu-view .license-chooser-options {
 .license-eyebrow {
     color: #69d7ff;
     font-size: 0.78rem;
-    font-weight: 700;
+    font-weight: 200;
     letter-spacing: 0.08em;
     margin: 0 0 8px;
     text-transform: uppercase;
@@ -432,7 +432,7 @@ body.store-page.category-menu-view .license-chooser-options {
 .license-price {
     color: #69d7ff;
     font-size: 1.35rem;
-    font-weight: 800;
+    font-weight: 200;
 }
 
 .license-purchase-row small {
